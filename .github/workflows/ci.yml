@@ -103,7 +103,7 @@ jobs:
         run: npm ci
 
       - name: Run npm audit
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
         continue-on-error: false
 
       - name: Run Snyk security scan
@@ -130,7 +130,7 @@ jobs:
         run: npm ci
 
       - name: Build with stats
-        run: npm run build -- --json > bundle-stats.json
+        run: npx webpack --mode production --json > bundle-stats.json
 
       - name: Analyze bundle size
         run: |

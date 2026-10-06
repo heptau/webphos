@@ -74,5 +74,11 @@
     "semver-compare": "^1.0.0",
     "uuid": "^14.0.2",
     "webfontloader": "^1.6.28"
+  },
+  "overrides": {
+    "sockjs": {
+      "uuid": "^11.1.1"
+    },
+    "qs": "^6.16.0"
   }
 }
