@@ -45,10 +45,10 @@ jest.mock('../src/js/config.js', () => ({
 jest.mock('../src/js/libs/helpers.js', () => {
   return jest.fn().mockImplementation(() => ({
     escapeHtml: (text: string) => text
-      .replace(/&/g, '&')
-      .replace(/</g, '<')
-      .replace(/>/g, '>')
-      .replace(/"/g, '"')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;'),
     getCookie: jest.fn(() => null),
     setCookie: jest.fn(),

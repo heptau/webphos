@@ -276,8 +276,11 @@ export function sanitize_filename(filename) {
 	}
 
 	// Remove path traversal attempts - handle ../ and ..\ patterns first
-	filename = filename.replace(/\.\.\//g, '');
-	filename = filename.replace(/\.\.\\/g, '');
+	var previous;
+	do {
+		previous = filename;
+		filename = filename.replace(/\.\.\//g, '').replace(/\.\.\\/g, '');
+	} while (filename !== previous);
 	// Then replace remaining slashes and backslashes
 	filename = filename.replace(/[\/\\]/g, '_');
 	// Remove any remaining multiple dots

@@ -123,8 +123,8 @@ class Tools_translate_class {
 		if (this.pending_langs[lang_code]) {
 			return this.pending_langs[lang_code];
 		}
-		const loader = LANG_LOADERS[lang_code];
-		if (!loader) {
+		const loader = Object.prototype.hasOwnProperty.call(LANG_LOADERS, lang_code) ? LANG_LOADERS[lang_code] : null;
+		if (typeof loader !== 'function') {
 			return Promise.reject(new Error('Unknown language: ' + lang_code));
 		}
 		this.pending_langs[lang_code] = loader().then((dict) => {
@@ -141,7 +141,7 @@ class Tools_translate_class {
 			delete this.pending_langs[lang_code];
 		}).catch((error) => {
 			delete this.pending_langs[lang_code];
-			console.error('Failed to load language: ' + lang_code, error);
+			console.error('Failed to load language:', lang_code, error);
 			throw error;
 		});
 		return this.pending_langs[lang_code];
@@ -161,7 +161,7 @@ class Tools_translate_class {
 		}
 		lang_code = normalize_lang_code(String(lang_code)) || 'en';
 
-		if (lang_code == 'en' || LANG_LOADERS[lang_code]) {
+		if (lang_code == 'en' || Object.prototype.hasOwnProperty.call(LANG_LOADERS, lang_code)) {
 			//translate once the dictionary is available
 			this.ensure_lang(lang_code).then(() => {
 				$(element || 'body').translate({lang: lang_code, t: this.translations});

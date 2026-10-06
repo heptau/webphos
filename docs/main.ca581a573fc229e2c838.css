@@ -287,6 +287,7 @@
 	--panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 0 0.5px rgba(255, 255, 255, 0.18);
 	--vibrancy: saturate(180%) blur(20px);
 	--traffic-close: #ff5f57;
+	--dirty-dot: #28c840;
 	--field-background: #1f1f21;
 	--font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
 	--font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
@@ -1710,9 +1711,6 @@ body .sp-preview{
 	filter: var(--menu-icons-filter-active);
 }
 
-/*
-IMPORTANT: any new icon should also must be added on /service-worker.js + its version should be updated - FEATURE DISABLED
- */
 .sidebar_left .select:after{ background-image: url('images/icons/select.svg'); }
 .sidebar_left .selection:after{ background-image: url('images/icons/selection.svg'); }
 .sidebar_left .lasso:after{ background-image: url('images/icons/lasso.svg'); }
@@ -1726,8 +1724,8 @@ IMPORTANT: any new icon should also must be added on /service-worker.js + its ve
 .sidebar_left .magic_erase:after{ background-image: url('images/icons/magic_erase.svg'); }
 .sidebar_left .fill:after{ background-image: url('images/icons/fill.svg'); }
 .sidebar_left .shape:after{ background-image: url('images/icons/shape.svg'); }
-.sidebar_left .text:after{ background-image: url('images/icons/text.svg'); background-size: 16px auto; }
-.sidebar_left .gradient:after{ background-image: url('images/icons/gradient.png'); background-size: 18px 12px; filter: none; }
+.sidebar_left .text:after{ background-image: url('images/icons/text.svg'); }
+.sidebar_left .gradient:after{ background-image: url('images/icons/gradient.svg'); }
 .sidebar_left .clone:after{ background-image: url('images/icons/clone.svg'); }
 .sidebar_left .crop:after{ background-image: url('images/icons/crop.svg'); }
 .sidebar_left .blur:after{ background-image: url('images/icons/blur.svg'); }
@@ -2953,14 +2951,7 @@ label {
 	margin-right: 22px;
 }
 
-/* application icon + bold application name (like the Apple menu + app menu on macOS) */
-.main_menu > ul.menu_bar > li.menu_logo {
-	flex: 0 0 auto;
-	width: 28px;
-	margin-left: 2px;
-	background: url('images/logo.png') no-repeat center center;
-	background-size: auto 17px;
-}
+/* bold application name (like the app menu on macOS) */
 .main_menu > ul.menu_bar > li > a .app_name {
 	font-weight: 700;
 }
@@ -3002,7 +2993,7 @@ label {
 	flex: 0 1 auto;
 	max-width: 200px;
 	height: 24px;
-	padding: 0 4px 0 12px;
+	padding: 0 12px 0 4px;
 	font-size: 12px;
 	color: var(--text-color-muted);
 	background: transparent;
@@ -3036,8 +3027,42 @@ label {
 	border-radius: 4px;
 	box-shadow: none;
 }
+.documents_bar .doc_close {
+	margin-left: 0;
+	margin-right: 4px;
+	/* the cross is drawn by the font a bit low, lift it to the middle of the text line */
+	line-height: 14px;
+	padding-bottom: 3px;
+	box-sizing: border-box;
+}
 .documents_bar .doc_close.idle {
 	visibility: hidden;
+}
+/* the cross (on the left) shows only over the tab, on touch screens always */
+.documents_bar .doc_close:not(.idle) {
+	visibility: hidden;
+}
+.documents_bar .doc_tab:hover .doc_close:not(.idle),
+.documents_bar .doc_tab:focus-visible .doc_close:not(.idle) {
+	visibility: visible;
+}
+@media (hover: none), (pointer: coarse) {
+	.documents_bar .doc_close:not(.idle) {
+		visibility: visible;
+	}
+}
+/* green dot after the name: the document has unsaved changes (the place is always reserved) */
+.documents_bar .doc_dirty {
+	flex: 0 0 auto;
+	width: 6px;
+	height: 6px;
+	margin-left: 6px;
+	background: var(--dirty-dot);
+	border-radius: 50%;
+	visibility: hidden;
+}
+.documents_bar .doc_dirty.on {
+	visibility: visible;
 }
 .documents_bar .doc_new {
 	align-self: center;
@@ -4334,4 +4359,4 @@ html.large_ui input[type="number"] {
 }
 
 
-/*# sourceMappingURL=main.537a4f948d3f4160697e.css.map*/
+/*# sourceMappingURL=main.ca581a573fc229e2c838.css.map*/
