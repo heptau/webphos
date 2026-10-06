@@ -8,7 +8,7 @@ var instance = null;
 
 //Available language codes - dictionaries are loaded on demand (code split),
 //so unused languages do not bloat the initial bundle.
-const LANG_LOADERS = {
+const LANG_LOADERS = new Map(Object.entries({
 	ar: () => import('../../languages/ar.json'),
 	cs: () => import('../../languages/cs.json'),
 	de: () => import('../../languages/de.json'),
@@ -25,7 +25,7 @@ const LANG_LOADERS = {
 	ru: () => import('../../languages/ru.json'),
 	tr: () => import('../../languages/tr.json'),
 	zh: () => import('../../languages/zh.json'),
-};
+}));
 
 //language names shown in Settings (own names, so they are not translated), code -> name
 export const LANGUAGE_NAMES = {
@@ -76,7 +76,7 @@ class Tools_translate_class {
 
 	//supported language codes
 	get_available_languages() {
-		return ['en'].concat(Object.keys(LANG_LOADERS));
+		return ['en'].concat(Array.from(LANG_LOADERS.keys()));
 	}
 
 	//best supported language based on operating system / browser preferences
@@ -123,8 +123,8 @@ class Tools_translate_class {
 		if (this.pending_langs[lang_code]) {
 			return this.pending_langs[lang_code];
 		}
-		const loader = Object.prototype.hasOwnProperty.call(LANG_LOADERS, lang_code) ? LANG_LOADERS[lang_code] : null;
-		if (typeof loader !== 'function') {
+		const loader = LANG_LOADERS.get(lang_code);
+		if (!loader) {
 			return Promise.reject(new Error('Unknown language: ' + lang_code));
 		}
 		this.pending_langs[lang_code] = loader().then((dict) => {
@@ -161,7 +161,7 @@ class Tools_translate_class {
 		}
 		lang_code = normalize_lang_code(String(lang_code)) || 'en';
 
-		if (lang_code == 'en' || Object.prototype.hasOwnProperty.call(LANG_LOADERS, lang_code)) {
+		if (lang_code == 'en' || LANG_LOADERS.has(lang_code)) {
 			//translate once the dictionary is available
 			this.ensure_lang(lang_code).then(() => {
 				$(element || 'body').translate({lang: lang_code, t: this.translations});
