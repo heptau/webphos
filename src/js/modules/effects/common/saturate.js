@@ -2,6 +2,7 @@ import Effects_common_class from '../abstract/css.js';
 import Base_layers_class from './../../../core/base-layers.js';
 import config from "../../../config";
 import alertify from './../../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../../tools/translate.js';
 
 class Effects_saturate_class extends Effects_common_class {
 
@@ -12,7 +13,7 @@ class Effects_saturate_class extends Effects_common_class {
 
 	saturate(filter_id) {
 		if (config.layer.type == null) {
-			alertify.error('Layer is empty.');
+			alertify.error(t('Layer is empty.'));
 			return;
 		}
 

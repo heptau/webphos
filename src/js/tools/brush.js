@@ -247,7 +247,7 @@ class Brush_class extends Base_tools_class {
 		}
 
 		//in case of undo, recalculate index
-		for(var i = index; i >= 0; i++){
+		for(var i = index; i >= 0; i--){
 			if(typeof config.layer.data[index] != "undefined"){
 				break;
 			}
@@ -289,7 +289,7 @@ class Brush_class extends Base_tools_class {
 		}
 
 		//in case of undo, recalculate index
-		for(var i = index; i >= 0; i++){
+		for(var i = index; i >= 0; i--){
 			if(typeof config.layer.data[index] != "undefined"){
 				break;
 			}

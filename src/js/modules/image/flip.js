@@ -2,6 +2,7 @@ import app from './../../app.js';
 import config from './../../config.js';
 import Base_layers_class from './../../core/base-layers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 class Image_flip_class {
 
@@ -19,7 +20,7 @@ class Image_flip_class {
 
 	flip(mode) {
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

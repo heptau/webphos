@@ -5,6 +5,8 @@
 
 import config from './../../config.js';
 import Base_layers_class from './../base-layers.js';
+import zoomView from './../../libs/zoomView.js';
+import Helper_class from './../../libs/helpers.js';
 
 var instance = null;
 
@@ -38,7 +40,9 @@ class GUI_preview_class {
 		document.getElementById('toggle_preview').innerHTML = template;
 
 		// preview mini window size on right sidebar
+		this.PREVIEW_BOX = {w: 176, h: 100};
 		this.PREVIEW_SIZE = {w: 176, h: 100};
+		this.size_for = null;
 
 		this.canvas_offset = {x: 0, y: 0};
 
@@ -107,16 +111,30 @@ class GUI_preview_class {
 			_this.zoom_auto();
 		}, false);
 		document.getElementById('main_wrapper').addEventListener('wheel', function (e) {
-			//zoom with mouse scroll
 			e.preventDefault();
-			_this.zoom_data.x = e.offsetX;
-			_this.zoom_data.y = e.offsetY;
-			var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail || -e.deltaY)));
-			if (delta > 0)
-				_this.zoom(+1, e);
-			else
-				_this.zoom(-1, e);
-		}, false);
+			if (e.ctrlKey || e.metaKey || e.altKey) {
+				//Ctrl/Cmd/Alt + scroll (or trackpad pinch) - zoom, as in Photoshop
+				_this.zoom_data.x = e.offsetX;
+				_this.zoom_data.y = e.offsetY;
+				var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail || -e.deltaY)));
+				if (delta > 0)
+					_this.zoom(+1, e);
+				else
+					_this.zoom(-1, e);
+			}
+			else {
+				//plain scroll - move the image (line / page delta modes are converted to pixels)
+				var unit = e.deltaMode == 1 ? 16 : (e.deltaMode == 2 ? config.visible_height || 600 : 1);
+				var dx = e.deltaX * unit;
+				var dy = e.deltaY * unit;
+				if (e.shiftKey && dx == 0) {
+					dx = dy;
+					dy = 0;
+				}
+				_this.pan(-dx, -dy);
+			}
+		}, {passive: false});
+		this.set_hand_events();
 		window.addEventListener('resize', function (e) {
 			//resize
 			config.need_render = true;
@@ -152,6 +170,113 @@ class GUI_preview_class {
 				return;
 			_this.set_zoom_position(e);
 		});
+	}
+
+	/**
+	 * moves the visible area
+	 *
+	 * @param {number} dx screen pixels
+	 * @param {number} dy screen pixels
+	 */
+	pan(dx, dy) {
+		zoomView.move(dx, dy);
+		config.need_render = true;
+	}
+
+	/**
+	 * hold Space and drag to move the image (hand tool, as in Photoshop)
+	 */
+	set_hand_events() {
+		var _this = this;
+		var helper = new Helper_class();
+		var wrapper = document.getElementById('main_wrapper');
+		var space = false;
+		var dragging = null;
+
+		document.addEventListener('keydown', function (e) {
+			if (e.code != 'Space' || e.repeat && space) {
+				if (e.code == 'Space' && space) {
+					e.preventDefault();
+				}
+				return;
+			}
+			var target = e.target;
+			var on_canvas_area = target === document.body || (target.closest && target.closest('#main_wrapper'));
+			var interactive = target.closest && target.closest('button, a, select, [role="button"], [role="tab"], [role="menuitem"], [contenteditable="true"]');
+			if (!on_canvas_area || interactive || helper.is_input(target) || e.ctrlKey || e.metaKey || e.altKey
+				|| document.getElementById('popups').children.length > 0) {
+				return;
+			}
+			space = true;
+			wrapper.classList.add('hand_mode');
+			e.preventDefault();
+		}, false);
+		document.addEventListener('keyup', function (e) {
+			if (e.code == 'Space') {
+				space = false;
+				wrapper.classList.remove('hand_mode');
+			}
+		}, false);
+		window.addEventListener('blur', function () {
+			space = false;
+			dragging = null;
+			wrapper.classList.remove('hand_mode', 'hand_dragging');
+		}, false);
+
+		wrapper.addEventListener('mousedown', function (e) {
+			if (space == false || e.button !== 0) {
+				return;
+			}
+			//capture phase: tools must not receive this click
+			e.preventDefault();
+			e.stopPropagation();
+			dragging = {x: e.clientX, y: e.clientY};
+			wrapper.classList.add('hand_dragging');
+		}, true);
+		document.addEventListener('mousemove', function (e) {
+			if (dragging == null) {
+				return;
+			}
+			_this.pan(e.clientX - dragging.x, e.clientY - dragging.y);
+			dragging.x = e.clientX;
+			dragging.y = e.clientY;
+		}, false);
+		document.addEventListener('mouseup', function () {
+			dragging = null;
+			wrapper.classList.remove('hand_dragging');
+		}, false);
+	}
+
+	/**
+	 * the preview has the proportions of the image (fits into 176 x 100 and is centered), so the image is not stretched
+	 */
+	update_preview_size() {
+		if (this.size_for && this.size_for[0] == config.WIDTH && this.size_for[1] == config.HEIGHT) {
+			return false;
+		}
+		this.size_for = [config.WIDTH, config.HEIGHT];
+		var scale = Math.min(this.PREVIEW_BOX.w / config.WIDTH, this.PREVIEW_BOX.h / config.HEIGHT);
+		var w = Math.max(1, Math.round(config.WIDTH * scale));
+		var h = Math.max(1, Math.round(config.HEIGHT * scale));
+		this.PREVIEW_SIZE = {w: w, h: h};
+
+		var canvas = document.getElementById('canvas_preview');
+		var background = document.getElementById('canvas_preview_background');
+		if (canvas) {
+			canvas.width = w;
+			canvas.height = h;
+			canvas.style.display = 'block';
+			canvas.style.margin = Math.round((this.PREVIEW_BOX.h - h) / 2) + 'px auto 0';
+		}
+		if (background) {
+			background.style.width = w + 'px';
+			background.style.height = h + 'px';
+			background.style.left = '50%';
+			background.style.top = Math.round((this.PREVIEW_BOX.h - h) / 2) + 'px';
+			background.style.transform = 'translateX(-50%)';
+		}
+		config.need_render = true;
+		return true;
 	}
 
 	prepare_canvas() {
@@ -203,9 +328,9 @@ class GUI_preview_class {
 			mini_rect_w,
 			mini_rect_h
 			);
-		this.canvas_preview.fillStyle = "rgba(0, 255, 0, 0.3)";
-		this.canvas_preview.strokeStyle = "#00ff00";
-		this.canvas_preview.fill();
+		//thin red frame like the Navigator panel in Photoshop
+		this.canvas_preview.strokeStyle = "#ff3b30";
+		this.canvas_preview.lineWidth = 1.5;
 		this.canvas_preview.stroke();
 	}
 
@@ -272,6 +397,10 @@ class GUI_preview_class {
 
 		document.getElementById("zoom_100").innerHTML = Math.round(config.ZOOM * 100) + '%';
 		document.getElementById("zoom_range").value = (config.ZOOM * 100);
+		var status_zoom = document.getElementById('status_zoom');
+		if (status_zoom && document.activeElement !== status_zoom) {
+			status_zoom.value = Math.round(config.ZOOM * 100);
+		}
 
 		config.need_render = true;
 		this.GUI.prepare_canvas();

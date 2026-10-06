@@ -8,7 +8,14 @@ import Clipboard_class from './../../libs/clipboard.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import EXIF from './../../../../node_modules/exif-js/exif.js';
 import GUI_tools_class from "../../core/gui/gui-tools";
-import semver_compare from './../../../../node_modules/semver-compare/';
+import { validate_file, validate_json_file, validate_data_url, sanitize_filename } from './../../libs/input-validator.js';
+import { t } from '../tools/translate.js';
+import Tools_settings_class from './../tools/settings.js';
+import File_open_url_class from './open-url.js';
+import File_open_json_class from './open-json.js';
+import File_open_webcam_class from './open-webcam.js';
+import menuDefinition from './../../config-menu.js';
+import { add_recent, list_recent, get_recent, clear_recent } from './../../libs/recent-files.js';
 
 var instance = null;
 
@@ -31,6 +38,7 @@ class File_open_class {
 		this.Base_layers = new Base_layers_class();
 		this.Base_gui = new Base_gui_class();
 		this.Helper = new Helper_class();
+		this.Tools_settings = new Tools_settings_class();
 		this.GUI_tools = new GUI_tools_class();
 
 		//clipboard class
@@ -38,7 +46,14 @@ class File_open_class {
 			_this.on_paste(data, w, h);
 		});
 
+		//sub modules
+		this.url_ops = new File_open_url_class(this);
+		this.json_ops = new File_open_json_class(this);
+		this.webcam_ops = new File_open_webcam_class(this);
+
 		this.events();
+
+		this.refresh_recent_menu();
 
 		this.maybe_file_open_url_handler();
 	}
@@ -78,10 +93,53 @@ class File_open_class {
 		);
 	}
 
+	/**
+	 * fills File > Open Recent (the menu definition array is updated in place)
+	 */
+	async refresh_recent_menu() {
+		var file_menu = menuDefinition.find((item) => item.name == 'File');
+		var recent_menu = file_menu && file_menu.children.find((item) => item.name == 'Open Recent');
+		if (!recent_menu) {
+			return;
+		}
+		var items = await list_recent();
+		var children = items.map((item) => ({
+			name: item.name,
+			target: 'file/open.open_recent',
+			parameter: item.id,
+			verbatim: true,
+		}));
+		if (children.length == 0) {
+			children.push({name: 'No Recent Files', disabled: true});
+		}
+		else {
+			children.push({divider: true});
+			children.push({name: 'Clear Menu', target: 'file/open.clear_recent_files'});
+		}
+		recent_menu.children.splice(0, recent_menu.children.length, ...children);
+	}
+
+	/**
+	 * @param {number} id id from the recent files list
+	 */
+	async open_recent(id) {
+		var file = await get_recent(parseInt(id, 10));
+		if (!file) {
+			alertify.error(t('File not found.'));
+			return;
+		}
+		await this.open_handler({target: {files: [file]}});
+	}
+
+	async clear_recent_files() {
+		await clear_recent();
+		await this.refresh_recent_menu();
+	}
+
 	open_file() {
 		var _this = this;
 
-		alertify.success('You can also drag and drop items into browser.');
+		alertify.success(t('You can also drag and drop items into browser.'));
 
 		document.getElementById("tmp").innerHTML = '';
 		var a = document.createElement('input');
@@ -98,79 +156,7 @@ class File_open_class {
 	}
 	
 	open_webcam(){
-		var _this = this;
-		var video = document.createElement('video');
-		video.autoplay = true;
-		video.style.maxWidth = '100%';
-		var track = null;
-		
-		function handleSuccess(stream) {	
-			track = stream.getTracks()[0];
-			video.srcObject = stream;	
-		}
-
-		function handleError(error) {
-			alertify.error('Sorry, cold not load getUserMedia() data: ' + error);
-		}
-		
-		var settings = {
-			title: 'Webcam',
-			params: [
-				{title: "Stream:", html: '<div id="webcam_container"></div>'},
-			],
-			on_load: function(params){
-				document.getElementById('webcam_container').appendChild(video);
-			},
-			on_finish: function(params){
-				//capture data
-				var width = video.videoWidth;
-				var height = video.videoHeight;
-				
-				var tmpCanvas = document.createElement('canvas');
-				var tmpCanvasCtx = tmpCanvas.getContext("2d");
-				tmpCanvas.width = width;
-				tmpCanvas.height = height;
-				tmpCanvasCtx.drawImage(video, 0, 0);
-				
-				//create requested layer
-				var new_layer = {
-					name: "Webcam #" + _this.Base_layers.auto_increment,
-					type: 'image',
-					data: tmpCanvas.toDataURL("image/png"),
-					width: width,
-					height: height,
-					width_original: width,
-					height_original: height,
-				};
-				app.State.do_action(
-					new app.Actions.Bundle_action('open_file_webcam', 'Open File Webcam', [
-						new app.Actions.Insert_layer_action(new_layer),
-						new app.Actions.Autoresize_canvas_action(width, height, null, true, true)
-					])
-				);
-				
-				//destroy
-				if(track != null){
-					track.stop();
-				}
-				video.pause();
-				video.src = "";
-				video.load();
-			},
-			on_cancel: function(params){
-				if(track != null){
-					track.stop();
-				}
-				video.pause();
-				video.src = "";
-				video.load();
-			},
-		};
-		this.POP.show(settings);
-		
-		navigator.mediaDevices.getUserMedia({audio: false, video: true})
-			.then(handleSuccess)
-			.catch(handleError);
+		return this.webcam_ops.open_webcam();
 	}
 
 	open_dir() {
@@ -215,6 +201,13 @@ class File_open_class {
 		if (data == '')
 			return;
 
+		// Validate data URL
+		var validation = validate_data_url(data);
+		if (!validation.valid) {
+			alertify.error(validation.error);
+			return;
+		}
+
 		var img = new Image();
 		img.crossOrigin = "Anonymous";
 		img.onload = function () {
@@ -238,24 +231,13 @@ class File_open_class {
 			};
 		};
 		img.onerror = function (ex) {
-			alertify.error('Sorry, image could not be loaded. Try copy image and paste it.');
+			alertify.error(t('Sorry, image could not be loaded. Try copy image and paste it.'));
 		};
 		img.src = data;
 	}
 
 	open_url() {
-		var _this = this;
-
-		var settings = {
-			title: 'Open URL',
-			params: [
-				{name: "url", title: "URL:", value: ""},
-			],
-			on_finish: function (params) {
-				_this.file_open_url_handler(params);
-			},
-		};
-		this.POP.show(settings);
+		return this.url_ops.open_url();
 	}
 
 	async open_handler(e) {
@@ -267,6 +249,13 @@ class File_open_class {
 		if (files == undefined) {
 			//drag and drop
 			files = e.dataTransfer.files;
+		}
+
+		//an image opens in a new document tab (if the current document has content and the setting allows it)
+		var has_image = Array.from(files).some((file) => file.type && file.type.match('image.*'));
+		if (has_image && this.Tools_settings.get_setting('open_in_new_tab') && app.GUI.GUI_documents.has_content()) {
+			await app.GUI.GUI_documents.new_blank();
+			auto_increment = this.Base_layers.auto_increment;
 		}
 
 		//sort
@@ -294,14 +283,24 @@ class File_open_class {
 
 		for (var i = 0, f; i < files.length; i++) {
 			f = files[i];
-			if (!f.type.match('image.*') && !f.name.match('.json')) {
+
+			// Validate file
+			var fileValidation = validate_file(f);
+			if (!fileValidation.valid) {
 				if(dir_opened == false) {
-					alertify.error('Wrong file type, must be image or json.');
+					alertify.error(fileValidation.error);
 				}
 				continue;
 			}
+
+			// Sanitize filename
+			var sanitizedName = sanitize_filename(f.name);
+
+			//remember for File > Open Recent
+			add_recent(f, sanitizedName).then(() => this.refresh_recent_menu());
+
 			if (files.length == 1) {
-				this.SAVE_NAME = f.name.split('.')[f.name.split('.').length - 2];
+				this.SAVE_NAME = sanitizedName.split('.')[sanitizedName.split('.').length - 2];
 			}
 
 			var FR = new FileReader();
@@ -312,7 +311,7 @@ class File_open_class {
 					var order = auto_increment + order_map[this.file.name];
 					//image
 					var new_layer = {
-						name: this.file.name,
+						name: sanitizedName,
 						type: 'image',
 						data: event.target.result,
 						order: order,
@@ -325,11 +324,14 @@ class File_open_class {
 					);
 				}
 				else {
-					//json
-					var response = _this.load_json(event.target.result);
-					if (response === true) {
-						return false;
-					}
+					//json - validate JSON file
+					validate_json_file(this.file).then(function(result) {
+						if (!result.valid) {
+							alertify.error(result.error);
+							return;
+						}
+						_this.load_json(result.data);
+					});
 				}
 			};
 			if (f.type == "text/plain")
@@ -402,30 +404,11 @@ class File_open_class {
 		}
 	}
 	
-	open_template_test(){
-		var _this = this;
-
-		this.Base_layers.debug_rendering = true;
-		
-		window.fetch("images/test-collection.json").then(function(response) {
-			return response.json();
-		}).then(function(json) {
-			_this.load_json(json, false);
-		}).catch(function(ex) {
-			alertify.error('Sorry, image could not be loaded.');
-		});
-	}
-
 	/**
 	 * check if url has url params, for example: https://viliusle.github.io/miniPaint/?image=http://i.imgur.com/ATda8Ae.jpg
 	 */
 	maybe_file_open_url_handler() {
-		var _this = this;
-		var url_params = this.Helper.get_url_parameters();
-
-		if (url_params.image != undefined) {
-			this.open_resource(url_params.image);
-		}
+		return this.url_ops.maybe_file_open_url_handler();
 	}
 
 	/**
@@ -434,241 +417,16 @@ class File_open_class {
 	 * @param string resource_url
 	 */
 	open_resource(resource_url) {
-		var _this = this;
-
-		if(resource_url.toLowerCase().indexOf('.json') == resource_url.length - 5){
-			//load json
-			window.fetch(resource_url).then(function(response) {
-				return response.json();
-			}).then(function(json) {
-				_this.load_json(json, false);
-			}).catch(function(ex) {
-				alertify.error('Sorry, image could not be loaded.');
-			});
-		}
-		else{
-			//load image
-			var data = {
-				url: resource_url,
-			};
-			this.file_open_url_handler(data);
-		}
+		return this.url_ops.open_resource(resource_url);
 	}
 
 	//handler for open url. Example url: http://i.imgur.com/ATda8Ae.jpg
 	file_open_url_handler(user_response) {
-		var _this = this;
-		var url = user_response.url;
-		if (url == '')
-			return;
-
-		var layer_name = url.replace(/^.*[\\\/]/, '');
-
-		var img = new Image();
-		img.crossOrigin = "Anonymous";
-		img.onload = function () {
-			var new_layer = {
-				name: layer_name,
-				type: 'image',
-				link: img,
-				width: img.width,
-				height: img.height,
-				width_original: img.width,
-				height_original: img.height,
-			};
-			img.onload = function () {
-				config.need_render = true;
-			};
-			app.State.do_action(
-				new app.Actions.Bundle_action('open_file_url', 'Open File URL', [
-					new app.Actions.Insert_layer_action(new_layer),
-					new app.Actions.Autoresize_canvas_action(img.width, img.height, null, true, true)
-				])
-			);
-		};
-		img.onerror = function (ex) {
-			alertify.error('Sorry, image could not be loaded. Try copy image and paste it.');
-		};
-		img.src = url;
+		return this.url_ops.file_open_url_handler(user_response);
 	}
 
-	async load_json(data) {
-		var json;
-		if(typeof data == 'string')
-			json = JSON.parse(data);
-		else
-			json = data;
-		if (json.info.version == undefined) {
-			json.info.version = "3.0.0";
-		}
-
-		//migration
-		if(semver_compare(json.info.version, '4.0.0') < 0) {
-			//convert from v3 to v4
-			for (var i in json.layers) {
-				//layers data
-				json.layers[i].id = (parseInt(i) + 1);
-				json.layers[i].opacity = json.layers[i].opacity * 100 || 100;
-				json.layers[i].type = "image";
-				json.layers[i].width = json.info.width;
-				json.layers[i].height = json.info.height;
-				json.layers[i].visible = (json.layers[i].visible == true); //convert to boolean
-				delete json.layers[i].title;
-			}
-			json.data = [];
-			for (var i in json.image_data) {
-				//image data
-				var new_id = null;
-				for (var j in json.layers) {
-					if (json.layers[j].name == json.image_data[i].name) {
-						new_id = json.layers[j].id;
-					}
-				}
-				if (new_id == null)
-					continue;
-				json.data.push(
-					{
-						id: new_id,
-						data: json.image_data[i].data,
-					}
-				);
-			}
-		}
-		if(semver_compare(json.info.version, '4.5.0') < 0) {
-			//migrate "rectangle", "circle" and "line" types to "shape"
-			for (var i in json.layers) {
-				var old_type = json.layers[i].type;
-
-				if(old_type == 'line' && json.layers[i].params.type.value == "Arrow"){
-					//migrate line (type=arrow) to arrow.
-					json.layers[i].type = 'arrow';
-					delete json.layers[i].params.type;
-					json.layers[i].render_function = ["arrow", "render"];
-				}
-				if(old_type == 'rectangle' || old_type == 'circle'){
-					//migrate params
-					json.layers[i].params.border_size = json.layers[i].params.size;
-					delete json.layers[i].params.size;
-
-					if(json.layers[i].params.fill == true) {
-						json.layers[i].params.border = false;
-					}
-					else{
-						json.layers[i].params.border = true;
-					}
-					json.layers[i].params.border_color = json.layers[i].color;
-					json.layers[i].params.fill_color = json.layers[i].color;
-
-					json.layers[i].color = null;
-				}
-				if(old_type == 'circle'){
-					//rename circle to ellipse
-					json.layers[i].type = 'ellipse';
-					json.layers[i].render_function = ["ellipse", "render"];
-				}
-			}
-		}
-		if(semver_compare(json.info.version, '4.8.0') < 0) {
-			//migrate "borders" layer to rectangle
-			for (var i in json.layers) {
-				var old_type = json.layers[i].type;
-
-				if(old_type == 'borders'){
-					json.layers[i].type = 'rectangle';
-					json.layers[i].name += ' (legacy)';
-					json.layers[i].params = {
-						radius: 0,
-						fill: false,
-						square: false,
-						border_size: json.layers[i].params.size,
-						border: true,
-						border_color: json.layers[i].color,
-						fill_color: "#000000",
-					};
-					json.layers[i].render_function = ["rectangle", "render"];
-				}
-			}
-		}
-		if(semver_compare(json.info.version, '4.11.0') < 0) {
-			//migrate star and star24 objects
-			for (var i in json.layers) {
-				var old_type = json.layers[i].type;
-
-				if(old_type == 'star' && typeof json.layers[i].params.corners == "undefined"){
-					json.layers[i].params.corners = 5;
-					json.layers[i].params.inner_radius = 40;
-					json.layers[i].render_function = ["star", "render"];
-				}
-				else if(old_type == 'star24'){
-					json.layers[i].type = 'star';
-					json.layers[i].params.corners = 24;
-					json.layers[i].params.inner_radius = 80;
-					json.layers[i].render_function = ["star", "render"];
-				}
-			}
-		}
-
-		const actions = [];
-
-		//reset zoom
-		await this.Base_gui.GUI_preview.zoom(100); //reset zoom
-
-		//set attributes
-		actions.push(
-			new app.Actions.Refresh_action_attributes_action('undo'),
-			new app.Actions.Prepare_canvas_action('undo'),
-			new app.Actions.Update_config_action({
-				ZOOM: 1,
-				WIDTH: parseInt(json.info.width),
-				HEIGHT: parseInt(json.info.height),
-				user_fonts: json.user_fonts || {}
-			}),
-			new app.Actions.Reset_layers_action(),
-			new app.Actions.Prepare_canvas_action('do'),
-			new app.Actions.Refresh_action_attributes_action('do')
-		);
-
-		var max_id_order = 0;
-		for (var i in json.layers) {
-			var value = json.layers[i];
-
-			if(value.id > max_id_order)
-				max_id_order = value.id;
-			if(typeof value.order != undefined && value.order > max_id_order)
-				max_id_order = value.order;
-
-			if (value.type == 'image') {
-				//add image data
-				value.link = null;
-				for (var j in json.data) {
-					if (json.data[j].id == value.id) {
-						value.data = json.data[j].data;
-					}
-				}
-			}
-			actions.push(
-				new app.Actions.Insert_layer_action(value, false)
-			);
-		}
-		if (json.info.layer_active != undefined) {
-			actions.push(
-				new app.Actions.Select_layer_action(json.info.layer_active, true)
-			);
-		}
-		if (json.info.guides != undefined) {
-			config.guides = json.info.guides;
-		}
-		actions.push(
-			new app.Actions.Set_object_property_action(this.Base_layers, 'auto_increment', max_id_order + 1),
-			new app.Actions.Update_config_action({
-				WIDTH: parseInt(json.info.width),
-				HEIGHT: parseInt(json.info.height),
-			}),
-			new app.Actions.Prepare_canvas_action('do')
-		);
-		await app.State.do_action(
-			new app.Actions.Bundle_action('open_json_file', 'Open JSON File', actions)
-		);
+	load_json(data) {
+		return this.json_ops.load_json(data);
 	}
 
 	/**
@@ -699,9 +457,6 @@ class File_open_class {
 		return exif_data;
 	}
 
-	search(){
-		this.GUI_tools.activate_tool('media');
-	}
 }
 
 export default File_open_class;

@@ -24,7 +24,7 @@ export default {
      */
     async init() {
         if (!databaseInitPromise) {
-            databaseInitPromise = new Promise(async (resolveInit) => {
+            databaseInitPromise = (async () => {
                 try {
                     if (window.indexedDB) {
                         // Delete database from a previous page load, if no other tabs have notified that they're open in a while
@@ -82,8 +82,7 @@ export default {
                         images: {}
                     };
                 }
-                resolveInit();
-            });
+            })();
             await databaseInitPromise;
         } else if (!database) {
             await databaseInitPromise;
@@ -214,7 +213,7 @@ export default {
                     resolve();
                 };
                 getAllImagesRequest.onerror = function () {
-                    reject(request.error);
+                    reject(getAllImagesRequest.error);
                 };
             });
         }

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "minipaint-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["webpack", "serve", "--mode", "development", "--env", "development", "--port", "8080"],
+      "port": 8080
+    }
+  ]
+}

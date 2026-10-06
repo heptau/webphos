@@ -11,7 +11,9 @@ import Image_trim_class from "./../modules/image/trim.js";
 import View_ruler_class from "./../modules/view/ruler.js";
 import zoomView from "./../libs/zoomView.js";
 import Helper_class from "./../libs/helpers.js";
+import { deserialize_layer_mask } from "./../libs/layer-mask.js";
 import alertify from "./../../../node_modules/alertifyjs/build/alertify.min.js";
+import { t } from '../modules/tools/translate.js';
 
 var instance = null;
 
@@ -32,6 +34,8 @@ var instance = null;
  * - is_vector (bool)
  * - hide_selection_if_active (bool)
  * - opacity (0-100)
+ * - mask (object|null) layer mask, see libs/layer-mask.js
+ * - mask_enabled (bool, default true)
  * - order (int)
  * - composition (string)
  * - rotate (int) 0-359
@@ -140,7 +144,8 @@ class Base_layers_class {
 			this.init_zoom_lib();
 		}
 
-		if (config.need_render == true) {
+		//no rendering while the history is being replayed (the layers are in a half finished state)
+		if (config.need_render == true && config.freeze_render !== true) {
 			this.render_success = null;
 
 			if (this.debug_rendering === true) {
@@ -180,6 +185,9 @@ class Base_layers_class {
 				this.ctx.save();
 			});
 
+			//before / after comparison (View > Split Compare)
+			this.render_compare();
+
 			//grid
 			this.Base_gui.draw_grid(this.ctx);
 
@@ -204,13 +212,58 @@ class Base_layers_class {
 			this.View_ruler.render_ruler();
 
 			if (this.render_success === false) {
-				alertify.error("Rendered with errors.");
+				alertify.error(t("Rendered with errors."));
 			}
 		}
 
 		requestAnimationFrame(function () {
 			_this.render(force);
 		});
+	}
+
+	/**
+	 * the left part of the picture shows the original (config.compare = {before: canvas, x}), a line marks the border
+	 */
+	render_compare() {
+		var compare = config.compare;
+		if (!compare || !compare.before) {
+			return;
+		}
+		var ctx = this.ctx;
+		var x = Math.max(0, Math.min(config.WIDTH, compare.x));
+		var unit = 1 / (config.ZOOM || 1);
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, x, config.HEIGHT);
+		ctx.clip();
+		ctx.clearRect(0, 0, config.WIDTH, config.HEIGHT);
+		ctx.drawImage(compare.before, 0, 0);
+		ctx.restore();
+
+		ctx.save();
+		ctx.lineWidth = 3 * unit;
+		ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+		ctx.beginPath();
+		ctx.moveTo(x, 0);
+		ctx.lineTo(x, config.HEIGHT);
+		ctx.stroke();
+		ctx.lineWidth = unit * 1.5;
+		ctx.strokeStyle = '#ffffff';
+		ctx.stroke();
+		//handle
+		ctx.beginPath();
+		ctx.arc(x, config.HEIGHT / 2, 11 * unit, 0, Math.PI * 2);
+		ctx.fillStyle = '#ffffff';
+		ctx.fill();
+		ctx.lineWidth = unit;
+		ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+		ctx.stroke();
+		ctx.fillStyle = '#555555';
+		ctx.font = (11 * unit) + 'px sans-serif';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillText('\u2194', x, config.HEIGHT / 2 + unit);
+		ctx.restore();
 	}
 
 	render_overlay() {
@@ -342,6 +395,7 @@ class Base_layers_class {
 	}
 
 	render_preview(layers) {
+		this.Base_gui.GUI_preview.update_preview_size();
 		var w = this.Base_gui.GUI_preview.PREVIEW_SIZE.w;
 		var h = this.Base_gui.GUI_preview.PREVIEW_SIZE.h;
 
@@ -370,6 +424,82 @@ class Base_layers_class {
 	render_object(ctx, object, is_preview) {
 		if (object.visible == false || object.type == null) return;
 
+		if (object.mask && object.mask_enabled !== false) {
+			var mask_canvas = this.get_mask_canvas(object);
+			if (mask_canvas) {
+				this.render_masked_object(ctx, object, is_preview, mask_canvas);
+				return;
+			}
+		}
+
+		this.render_object_plain(ctx, object, is_preview);
+	}
+
+	/**
+	 * Canvas holding the layer mask in its alpha channel (cached per stored mask)
+	 *
+	 * @param {object} object layer
+	 * @returns {HTMLCanvasElement|null}
+	 */
+	get_mask_canvas(object) {
+		if (!this.mask_canvases) {
+			this.mask_canvases = new WeakMap();
+		}
+		var cached = this.mask_canvases.get(object.mask);
+		if (cached !== undefined) {
+			return cached;
+		}
+		var mask = deserialize_layer_mask(object.mask);
+		var canvas = null;
+		if (mask) {
+			canvas = document.createElement("canvas");
+			canvas.width = mask.width;
+			canvas.height = mask.height;
+			var ctx = canvas.getContext("2d");
+			var image = ctx.createImageData(mask.width, mask.height);
+			for (var p = 0, i = 3; p < mask.data.length; p++, i += 4) {
+				image.data[i] = mask.data[p];
+			}
+			ctx.putImageData(image, 0, 0);
+		}
+		this.mask_canvases.set(object.mask, canvas);
+		return canvas;
+	}
+
+	/**
+	 * Renders a layer with a layer mask: the layer (with its filters) goes to a temporary canvas,
+	 * the mask cuts it and the result is drawn with the current alpha and blend mode of the context
+	 */
+	render_masked_object(ctx, object, is_preview, mask_canvas) {
+		var temp = document.createElement("canvas");
+		temp.width = ctx.canvas.width;
+		temp.height = ctx.canvas.height;
+		var temp_ctx = temp.getContext("2d");
+		temp_ctx.setTransform(ctx.getTransform());
+
+		this.render_object_plain(temp_ctx, object, is_preview);
+
+		temp_ctx.save();
+		temp_ctx.globalCompositeOperation = "destination-in";
+		temp_ctx.filter = "none";
+		temp_ctx.translate(object.x + object.width / 2, object.y + object.height / 2);
+		temp_ctx.rotate(((object.rotate || 0) * Math.PI) / 180);
+		temp_ctx.drawImage(mask_canvas, -object.width / 2, -object.height / 2, object.width, object.height);
+		temp_ctx.restore();
+
+		ctx.save();
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.drawImage(temp, 0, 0);
+		ctx.restore();
+
+		temp.width = 1;
+		temp.height = 1;
+	}
+
+	/**
+	 * Renders a layer without its layer mask
+	 */
+	render_object_plain(ctx, object, is_preview) {
 		this.pre_render_object(ctx, object);
 
 		//example with canvas object - other types should overwrite this method
@@ -525,7 +655,7 @@ class Base_layers_class {
 				return config.layers[i];
 			}
 		}
-		alertify.error("Error: can not find layer with id:" + id);
+		alertify.error(t("Error: can not find layer with id:") + id);
 		return null;
 	}
 

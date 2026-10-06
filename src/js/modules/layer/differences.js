@@ -3,6 +3,7 @@ import config from './../../config.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 class Layer_differences_class {
 
@@ -14,7 +15,7 @@ class Layer_differences_class {
 	differences() {
 		var _this = this;
 		if (this.Base_layers.find_previous(config.layer.id) == null) {
-			alertify.error('There are no layers behind.');
+			alertify.error(t('There are no layers behind.'));
 			return false;
 		}
 

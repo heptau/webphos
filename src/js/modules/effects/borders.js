@@ -4,6 +4,7 @@ import Base_layers_class from './../../core/base-layers.js';
 import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Effects_browser_class from "./browser";
+import { t } from '../tools/translate.js';
 
 class Effects_borders_class {
 
@@ -15,7 +16,7 @@ class Effects_borders_class {
 
 	borders(filter_id) {
 		if (config.layer.type == null) {
-			alertify.error('Layer is empty.');
+			alertify.error(t('Layer is empty.'));
 			return;
 		}
 

@@ -1,60 +1,40 @@
-# miniPaint
+# WebPhos
 
-Online image editor lets you create and edit images using HTML5 technologies. No need to buy, download, install, or have outdated flash. No ads. Key features: layers, filters, open source Photoshop alternative.
+[![GitHub License](https://img.shields.io/github/license/heptau/webphos?label=License)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-488%20passed-brightgreen)](https://github.com/heptau/webphos/actions)
+[![PWA](https://img.shields.io/badge/PWA-Installable-blue?logo=pwa)](https://webphos.80.cz)
 
-miniPaint operates directly in the browser. You can create images by pasting from the clipboard (ctrl+v) or uploading from the computer (_using menu or drag & drop_). Nothing will be sent to any server. Everything stays in your browser. 
+WebPhos is an image editor that runs directly in the browser. It is built with plain JavaScript and HTML5 canvas (no framework), looks like a native macOS application and works like Photoshop: layers, masks, selections, adjustments and effects with live preview, document tabs and history.
 
-## URL:
-**https://viliusle.github.io/miniPaint/**
+Nothing is sent to any server. Everything stays in your browser.
 
-## Preview:
-![miniPaint](https://raw.githubusercontent.com/viliusle/miniPaint/master/images/preview.gif)
-(generated using miniPaint)
-
-**Change log:** [/miniPaint/releases](https://github.com/viliusle/miniPaint/releases)
-
-## Browser Support
-- Chrome
-- Firefox
-- Opera
-- Edge
-- Safari
-- Yandex
+**Try it:** https://webphos.80.cz/
 
 ## Features
 
-**Files**: open images, directories, URLs, data URLs, drag and drop, save (PNG, JPG, BMP, WEBP, animated GIF, TIFF, JSON (layers data), print.
+- Layers with masks, styles and blend modes
+- Selections of many kinds with live-preview refinement
+- Adjustments and effects with live preview
+- Retouching, drawing and text tools
+- Several documents in tabs, history, autosave
+- Import and export of common image formats, PDF and SVG
+- Themes and languages that follow the system, keyboard accessible
 
-**Edit**: undo, cut, copy, paste, selection, paste from the clipboard.
+## Development
 
-**Image**: information, EXIF, trim, zoom, resize (Hermite resample, default resize), rotate, flip, color corrections (brightness, contrast, hue, saturation, luminance), automatic color adjustment, grid, histogram, negative.
+```bash
+npm install
+npm run server   # development server
+npm test         # tests
+make build       # production build into docs/ (GitHub Pages)
+```
 
-**Layers**: multi-layer system, differences, merging, flattening, transparency support.
+More in [CONTRIBUTING.md](CONTRIBUTING.md). Developers and AI agents: see also [AGENTS.md](AGENTS.md) for the project structure and conventions.
 
-**Effects**: black and white, blur (box, gaussian, stack, zoom), bulge/pinch, denoise, desaturation, dither, dot screen, edge, emboss, enrich, gamma, grains, grayscale, heatmap, jpg compression, mosaic, oil, sepia, sharpen, solarize, tilt shift, vignette, vibrance, vintage, blueprint, night vision, pencil, also instagram filters: 1977, aden, clarendon, gingham, inkwell, lo-fi, toaster, valencia, x-pro ii.
+## Contributing
 
-**Tools**: pencil, brush, magic wand, eraser, fill, color picker, letter, crop, blur, sharpener, desaturation, clone, borders, sprites, keypoints, color zoom, change color, restore transparency, content fill. 
-
-**Help**: keyboard shortcuts, translation.
-
-## Embed
-To embed this app on another page, use the following HTML code:
-
-    <iframe style="box-sizing:border-box; width:100%; height:100vh;" id="miniPaint" src="https://viliusle.github.io/miniPaint/" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-
-## Build instructions
-See [Wiki > Build instructions](https://github.com/viliusle/miniPaint/wiki/Build-instructions)
-
-## Wiki
-See [Wiki](https://github.com/viliusle/miniPaint/wiki)
-
-## Contributors
-<a align="center" href="https://github.com/viliusle/miniPaint/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=viliusle/miniPaint" />
-</a>
+Bug reports, ideas and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). Security problems: see [SECURITY.md](SECURITY.md).
 
 ## License
-MIT License
 
-## Support
-Please use the GitHub issues for support, feature requests and bug reports, or contact us by sending an email to www.viliusl@gmail.com.
+MIT License, see [LICENSE](LICENSE). WebPhos is based on [miniPaint](https://github.com/viliusle/miniPaint) by ViliusL.

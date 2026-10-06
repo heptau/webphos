@@ -4,6 +4,7 @@ import Base_layers_class from './../../core/base-layers.js';
 import Helper_class from './../../libs/helpers.js';
 import ImageFilters_class from './../../libs/imagefilters.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from './translate.js';
 
 /**
  * SIFT: scale-invariant-feature-transform, keypoints
@@ -30,7 +31,7 @@ class Tools_keypoints_class {
 	keypoints(return_data) {
 
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
@@ -139,7 +140,7 @@ class Tools_keypoints_class {
 
 		//show points?
 		if (return_data === undefined || return_data !== true) {
-			alertify.success('key points: ' + points.length);
+			alertify.success(t('key points: ') + points.length);
 
 			var size = 3;
 			ctx.clearRect(0, 0, clone.width, clone.height);

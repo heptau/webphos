@@ -1,0 +1,61 @@
+{
+	"name": "WebPhos - image editor",
+	"short_name": "WebPhos",
+	"description": "WebPhos is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything...",
+	"start_url": "./",
+	"scope": "./",
+	"display": "standalone",
+	"orientation": "any",
+	"background_color": "#ffffff",
+	"theme_color": "#f4f4f6",
+	"icons": [
+		{
+			"src": "images/manifest/48x48.png",
+			"sizes": "48x48",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "images/manifest/72x72.png",
+			"sizes": "72x72",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "images/manifest/96x96.png",
+			"sizes": "96x96",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "images/manifest/144x144.png",
+			"sizes": "144x144",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "images/manifest/168x168.png",
+			"sizes": "168x168",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "images/manifest/192x192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "images/manifest/512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "images/manifest/512x512-maskable.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	]
+}

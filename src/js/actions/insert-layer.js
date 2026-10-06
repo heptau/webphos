@@ -2,6 +2,7 @@ import app from './../app.js';
 import config from './../config.js';
 import { Base_action } from './base.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 export class Insert_layer_action extends Base_action {
 	/**
@@ -60,7 +61,7 @@ export class Insert_layer_action extends Base_action {
 		// Build data
 		for (let i in this.settings) {
 			if (typeof layer[i] == "undefined" && !i.startsWith('_')) {
-				alertify.error('Error: wrong key: ' + i);
+				alertify.error(t('Error: wrong key: ') + i);
 				continue;
 			}
 			layer[i] = this.settings[i];
@@ -90,6 +91,10 @@ export class Insert_layer_action extends Base_action {
 						layer.width = layer.data.width;
 					if (layer.height == 0 || layer.height === null)
 						layer.height = layer.data.height;
+					if (layer.width_original == null)
+						layer.width_original = layer.width;
+					if (layer.height_original == null)
+						layer.height_original = layer.height;
 					layer.link = layer.data.cloneNode(true);
 					layer.link.onload = function () {
 						config.need_render = true;
@@ -120,14 +125,14 @@ export class Insert_layer_action extends Base_action {
 						};
 						layer.link.onerror = (error) => {
 							resolve(error);
-							alertify.error('Sorry, image could not be loaded.');
+							alertify.error(t('Sorry, image could not be loaded.'));
 						};
 						layer.link.src = layer.data;
 						layer.link.crossOrigin = "Anonymous";
 					});
 				}
 				else {
-					alertify.error('Error: can not load image.');
+					alertify.error(t('Error: can not load image.'));
 				}
 			}
 		}

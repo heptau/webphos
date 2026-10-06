@@ -5,7 +5,8 @@
 
 import config from './../../config.js';
 import Helper_class from './../../libs/helpers.js';
-import Tools_translate_class from './../../modules/tools/translate.js';
+import Tools_translate_class, { t } from './../../modules/tools/translate.js';
+import { has_modifier } from './../../libs/shortcuts.js';
 
 const Helper = new Helper_class();
 
@@ -188,7 +189,11 @@ class GUI_colors_class {
 			this.el.innerHTML = dialogTemplate;
 		} else {
 			var saved_color = this.Helper.getCookie('color');
-			if (saved_color != null) config.COLOR = saved_color;
+			if (saved_color != null) {
+				config.COLOR = saved_color;
+				//tools that follow the foreground color (text) are set up before the saved color is restored
+				setTimeout(() => document.dispatchEvent(new CustomEvent('minipaint:color')), 0);
+			}
 			this.el = document.getElementById('toggle_colors');
 			this.el.innerHTML = sidebarTemplate;
 		}
@@ -386,6 +391,75 @@ class GUI_colors_class {
 
 		// Update all inputs from config.COLOR
 		this.render_selected_color();
+
+		if (this.uiType === 'sidebar') {
+			this.init_background_color();
+		}
+	}
+
+	/**
+	 * Photoshop-like foreground / background color pair: background swatch, swap (X) and default colors.
+	 * Foreground is config.COLOR, background config.COLOR_BG (used by Edit > Fill with Background Color).
+	 */
+	init_background_color() {
+		const saved_bg = Helper.getCookie('color_bg');
+		if (typeof saved_bg == 'string' && /^#[0-9a-f]{6}$/i.test(saved_bg)) {
+			config.COLOR_BG = saved_bg;
+		}
+
+		const sample = this.inputs.sample[0];
+		const wrap = document.createElement('div');
+		wrap.className = 'fgbg';
+		sample.parentNode.insertBefore(wrap, sample);
+		wrap.appendChild(sample);
+
+		const bg = document.createElement('input');
+		bg.type = 'color';
+		bg.className = 'bg_swatch';
+		bg.value = config.COLOR_BG;
+		bg.title = t('Background Color');
+		bg.setAttribute('aria-label', 'Background Color');
+		wrap.appendChild(bg);
+
+		const make_button = (cls, text, title) => {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'fgbg_button ' + cls;
+			button.textContent = text;
+			button.title = t(title);
+			button.setAttribute('aria-label', title);
+			wrap.appendChild(button);
+			return button;
+		};
+		const swap = make_button('swap', '\u21C4', 'Swap Colors (X)');
+		const reset = make_button('reset', '\u25A3', 'Default Colors');
+
+		const set_background = (hex) => {
+			config.COLOR_BG = hex;
+			bg.value = hex;
+			Helper.setCookie('color_bg', hex);
+		};
+		const swap_colors = () => {
+			const foreground = config.COLOR;
+			this.set_color({ hex: config.COLOR_BG });
+			set_background(foreground);
+		};
+		bg.addEventListener('input', () => set_background(bg.value));
+		swap.addEventListener('click', swap_colors);
+		reset.addEventListener('click', () => {
+			this.set_color({ hex: '#000000' });
+			set_background('#ffffff');
+		});
+		document.addEventListener('keydown', (event) => {
+			var target = event.target;
+			var editable = target && (target.tagName == 'SELECT' || target.isContentEditable);
+			if (String(event.key || '').toLowerCase() != 'x' || event.repeat || has_modifier(event) || event.shiftKey
+				|| editable || Helper.is_input(target) || document.getElementById('popups').children.length > 0) {
+				return;
+			}
+			event.preventDefault();
+			swap_colors();
+		});
 	}
 
 	/**
@@ -454,6 +528,7 @@ class GUI_colors_class {
 			} else {
 				config.COLOR = newColor != null ? newColor : config.COLOR;
 				config.ALPHA = newAlpha != null ? newAlpha : config.ALPHA;
+				document.dispatchEvent(new CustomEvent('minipaint:color'));
 			}
 			if (hsl && !hsv) {
 				hsv = Helper.hslToHsv(hsl.h, hsl.s, hsl.l);

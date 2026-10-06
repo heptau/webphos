@@ -4,6 +4,7 @@ import Base_tools_class from './../core/base-tools.js';
 import Base_layers_class from './../core/base-layers.js';
 import Layer_raster_class from './../modules/layer/raster.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 class Clone_class extends Base_tools_class {
 
@@ -123,11 +124,11 @@ class Clone_class extends Base_tools_class {
 			this.Layer_raster.raster();
 		}
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 		if (config.layer.rotate || 0 > 0) {
-			alertify.error('Erase on rotate object is disabled. Please rasterize first.');
+			alertify.error(t('Erase on rotate object is disabled. Please rasterize first.'));
 			return;
 		}
 		if (e.which == 3 && mouse.valid == true) {
@@ -140,7 +141,7 @@ class Clone_class extends Base_tools_class {
 				x: mouse_x,
 				y: mouse_y,
 			};
-			alertify.success('Source coordinates saved.');
+			alertify.success(t('Source coordinates saved.'));
 		}
 	}
 
@@ -152,11 +153,11 @@ class Clone_class extends Base_tools_class {
 			this.Layer_raster.raster();
 		}
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 		if (config.layer.rotate || 0 > 0) {
-			alertify.error('Erase on rotate object is disabled. Please rasterize first.');
+			alertify.error(t('Erase on rotate object is disabled. Please rasterize first.'));
 			return;
 		}
 
@@ -167,7 +168,7 @@ class Clone_class extends Base_tools_class {
 			x: mouse_x,
 			y: mouse_y,
 		};
-		alertify.success('Source coordinates saved.');
+		alertify.success(t('Source coordinates saved.'));
 	}
 
 	mousedown(e) {
@@ -185,34 +186,34 @@ class Clone_class extends Base_tools_class {
 			this.Layer_raster.raster();
 		}
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 		if (config.layer.rotate || 0 > 0) {
-			alertify.error('Erase on rotate object is disabled. Please rasterize first.');
+			alertify.error(t('Erase on rotate object is disabled. Please rasterize first.'));
 			return;
 		}
 		if (this.clone_coords === null) {
-			alertify.error('Source is empty, right click on image or use long press to save source position.');
+			alertify.error(t('Source is empty, right click on image or use long press to save source position.'));
 			return;
 		}
 		if (layer.width != layer.width_original || layer.height != layer.height_original) {
-			alertify.error('Clone tool disabled for resized image. Please rasterize first.');
+			alertify.error(t('Clone tool disabled for resized image. Please rasterize first.'));
 			return;
 		}
 		if (params.source_layer.value == 'Previous' &&
 			(previous_layer.width != previous_layer.width_original
 				|| previous_layer.height != previous_layer.height_original)) {
-			alertify.error('Clone tool disabled for resized image. Please rasterize first.');
+			alertify.error(t('Clone tool disabled for resized image. Please rasterize first.'));
 			return;
 		}
 		if (params.source_layer.value == 'Previous') {
 			if (previous_layer == null) {
-				alertify.error('Can not find previous layer.');
+				alertify.error(t('Can not find previous layer.'));
 				return;
 			}
 			if (previous_layer.type != 'image') {
-				alertify.error('Previous layer must be image, convert it to raster to apply this tool.');
+				alertify.error(t('Previous layer must be image, convert it to raster to apply this tool.'));
 				return;
 			}
 		}

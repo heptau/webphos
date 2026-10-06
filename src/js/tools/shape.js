@@ -4,6 +4,7 @@ import Base_tools_class from './../core/base-tools.js';
 import Base_layers_class from './../core/base-layers.js';
 import Dialog_class from './../libs/popup.js';
 import GUI_tools_class from './../core/gui/gui-tools.js';
+import { has_modifier } from './../libs/shortcuts.js';
 
 var instance = null;
 
@@ -36,7 +37,7 @@ class Shape_class extends Base_tools_class {
 			if (this.Helper.is_input(event.target))
 				return;
 
-			if (code == 72) {
+			if (code == 72 && has_modifier(event) == false) {
 				//H
 				this.show_shapes();
 			}

@@ -5,6 +5,7 @@ import Base_layers_class from './../../core/base-layers.js';
 import glfx from './../../libs/glfx.js';
 import ImageFilters_class from './../../libs/imagefilters.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 class Effects_nightVision_class {
 
@@ -17,7 +18,7 @@ class Effects_nightVision_class {
 
 	night_vision() {
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

@@ -6,6 +6,7 @@ import GUI_tools_class from './../core/gui/gui-tools.js';
 import Base_gui_class from './../core/base-gui.js';
 import Base_selection_class from './../core/base-selection.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 class Crop_class extends Base_tools_class {
 
@@ -24,7 +25,8 @@ class Crop_class extends Base_tools_class {
 			height: null,
 		};
 		var sel_config = {
-			enable_background: true,
+			enable_background: false,
+			shade_outside: true,
 			enable_borders: true,
 			enable_controls: true,
 			crop_lines: true,
@@ -180,7 +182,7 @@ class Crop_class extends Base_tools_class {
 		this.GUI_tools.show_action_attributes();
 
 		if (selection.width == null || selection.width == 0 || selection.height == 0) {
-			alertify.error('Empty selection');
+			alertify.error(t('Empty selection'));
 			return;
 		}
 		
@@ -197,7 +199,7 @@ class Crop_class extends Base_tools_class {
 			}
 		}
 		if (rotated_name !== false) {
-			alertify.error('Crop on rotated layer is not supported. Convert it to raster to continue.' + '('+ rotated_name + ')');
+			alertify.error(t('Crop on rotated layer is not supported. Convert it to raster to continue.') + '('+ rotated_name + ')');
 			return;
 		}
 

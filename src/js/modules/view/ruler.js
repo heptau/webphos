@@ -40,7 +40,105 @@ class View_ruler_class {
 				_this.ruler();
 				event.preventDefault();
 			}
+			else if (event.code == "KeyR" && (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey) {
+				//Ctrl/Cmd+R - rulers (as in Photoshop)
+				_this.ruler();
+				event.preventDefault();
+			}
 		}, false);
+
+		//drag from a ruler to create a guide (as in Photoshop)
+		var ruler_top = document.getElementById('ruler_top');
+		var ruler_left = document.getElementById('ruler_left');
+		if (ruler_top && ruler_left) {
+			ruler_top.addEventListener('mousedown', (event) => {
+				this.drag_guide(event, true);
+			});
+			ruler_left.addEventListener('mousedown', (event) => {
+				this.drag_guide(event, false);
+			});
+		}
+	}
+
+	/**
+	 * creates a guide and moves it with the mouse until the button is released,
+	 * releasing over the ruler removes it again
+	 *
+	 * @param {MouseEvent} event
+	 * @param {boolean} horizontal true for the top ruler (horizontal guide)
+	 */
+	drag_guide(event, horizontal) {
+		if (config.ruler_active == false || event.button !== 0) {
+			return;
+		}
+		event.preventDefault();
+		var canvas = document.getElementById('canvas_minipaint');
+		var guide = null;
+
+		var position = (e) => {
+			var rect = canvas.getBoundingClientRect();
+			var world = this.Base_layers.get_world_coords(e.clientX - rect.left, e.clientY - rect.top);
+			return Math.round(horizontal ? world.y : world.x);
+		};
+		var move = (e) => {
+			var value = position(e);
+			if (guide == null) {
+				guide = horizontal ? {x: null, y: value} : {x: value, y: null};
+				config.guides.push(guide);
+				if (config.guides_enabled == false) {
+					config.guides_enabled = true;
+					this.Helper.setCookie('guides', 1);
+				}
+			}
+			if (horizontal) {
+				guide.y = value;
+			}
+			else {
+				guide.x = value;
+			}
+			config.need_render = true;
+		};
+		var cancel = () => {
+			stop();
+			if (guide != null) {
+				var index = config.guides.indexOf(guide);
+				if (index >= 0) {
+					config.guides.splice(index, 1);
+				}
+				config.need_render = true;
+			}
+		};
+		var on_key = (e) => {
+			if (e.key == 'Escape') {
+				cancel();
+			}
+		};
+		var stop = () => {
+			document.removeEventListener('mousemove', move);
+			document.removeEventListener('mouseup', up);
+			document.removeEventListener('keydown', on_key);
+			window.removeEventListener('blur', cancel);
+		};
+		var up = (e) => {
+			stop();
+			if (guide == null) {
+				return;
+			}
+			var over = document.elementFromPoint(e.clientX, e.clientY);
+			var value = horizontal ? guide.y : guide.x;
+			var limit = horizontal ? config.HEIGHT : config.WIDTH;
+			if ((over && (over.id == 'ruler_top' || over.id == 'ruler_left')) || value <= 0 || value > limit) {
+				var index = config.guides.indexOf(guide);
+				if (index >= 0) {
+					config.guides.splice(index, 1);
+				}
+			}
+			config.need_render = true;
+		};
+		document.addEventListener('mousemove', move);
+		document.addEventListener('mouseup', up);
+		document.addEventListener('keydown', on_key);
+		window.addEventListener('blur', cancel);
 	}
 
 	ruler() {
@@ -102,7 +200,7 @@ class View_ruler_class {
 		var ctx_left = ruler_left.getContext("2d");
 		var ctx_top = ruler_top.getContext("2d");
 
-		var color = '#111';
+		var color = getComputedStyle(document.body).getPropertyValue('--text-color-muted').trim() || '#111';
 		var size = 15;
 
 		//calc step
@@ -124,6 +222,7 @@ class View_ruler_class {
 
 		//left
 		ctx_left.strokeStyle = color;
+		ctx_left.fillStyle = color;
 		ctx_left.lineWidth = 1;
 		ctx_left.font = "11px Arial";
 
@@ -164,6 +263,7 @@ class View_ruler_class {
 
 		//top
 		ctx_top.strokeStyle = color;
+		ctx_top.fillStyle = color;
 		ctx_top.lineWidth = 1;
 		ctx_top.font = "11px Arial";
 

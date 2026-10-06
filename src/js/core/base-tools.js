@@ -197,7 +197,7 @@ class Base_tools_class {
 	}
 
 	get_mouse_info(event) {
-		if(typeof event != "undefined" && typeof mouse.x == "undefined"){
+		if(typeof event != "undefined"){
 			//mouse not set yet - set it now...
 			this.set_mouse_info(event);
 		}

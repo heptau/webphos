@@ -5,6 +5,7 @@ import Base_layers_class from './../../core/base-layers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Tools_settings_class from './../tools/settings.js';
 import app from './../../app.js';
+import { t } from '../tools/translate.js';
 
 class View_guides_class {
 
@@ -61,7 +62,7 @@ class View_guides_class {
 			//was disabled
 			config.guides_enabled = true;
 			this.Helper.setCookie('guides', 1);
-			alertify.warning('Guides enabled.');
+			alertify.warning(t('Guides enabled.'));
 		}
 
 		config.need_render = true;
@@ -134,6 +135,25 @@ class View_guides_class {
 		}
 
 		config.need_render = true;
+	}
+
+	/**
+	 * View > Show / Hide Guides (Ctrl+;)
+	 */
+	toggle() {
+		config.guides_enabled = !config.guides_enabled;
+		this.Helper.setCookie('guides', config.guides_enabled ? 1 : 0);
+		config.need_render = true;
+	}
+
+	/**
+	 * View > Snap (Shift+Ctrl+;)
+	 */
+	toggle_snap() {
+		var snap = !this.Tools_settings.get_setting('snap');
+		this.Tools_settings.save_setting('snap', snap);
+		config.SNAP = snap;
+		alertify.warning(t(snap ? 'Snap enabled.' : 'Snap disabled.'));
 	}
 
 	remove(params) {

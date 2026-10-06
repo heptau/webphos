@@ -1,5 +1,45 @@
 // https://github.com/jorgejeferson/translate.js/tree/39be8237666a76035fc210a28d8e431f1416579e
 (function ($) {
+	//translations may contain simple inline markup; everything else (scripts, event handlers...) is dropped
+	var ALLOWED_TAGS = ['B', 'I', 'U', 'EM', 'STRONG', 'SPAN', 'SMALL', 'BR', 'CODE', 'SUB', 'SUP', 'A'];
+	var ALLOWED_ATTRS = ['class', 'title', 'href', 'target', 'rel'];
+
+	function clean_node(source, target) {
+		Array.prototype.forEach.call(source.childNodes, function (node) {
+			if (node.nodeType === 3) {
+				target.appendChild(document.createTextNode(node.nodeValue));
+			}
+			else if (node.nodeType === 1) {
+				if (ALLOWED_TAGS.indexOf(node.tagName) < 0) {
+					//unknown element: keep only its (cleaned) content
+					clean_node(node, target);
+					return;
+				}
+				var copy = document.createElement(node.tagName);
+				Array.prototype.forEach.call(node.attributes, function (attribute) {
+					var name = attribute.name.toLowerCase();
+					if (ALLOWED_ATTRS.indexOf(name) < 0) {
+						return;
+					}
+					if (name === 'href' && /^(https?:|mailto:|#)/i.test(attribute.value.trim()) === false) {
+						return;
+					}
+					copy.setAttribute(name, attribute.value);
+				});
+				clean_node(node, copy);
+				target.appendChild(copy);
+			}
+		});
+	}
+
+	//sets the content of the element from a text with simple markup, without evaluating it as HTML
+	function set_safe_content($element, text) {
+		var parsed = new DOMParser().parseFromString(String(text), 'text/html');
+		var fragment = document.createDocumentFragment();
+		clean_node(parsed.body, fragment);
+		$element.empty().append(fragment);
+	}
+
 	$.fn.translate = function (options) {
 		var that = this; //a reference to ourselves
 		var settings = {
@@ -42,8 +82,10 @@
 		this.find(settings.css).each(function (i) {
 			var $this = $(this);
 
+			//elements with an icon (svg) keep their content, only the attributes (title) are translated
+			var has_icon = $this.find("svg").length > 0;
 			var trn_key = $this.attr("data-trn-key");
-			if (!trn_key) {
+			if (!trn_key && !has_icon) {
 				trn_key = $this.html();
 				$this.attr("data-trn-key", trn_key);
 			}
@@ -58,7 +100,9 @@
 					$this.attr(this.name, that.get(trn_attr_key));
 				}
 			});
-			$this.html(that.get(trn_key));
+			if (!has_icon) {
+				set_safe_content($this, that.get(trn_key));
+			}
 		});
 		return this;
 	};

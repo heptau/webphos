@@ -6,6 +6,9 @@
 import config from './../config.js';
 import Dialog_class from './../libs/popup.js';
 import Base_gui_class from './base-gui.js';
+import menuDefinition from './../config-menu.js';
+import { t } from './../modules/tools/translate.js';
+import { format_shortcut_mac, is_mac_platform } from './../libs/shortcuts.js';
 const fuzzysort = require('fuzzysort');
 
 var instance = null;
@@ -33,10 +36,18 @@ class Base_search_class {
 			}
 
 			var code = event.key;
-			if (code == "F3" || ( (event.ctrlKey == true || event.metaKey) && code == "f")) {
+			if (code == "F3" || ( (event.ctrlKey == true || event.metaKey) && !event.shiftKey && !event.altKey && (code == "f" || code == "k"))) {
 				//open
 				this.search();
 				event.preventDefault();
+			}
+		}, false);
+
+		//click on a result runs it
+		document.addEventListener('click', (event) => {
+			var result = event.target.closest ? event.target.closest('.search-result') : null;
+			if (result && document.querySelector('#global_search_results')) {
+				this.run(parseInt(result.dataset.index, 10));
 			}
 		}, false);
 
@@ -54,7 +65,7 @@ class Base_search_class {
 			}
 
 			let results = fuzzysort.go(query, this.db, {
-				keys: ['title'],
+				keys: ['title', 'english'],
 				limit: 10,
 				threshold: -50000,
 			});
@@ -62,14 +73,17 @@ class Base_search_class {
 			//show
 			for(var i = 0; i < results.length; i++) {
 				var item = results[i];
+				var entry = item.obj;
 
 				var className = "search-result n" + (i+1);
 				if(i == 0){
 					className += " active";
 				}
 
-				node.innerHTML += "<div class='"+className+"' data-key='"+item.obj.key+"'>"
-					+ fuzzysort.highlight(item[0]) + "</div>";
+				var label = item[0] ? fuzzysort.highlight(item[0]) : this.escape(entry.title);
+				var shortcut = entry.shortcut ? ' <span class="search-shortcut">' + this.escape(entry.shortcut) + '</span>' : '';
+				node.innerHTML += "<div class='" + className + "' data-index='" + entry.index + "'>"
+					+ label + (entry.path ? ' <span class="search-path">' + this.escape(entry.path) + '</span>' : '') + shortcut + "</div>";
 			}
 		}, false);
 
@@ -111,15 +125,10 @@ class Base_search_class {
 	search() {
 		var _this = this;
 
-		//init DB
+		//init DB: all commands of the menu
 		if(this.db === null) {
-			this.db = Object.keys(this.Base_gui.modules);
-			for(var i in this.db){
-				this.db[i] = {
-					key: this.db[i],
-					title: this.db[i].replace(/_/i, ' '),
-				};
-			}
+			this.db = [];
+			this.collect_commands(menuDefinition, []);
 		}
 
 		var settings = {
@@ -134,16 +143,9 @@ class Base_search_class {
 				popup.el.querySelector('.dialog_content').appendChild(node);
 			},
 			on_finish: function (params) {
-				//execute
 				var target = document.querySelector('.search-result.active');
 				if(target){
-					//execute
-					var key = target.dataset.key;
-					var class_object = this.Base_gui.modules[key];
-					var function_name = _this.get_function_from_path(key);
-
-					_this.POP.hide();
-					class_object[function_name]();
+					_this.run(parseInt(target.dataset.index, 10));
 				}
 			},
 		};
@@ -153,12 +155,48 @@ class Base_search_class {
 		document.getElementById("pop_data_search").select();
 	}
 
-	get_function_from_path(path){
-		var parts = path.split("/");
-		var result = parts[parts.length - 1];
-		result = result.replace(/-/, '_');
+	/**
+	 * flattens the menu to a list of commands (name in the current language and in English, path, shortcut)
+	 */
+	collect_commands(items, path) {
+		for (var item of items) {
+			if (item.divider) {
+				continue;
+			}
+			if (item.children) {
+				this.collect_commands(item.children, path.concat(item.name));
+				continue;
+			}
+			if (!item.target) {
+				continue;
+			}
+			var shortcut = item.shortcut || '';
+			if (shortcut && is_mac_platform()) {
+				shortcut = format_shortcut_mac(shortcut);
+			}
+			this.db.push({
+				index: this.db.length,
+				title: t(item.name),
+				english: item.name,
+				path: path.map((name) => t(name)).join(' › '),
+				shortcut: shortcut,
+				target: item.target,
+				parameter: item.parameter ?? null,
+			});
+		}
+	}
 
-		return result;
+	run(index) {
+		var entry = this.db[index];
+		if (!entry) {
+			return;
+		}
+		this.POP.hide();
+		this.Base_gui.run_target(entry.target, entry.parameter);
+	}
+
+	escape(text) {
+		return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
 	}
 
 }

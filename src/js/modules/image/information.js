@@ -1,8 +1,12 @@
 import config from './../../config.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
+import { has_modifier } from './../../libs/shortcuts.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Tools_settings_class from './../tools/settings.js';
+import Base_gui_class from './../../core/base-gui.js';
+import { UNIT_NAMES, is_unit, clamp_dpi } from './../../libs/units.js';
+import app from './../../app.js';
 
 var instance = null;
 
@@ -19,6 +23,7 @@ class Image_information_class {
 		this.POP = new Dialog_class();
 		this.Helper = new Helper_class();
 		this.Tools_settings = new Tools_settings_class();
+		this.Base_gui = new Base_gui_class();
 
 		this.set_events();
 	}
@@ -29,7 +34,7 @@ class Image_information_class {
 			if (this.Helper.is_input(event.target))
 				return;
 
-			if (code == "i") {
+			if (code == "i" && has_modifier(event) == false) {
 				this.information();
 				event.preventDefault();
 			}
@@ -53,9 +58,24 @@ class Image_information_class {
 				{title: "Width:", value: width + ' ' + units},
 				{title: "Height:", value: height + ' ' + units},
 				{title: "Pixels:", value: pixels},
+				{name: "dpi", title: "Resolution (dpi):", value: parseInt(resolution, 10) || 72},
+				{name: "units", title: "Units:", type: "select", values: UNIT_NAMES, value: units},
 				{title: "Layers:", value: config.layers.length},
 				{title: "Unique colors:", value: '...'},
 			],
+			on_finish: (params) => {
+				var dpi = Math.round(parseFloat(params.dpi));
+				if (isNaN(dpi)) {
+					return;
+				}
+				dpi = clamp_dpi(dpi);
+				var new_units = is_unit(params.units) ? params.units : units;
+				if (dpi != (parseInt(resolution, 10) || 72) || new_units != units) {
+					app.State.do_action(new app.Actions.Update_config_action({RESOLUTION: dpi, UNITS: new_units})).then(() => {
+						this.Base_gui.GUI_information.update_units();
+					});
+				}
+			},
 		};
 		if(units != 'pixels'){
 			settings.params[0].value += " (" + config.WIDTH + " pixels)";

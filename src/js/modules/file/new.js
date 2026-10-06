@@ -5,6 +5,8 @@ import Base_layers_class from './../../core/base-layers.js';
 import Helper_class from './../../libs/helpers.js';
 import Dialog_class from './../../libs/popup.js';
 import Tools_settings_class from './../tools/settings.js';
+import { UNIT_NAMES, is_unit, to_pixels, from_pixels, clamp_dpi } from './../../libs/units.js';
+import { link_unit_fields } from './../../libs/dialog-units.js';
 
 /** 
  * manages files / new
@@ -27,12 +29,17 @@ class File_new_class {
 		var height = config.HEIGHT;
 		var common_dimensions = this.Base_gui.common_dimensions;
 		var resolution_types = ['Custom'];
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		//a new document starts with the defaults from Settings
+		var units = this.Tools_settings.get_setting('default_units', true);
+		var resolution = this.Tools_settings.get_default_resolution();
 
 		for (var i in common_dimensions) {
 			var value = common_dimensions[i];
 			resolution_types.push(value[0] + 'x' + value[1] + ' - ' + value[2]);
+		}
+		for (var j in this.Base_gui.preset_dimensions) {
+			var preset = this.Base_gui.preset_dimensions[j];
+			resolution_types.push(preset[0] + 'x' + preset[1] + ' - ' + preset[2]);
 		}
 
 		var transparency_cookie = this.Helper.getCookie('transparency');
@@ -48,16 +55,19 @@ class File_new_class {
 		}
 
 		//convert units
-		width = this.Helper.get_user_unit(width, units, resolution);
-		height = this.Helper.get_user_unit(height, units, resolution);
+		width = from_pixels(width, units, resolution);
+		height = from_pixels(height, units, resolution);
 
 		var settings = {
 			title: 'New file',
 			params: [
-				{name: "width", title: "Width:", value: width, comment: units},
-				{name: "height", title: "Height:", value: height, comment: units},
-				{name: "resolution_type", title: "Resolution:", values: resolution_types},
-				{name: "layout", title: "Layout:", value: "Custom", values: ["Custom", "Landscape", "Portrait"]},
+				{name: "resolution_type", title: "Preset:", type: "select", values: resolution_types},
+				{name: "layout", title: "Layout:", type: "select", value: "Custom", values: ["Custom", "Landscape", "Portrait"]},
+				{name: "width", title: "Width:", value: width},
+				{name: "height", title: "Height:", value: height},
+				{name: "units", title: "Units:", type: "select", values: UNIT_NAMES, value: units},
+				{name: "dpi", title: "Resolution (dpi):", value: parseInt(resolution, 10) || 72},
+				{title: "Pixels:", html: '<span id="new_pixels">-</span>'},
 				{name: "transparency", title: "Transparent:", value: transparency},
 			],
 			on_finish: function (params) {
@@ -65,36 +75,67 @@ class File_new_class {
 			},
 		};
 		this.POP.show(settings);
+		this.link_fields();
 	}
 
-	async new_handler(response) {
-		var width = parseFloat(response.width);
-		var height = parseFloat(response.height);
-		var resolution_type = response.resolution_type;
-		var transparency = response.transparency;
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
-
-		if (resolution_type != 'Custom') {
-			var dim = resolution_type.split(" ");
-			dim = dim[0].split("x");
-			width = parseInt(dim[0]);
-			height = parseInt(dim[1]);
-
-			if(response.layout == 'Portrait'){
-				var tmp = width;
-				width = height;
-				height = tmp;
+	/**
+	 * preset and layout fill the width / height fields (like in Photoshop), typing a size selects "Custom"
+	 */
+	link_fields() {
+		var _this = this;
+		var field = function (name) {
+			return document.getElementById('pop_data_' + name);
+		};
+		var linked = link_unit_fields({width: 'width', height: 'height', units: 'units', dpi: 'dpi'}, 'new_pixels');
+		var preset_size = function () {
+			var match = /^(\d+)x(\d+)/.exec(field('resolution_type').value);
+			return match ? [parseInt(match[1], 10), parseInt(match[2], 10)] : null;
+		};
+		var apply_layout = function (w, h) {
+			var layout = field('layout').value;
+			if ((layout == 'Portrait' && w > h) || (layout == 'Landscape' && h > w)) {
+				return [h, w];
 			}
-		}
-		else {
-			//convert units
-			width = this.Helper.get_internal_unit(width, units, resolution);
-			height = this.Helper.get_internal_unit(height, units, resolution);
-		}
+			return [w, h];
+		};
 
-		// Prepare layers		
-		app.State.do_action(
+		field('resolution_type').addEventListener('change', function () {
+			var size = preset_size();
+			if (size) {
+				var oriented = apply_layout(size[0], size[1]);
+				linked.set_pixels(oriented[0], oriented[1]);
+			}
+		});
+		field('layout').addEventListener('change', function () {
+			var size = preset_size() || linked.get_pixels();
+			if (isNaN(size[0]) || isNaN(size[1])) {
+				return;
+			}
+			var oriented = apply_layout(size[0], size[1]);
+			linked.set_pixels(oriented[0], oriented[1]);
+		});
+		['width', 'height', 'dpi', 'units'].forEach(function (name) {
+			field(name).addEventListener('input', function () {
+				if (name != 'units' && name != 'dpi') {
+					field('resolution_type').value = 'Custom';
+				}
+			});
+		});
+	}
+
+	/**
+	 * replaces the current project by a new empty one; the old project stays in its own document tab
+	 *
+	 * @param {number} width pixels
+	 * @param {number} height pixels
+	 * @param {boolean} transparency
+	 */
+	async create_document(width, height, transparency, physical) {
+		//the current project stays in its own document tab
+		var rollback = app.GUI.GUI_documents.before_new();
+
+		try {
+			await app.State.do_action(
 			new app.Actions.Bundle_action('new_file', 'New File', [
 				new app.Actions.Refresh_action_attributes_action('undo'),
 				new app.Actions.Prepare_canvas_action('undo'),
@@ -103,6 +144,8 @@ class File_new_class {
 					WIDTH: parseInt(width),
 					HEIGHT: parseInt(height),
 					ALPHA: 255,
+					RESOLUTION: physical && physical.dpi > 0 ? physical.dpi : null,
+					UNITS: physical && is_unit(physical.units) ? physical.units : null,
 					COLOR: '#008000',
 					mouse: {},
 					visible_width: null,
@@ -115,13 +158,43 @@ class File_new_class {
 				new app.Actions.Init_canvas_zoom_action(),
 				new app.Actions.Insert_layer_action({})
 			])
-		);
+			);
+		}
+		catch (error) {
+			rollback();
+			throw error;
+		}
+
+		//undo of the new project must not bring the previous document back
+		await app.GUI.GUI_documents.clear_history();
+		//creating the document is not a change of the document
+		var created = app.GUI.GUI_documents.documents[app.GUI.GUI_documents.active];
+		if (created) {
+			created.dirty = false;
+			app.GUI.GUI_documents.render();
+		}
 
 		//sleep, lets wait till DOM is finished
 		await new Promise(r => setTimeout(r, 10));
 
 		//fit to screen?
 		this.Base_gui.GUI_preview.zoom_auto(true);
+	}
+
+	async new_handler(response) {
+		var transparency = response.transparency;
+		var units = is_unit(response.units) ? response.units : this.Tools_settings.get_setting('default_units');
+		var dpi = clamp_dpi(response.dpi);
+
+		//the preset and layout already filled the fields, so the fields are the single source of the size
+		var width = to_pixels(response.width, units, dpi);
+		var height = to_pixels(response.height, units, dpi);
+
+		if (isNaN(width) || isNaN(height) || width < 1 || height < 1) {
+			return;
+		}
+
+		await this.create_document(width, height, transparency, {dpi: dpi, units: units});
 
 		// Save transparency
 		if (transparency) {

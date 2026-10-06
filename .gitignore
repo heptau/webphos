@@ -15,3 +15,6 @@ nbproject/
 /node_modules/
 *.js.ignore
 
+# build artifacts: dist/ is only an intermediate step, the release goes to docs/ (GitHub Pages)
+/dist/
+/coverage/

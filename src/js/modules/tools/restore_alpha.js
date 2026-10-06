@@ -3,6 +3,7 @@ import config from './../../config.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from './translate.js';
 
 class Tools_restoreAlpha_class {
 
@@ -15,7 +16,7 @@ class Tools_restoreAlpha_class {
 		var _this = this;
 
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

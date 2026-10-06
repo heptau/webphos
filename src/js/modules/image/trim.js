@@ -4,7 +4,9 @@ import Base_gui_class from './../../core/base-gui.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
+import { has_modifier } from './../../libs/shortcuts.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 var instance = null;
 
@@ -31,7 +33,7 @@ class Image_trim_class {
 			if (this.Helper.is_input(event.target))
 				return;
 
-			if (code == 84) {
+			if (code == 84 && has_modifier(event) == false) {
 				//trim
 				this.trim();
 				event.preventDefault();
@@ -76,6 +78,32 @@ class Image_trim_class {
 	}
 
 	/**
+	 * Layer > Trim to Content - crops the active layer to its non transparent pixels (no dialog)
+	 */
+	trim_to_content() {
+		var layer = config.layer;
+		if (layer == null || layer.type != 'image') {
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
+			return;
+		}
+		var info = this.get_trim_info(layer.id, false, 0).relative;
+		if (!info || !(info.width > 0) || !(info.height > 0)) {
+			alertify.error(t('Layer is empty.'));
+			return;
+		}
+		if (info.left == 0 && info.top == 0 && info.width >= layer.width && info.height >= layer.height) {
+			return; //nothing to trim
+		}
+		var actions = this.trim_layer(layer.id, false, 0);
+		if (actions === false) {
+			return;
+		}
+		return app.State.do_action(
+			new app.Actions.Bundle_action('trim_layer', 'Trim Layer', actions)
+		);
+	}
+
+	/**
 	 * removes empty (white/transparent) area from top, right, bottom and left sides
 	 * This affects layer data
 	 *
@@ -87,7 +115,7 @@ class Image_trim_class {
 		var layer = this.Base_layers.get_layer(layer_id);
 		
 		if (layer.type != 'image') {
-			alertify.error('Skip - layer must be image.');
+			alertify.error(t('Skip - layer must be image.'));
 			return false;
 		}
 		

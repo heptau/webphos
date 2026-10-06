@@ -4,6 +4,7 @@ import Helper_class from './../libs/helpers.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 import image_store from './store/image-store.js';
 import { Base_action } from './base.js';
+import { t } from '../modules/tools/translate.js';
 
 const Helper = new Helper_class();
 
@@ -32,8 +33,13 @@ export class Update_layer_image_action extends Base_action {
 		if (!this.reference_layer) {
 			throw new Error('Aborted - layer with specified id doesn\'t exist');
 		}
+		if (this.reference_layer.locked === true) {
+			alertify.error(t('Layer is locked.'));
+			this.reference_layer = null;
+			throw new Error('Aborted - layer is locked');
+		}
 		if (this.reference_layer.type != 'image'){
-			alertify.error('Error: layer must be image.');
+			alertify.error(t('Error: layer must be image.'));
 			throw new Error('Aborted - layer is not an image');
 		}
 
@@ -43,7 +49,7 @@ export class Update_layer_image_action extends Base_action {
 			try {
 				canvas_data_url = await image_store.get(this.new_image_id);
 			} catch (error) {
-				throw new Error('Aborted - problem retrieving cached image from database');
+				throw new Error('Aborted - problem retrieving cached image from database', { cause: error });
 			}
 		} else if (this.canvas) {
 			if (Helper.is_edge_or_ie() == false && typeof(FileReader) !== 'undefined') {
@@ -111,7 +117,7 @@ export class Update_layer_image_action extends Base_action {
 			try {
 				this.reference_layer.link.src = await image_store.get(this.old_image_id);
 			} catch (error) {
-				throw new Error('Failed to retrieve image from store');
+				throw new Error('Failed to retrieve image from store', { cause: error });
 			}
 		}
 		this.reference_layer._link_database_id = this.old_link_database_id;
@@ -143,7 +149,7 @@ export class Update_layer_image_action extends Base_action {
 		this.old_link_database_id = null;
 		this.reference_layer = null;
 		if (has_error) {
-			alertify.error('A problem occurred while removing undo history. It\'s suggested you save your work and refresh the page in order to free up memory.');
+			alertify.error(t('A problem occurred while removing undo history. It\'s suggested you save your work and refresh the page in order to free up memory.'));
 		}
 	}
 }

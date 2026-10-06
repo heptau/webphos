@@ -4,15 +4,20 @@
  */
 
 //css
+import './../css/variables.css';
 import './../css/reset.css';
 import './../css/utility.css';
 import './../css/component.css';
 import './../css/layout.css';
 import './../css/menu.css';
+import './../css/popup.css';
+import './../css/macos.css';
 import './../css/print.css';
 import './../../node_modules/alertifyjs/build/css/alertify.min.css';
 //js
+import alertify from './../../node_modules/alertifyjs/build/alertify.min.js';
 import app from './app.js';
+import { t } from './modules/tools/translate.js';
 import config from './config.js';
 import './core/components/index.js';
 import Base_gui_class from './core/base-gui.js';
@@ -23,6 +28,16 @@ import Base_search_class from './core/base-search.js';
 import File_open_class from './modules/file/open.js';
 import File_save_class from './modules/file/save.js';
 import * as Actions from './actions/index.js';
+
+//dialogs can be dragged by the title, the cursor stays normal (see macos.css)
+alertify.defaults.movable = true;
+alertify.defaults.closable = true;
+//button labels follow the application language (the language is applied after start and when it changes)
+const translate_alertify = () => {
+	alertify.defaults.glossary.ok = t('OK');
+	alertify.defaults.glossary.cancel = t('Cancel');
+};
+document.addEventListener('minipaint:history', translate_alertify);
 
 window.addEventListener('load', function (e) {
 	// Initiate app

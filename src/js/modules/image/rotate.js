@@ -3,8 +3,10 @@ import Dialog_class from './../../libs/popup.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Base_gui_class from './../../core/base-gui.js';
 import Helper_class from './../../libs/helpers.js';
+import { has_modifier } from './../../libs/shortcuts.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import app from '../../app.js';
+import { t } from '../tools/translate.js';
 
 var instance = null;
 
@@ -31,7 +33,7 @@ class Image_rotate_class {
 			if (this.Helper.is_input(event.target))
 				return;
 
-			if (code == 76) {
+			if (code == 76 && has_modifier(event) == false) {
 				//L - rotate left
 				this.left();
 				event.preventDefault();
@@ -43,7 +45,7 @@ class Image_rotate_class {
 		var _this = this;
 
 		if (config.layer.rotate === null) {
-			alertify.error('Rotate is not supported on this type of object. Convert to raster?');
+			alertify.error(t('Rotate is not supported on this type of object. Convert to raster?'));
 			return;
 		}
 
@@ -103,6 +105,19 @@ class Image_rotate_class {
 		new_rotate -= 90;
 		if (new_rotate < 0)
 			new_rotate = 360 + new_rotate;
+
+		app.State.do_action(
+			new app.Actions.Bundle_action('rotate_layer', 'Rotate Layer', [
+				new app.Actions.Update_layer_action(config.layer.id, {
+					rotate: new_rotate
+				}),
+				...this.check_sizes(new_rotate)
+			])
+		);
+	}
+
+	rotate_180() {
+		let new_rotate = (config.layer.rotate + 180) % 360;
 
 		app.State.do_action(
 			new app.Actions.Bundle_action('rotate_layer', 'Rotate Layer', [

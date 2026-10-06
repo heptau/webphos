@@ -3,10 +3,10 @@
 	display: grid;
 	margin: 0;
 	position: fixed; /* dont change it, vh does not work on mobiles with bottom footer */
-	top: 30px;
+	top: var(--menubar-height, 30px);
 	right: 0;
 	left: 0;
-	bottom: 5px;
+	bottom: var(--statusbar-height, 5px);
 	height: auto;
 	overflow: hidden;
 
@@ -18,6 +18,12 @@
 	grid-template-areas:
 		"submenu submenu submenu"
 		"sidebar_left main sidebar_right";
+}
+/* semantic wrappers must not create boxes - .wrapper grid expects the real
+   layout elements (submenu, sidebars, middle_area) as grid items */
+.app-header,
+.app-main{
+	display: contents;
 }
 .trn{}
 .toggle{
@@ -160,15 +166,19 @@ body .sp-preview{
 	top: 0;
 	width: 31px;
 	height: 30px;
-	background: url('images/logo.svg') no-repeat center center;
+	background: url('images/logo.png') no-repeat center center;
 	background-size: auto 28px;
-	filter: var(--mobile-menu-toggle-filter);
 }
 .logo:hover:after{
 	left: 2px;
 }
+.about-logo-wrap{
+	text-align: center;
+	padding: 4px 0 8px;
+}
 .about-logo{
-	margin-left:22%;
+	width: 96px;
+	height: 96px;
 }
 .about-name{
 	font-size:15px;
@@ -299,27 +309,36 @@ body .sp-preview{
 	filter: var(--menu-icons-filter-active);
 }
 
-/*
-IMPORTANT: any new icon should also must be added on /service-worker.js + its version should be updated - FEATURE DISABLED
- */
 .sidebar_left .select:after{ background-image: url('images/icons/select.svg'); }
 .sidebar_left .selection:after{ background-image: url('images/icons/selection.svg'); }
+.sidebar_left .lasso:after{ background-image: url('images/icons/lasso.svg'); }
+.sidebar_left .magic_wand:after{ background-image: url('images/icons/magic_wand.svg'); }
+.sidebar_left .quick_select:after{ background-image: url('images/icons/quick_select.svg'); }
+.sidebar_left .quick_mask:after{ background-image: url('images/icons/quick_mask.svg'); }
 .sidebar_left .brush:after{ background-image: url('images/icons/brush.svg'); }
 .sidebar_left .pencil:after{ background-image: url('images/icons/pencil.svg'); }
 .sidebar_left .pick_color:after{ background-image: url('images/icons/pick_color.svg'); }
 .sidebar_left .erase:after{ background-image: url('images/icons/erase.svg'); }
 .sidebar_left .magic_erase:after{ background-image: url('images/icons/magic_erase.svg'); }
 .sidebar_left .fill:after{ background-image: url('images/icons/fill.svg'); }
-.sidebar_left .media:after{ background-image: url('images/icons/media.svg'); }
 .sidebar_left .shape:after{ background-image: url('images/icons/shape.svg'); }
-.sidebar_left .text:after{ background-image: url('images/icons/text.svg'); background-size: 16px auto; }
-.sidebar_left .gradient:after{ background-image: url('images/icons/gradient.png'); background-size: 18px 12px; filter: none; }
+.sidebar_left .text:after{ background-image: url('images/icons/text.svg'); }
+.sidebar_left .gradient:after{ background-image: url('images/icons/gradient.svg'); }
 .sidebar_left .clone:after{ background-image: url('images/icons/clone.svg'); }
 .sidebar_left .crop:after{ background-image: url('images/icons/crop.svg'); }
 .sidebar_left .blur:after{ background-image: url('images/icons/blur.svg'); }
 .sidebar_left .sharpen:after{ background-image: url('images/icons/sharpen.svg'); }
+.sidebar_left .dodge_burn:after{ background-image: url('images/icons/dodge_burn.svg'); }
+.sidebar_left .smudge:after{ background-image: url('images/icons/smudge.svg'); }
 .sidebar_left .desaturate:after{ background-image: url('images/icons/desaturate.svg'); }
 .sidebar_left .bulge_pinch:after{ background-image: url('images/icons/bulge_pinch.svg'); }
+.sidebar_left .heal:after{ background-image: url('images/icons/heal.svg'); }
+.sidebar_left .red_eye:after{ background-image: url('images/icons/red_eye.svg'); }
+.sidebar_left .background_eraser:after{ background-image: url('images/icons/background_eraser.svg'); }
+.sidebar_left .liquify:after{ background-image: url('images/icons/liquify.svg'); }
+.sidebar_left .measure:after{ background-image: url('images/icons/measure.svg'); }
+.sidebar_left .hand:after{ background-image: url('images/icons/hand.svg'); }
+.sidebar_left .zoom:after{ background-image: url('images/icons/zoom.svg'); }
 .sidebar_left .animation:after{ background-image: url('images/icons/animation.svg'); }
 
 @media screen and (max-width:550px){

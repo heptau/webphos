@@ -5,6 +5,7 @@ import Base_layers_class from './../core/base-layers.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 import ImageFilters from './../libs/imagefilters.js';
 import Helper_class from './../libs/helpers.js';
+import { t } from '../modules/tools/translate.js';
 
 class Desaturate_class extends Base_tools_class {
 
@@ -42,11 +43,11 @@ class Desaturate_class extends Base_tools_class {
 			return;
 		}
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 		if (config.layer.rotate || 0 > 0) {
-			alertify.error('Erase on rotate object is disabled. Please rasterize first.');
+			alertify.error(t('Erase on rotate object is disabled. Please rasterize first.'));
 			return;
 		}
 		this.started = true;

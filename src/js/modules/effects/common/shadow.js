@@ -4,6 +4,7 @@ import Dialog_class from '../../../libs/popup.js';
 import Effects_browser_class from '../browser.js';
 import Base_layers_class from './../../../core/base-layers.js';
 import alertify from './../../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../../tools/translate.js';
 
 class Effects_brightness_class extends Effects_common_class {
 
@@ -17,7 +18,7 @@ class Effects_brightness_class extends Effects_common_class {
 
 	shadow(filter_id) {
 		if (config.layer.type == null) {
-			alertify.error('Layer is empty.');
+			alertify.error(t('Layer is empty.'));
 			return;
 		}
 

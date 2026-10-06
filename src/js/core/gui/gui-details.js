@@ -10,7 +10,7 @@ import Text_class from './../../tools/text.js';
 import Base_layers_class from "../base-layers";
 import Tools_settings_class from './../../modules/tools/settings.js';
 import Helper_class from './../../libs/helpers.js';
-import Tools_translate_class from './../../modules/tools/translate.js';
+import Tools_translate_class, { t } from './../../modules/tools/translate.js';
 
 var template = `
 	<div class="row">
@@ -135,6 +135,9 @@ class GUI_details_class {
 	}
 
 	render_details(events = false) {
+		if (app.GUI && app.GUI.GUI_layers) {
+			app.GUI.GUI_layers.sync_layer_props();
+		}
 		this.render_general('x', events);
 		this.render_general('y', events);
 		this.render_general('width', events);
@@ -709,7 +712,7 @@ class GUI_details_class {
 				item_row.appendChild($colorInput[0]);
 			}
 			else {
-				alertify.error('Error: unsupported attribute type:' + typeof item + ', ' + k);
+				alertify.error(t('Error: unsupported attribute type:') + typeof item + ', ' + k);
 			}
 		}
 	}

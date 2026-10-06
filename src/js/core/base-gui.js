@@ -3,6 +3,7 @@
  * author: Vilius L.
  */
 
+import app from './../app.js';
 import config from './../config.js';
 import Base_layers_class from './base-layers.js';
 import GUI_tools_class from './gui/gui-tools.js';
@@ -10,11 +11,19 @@ import GUI_preview_class from './gui/gui-preview.js';
 import GUI_colors_class from './gui/gui-colors.js';
 import GUI_layers_class from './gui/gui-layers.js';
 import GUI_information_class from './gui/gui-information.js';
+import GUI_history_class from './gui/gui-history.js';
+import GUI_histogram_class from './gui/gui-histogram.js';
+import GUI_documents_class from './gui/gui-documents.js';
+import GUI_context_menu_class, { CANVAS_MENU, LAYER_MENU } from './gui/gui-context-menu.js';
+import { restore_panels } from './../libs/panels.js';
 import GUI_details_class from './gui/gui-details.js';
 import GUI_menu_class from './gui/gui-menu.js';
-import Tools_translate_class from './../modules/tools/translate.js';
+import Tools_translate_class, { t } from './../modules/tools/translate.js';
 import Tools_settings_class from './../modules/tools/settings.js';
 import Helper_class from './../libs/helpers.js';
+import shortcutsDefinition from './../config-shortcuts.js';
+import { find_shortcut } from './../libs/shortcuts.js';
+import { AUTO, normalize_lang_code, resolve_theme, system_prefers_dark, on_system_theme_change } from './../libs/system-preferences.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 
 var instance = null;
@@ -57,12 +66,29 @@ class Base_gui_class {
 			//[7680,4320, '8K UHD'],
 		];
 
+		//ready-made sizes for File > New (not used for the automatic canvas size)
+		this.preset_dimensions = [
+			[1080, 1080, 'Instagram post'],
+			[1080, 1350, 'Instagram portrait'],
+			[1080, 1920, 'Story / Reels'],
+			[1200, 630, 'Facebook / link preview'],
+			[1500, 500, 'Social header'],
+			[1280, 720, 'YouTube thumbnail'],
+			[2480, 3508, 'A4, 300 dpi'],
+			[512, 512, 'App icon'],
+			[1024, 1024, 'App icon 2x'],
+			[32, 32, 'Favicon'],
+		];
+
 		this.GUI_tools = new GUI_tools_class(this);
 		this.GUI_preview = new GUI_preview_class(this);
 		this.GUI_colors = new GUI_colors_class(this);
 		this.GUI_layers = new GUI_layers_class(this);
 		this.GUI_information = new GUI_information_class(this);
 		this.GUI_details = new GUI_details_class(this);
+		this.GUI_history = new GUI_history_class();
+		this.GUI_histogram = new GUI_histogram_class();
+		this.GUI_documents = new GUI_documents_class();
 		this.GUI_menu = new GUI_menu_class();
 		this.Tools_translate = new Tools_translate_class();
 		this.Tools_settings = new Tools_settings_class();
@@ -83,6 +109,10 @@ class Base_gui_class {
 			if (key.indexOf('Base' + '/') < 0) {
 				var moduleKey = key.replace('./', '').replace('.js', '');
 				var classObj = modules_context(key);
+				// skip helper files without class export and internal sub-modules
+				if (typeof classObj.default !== 'function' || classObj.default.auto_register === false) {
+					return;
+				}
 				_this.modules[moduleKey] = new classObj.default();
 			}
 		});
@@ -137,6 +167,7 @@ class Base_gui_class {
 		this.autodetect_dimensions();
 
 		this.change_theme();
+		this.apply_large_ui();
 		this.prepare_canvas();
 		this.GUI_tools.render_main_tools();
 		this.GUI_preview.render_main_preview();
@@ -144,6 +175,9 @@ class Base_gui_class {
 		this.GUI_layers.render_main_layers();
 		this.GUI_information.render_main_information();
 		this.GUI_details.render_main_details();
+		this.GUI_history.render_main_history();
+		this.GUI_histogram.render_main_histogram();
+		this.GUI_documents.render_main_documents();
 		this.GUI_menu.render_main();
 		this.load_saved_changes();
 
@@ -152,13 +186,35 @@ class Base_gui_class {
 	}
 
 	init_service_worker() {
-		/*if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('./service-worker.js').then(function(reg) {
-				//Successfully registered service worker
-			}).catch(function(err) {
-				console.warn('Error registering service worker', err);
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('sw.js').then((reg) => {
+				console.log('[SW] Service worker registered:', reg.scope);
+				
+				// Check for updates
+				reg.addEventListener('updatefound', () => {
+					const newWorker = reg.installing;
+					newWorker.addEventListener('statechange', () => {
+						if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+							// New version available
+							console.log('[SW] New version available');
+							if (confirm(t('A new version is available. Refresh the page?'))) {
+								window.location.reload();
+							}
+						}
+					});
+				});
+			}).catch((err) => {
+				console.warn('[SW] Error registering service worker:', err);
 			});
-		}*/
+			
+			// Listen for controller change (new SW activated)
+			let refreshing = false;
+			navigator.serviceWorker.addEventListener('controllerchange', () => {
+				if (refreshing) return;
+				refreshing = true;
+				window.location.reload();
+			});
+		}
 	}
 
 	set_events() {
@@ -166,22 +222,20 @@ class Base_gui_class {
 
 		//menu events
 		this.GUI_menu.on('select_target', (target, object) => {
-			var parts = target.split('.');
-			var module = parts[0];
-			var function_name = parts[1];
-			var param = object.parameter ??= null;
-
-			//call module
-			if (this.modules[module] == undefined) {
-				alertify.error('Modules class not found: ' + module);
-				return;
-			}
-			if (this.modules[module][function_name] == undefined) {
-				alertify.error('Module function not found. ' + module + '.' + function_name);
-				return;
-			}
-			this.modules[module][function_name](param);
+			return this.run_target(target, object.parameter ?? null);
 		});
+
+		//Photoshop-like keyboard shortcuts
+		document.addEventListener('keydown', (event) => {
+			if (this.Helper.is_input(event.target) || document.getElementById('popups').children.length > 0)
+				return;
+
+			var shortcut = find_shortcut(event, shortcutsDefinition);
+			if (shortcut != null) {
+				event.preventDefault();
+				this.run_target(shortcut.target, shortcut.parameter ?? null);
+			}
+		}, false);
 
 		//registerToggleAbility
 		var targets = document.querySelectorAll('.toggle');
@@ -193,8 +247,15 @@ class Base_gui_class {
 				var target = document.getElementById(this.dataset.target);
 				target.classList.toggle('hidden');
 				//save
-				if (target.classList.contains('hidden') == false)
+				if (target.classList.contains('hidden') == false) {
 					_this.Helper.setCookie(this.dataset.target, 1);
+					if (this.dataset.target == 'toggle_history') {
+						_this.GUI_history.render();
+					}
+					if (this.dataset.target == 'toggle_histogram') {
+						_this.GUI_histogram.render();
+					}
+				}
 				else
 					_this.Helper.setCookie(this.dataset.target, 0);
 			});
@@ -216,16 +277,74 @@ class Base_gui_class {
 		//confirmation on exit
 		var exit_confirm = this.Tools_settings.get_setting('exit_confirm');
 		window.addEventListener('beforeunload', function (e) {
-			if(exit_confirm && (config.layers.length > 1 || _this.Base_layers.is_layer_empty(config.layer.id) == false)){
+			if(exit_confirm && !window.minipaint_quitting && (config.layers.length > 1 || _this.Base_layers.is_layer_empty(config.layer.id) == false)){
 				e.preventDefault();
 				e.returnValue = '';
 			}
 			return undefined;
 		});
 
+		this.GUI_context_menu = new GUI_context_menu_class();
 		document.getElementById('canvas_minipaint').addEventListener('contextmenu', function (e) {
 			e.preventDefault();
+			//clone tool uses right click itself
+			if (config.TOOL && config.TOOL.name == 'clone') {
+				return;
+			}
+			_this.GUI_context_menu.show(e, CANVAS_MENU, (target, param) => _this.run_target(target, param));
 		}, false);
+		document.getElementById('layers_base').addEventListener('contextmenu', function (e) {
+			var button = e.target.closest ? e.target.closest('#layer_name') : null;
+			if (!button || !button.dataset.id) {
+				return;
+			}
+			e.preventDefault();
+			var show = () => _this.GUI_context_menu.show(e, LAYER_MENU, (target, param) => _this.run_target(target, param));
+			if (button.dataset.id != config.layer.id) {
+				//select the layer under the pointer first
+				Promise.resolve(app.State.do_action(new app.Actions.Select_layer_action(button.dataset.id))).then(show);
+			}
+			else {
+				show();
+			}
+		}, false);
+	}
+
+	/**
+	 * call module function
+	 *
+	 * @param {string} target format "module.function", e.g. "image/flip.vertical"
+	 * @param {*} param
+	 */
+	async run_target(target, param = null) {
+		//Edit > Repeat Last Command remembers adjustments and effects
+		if (target.indexOf('image/') == 0 || target.indexOf('effects/') == 0) {
+			if (target.indexOf('image/adjustments.repeat_last') < 0 && target.indexOf('image/information') < 0) {
+				this.last_command = {target: target, parameter: param};
+			}
+		}
+		var parts = target.split('.');
+		var module = parts[0];
+		var function_name = parts[1];
+
+		//call module
+		if (this.modules[module] == undefined) {
+			alertify.error(t('Modules class not found: ') + module);
+			return;
+		}
+		
+		// Handle lazy-loaded modules
+		var moduleObj = this.modules[module];
+		if (moduleObj._lazy && moduleObj._get_instance) {
+			moduleObj = await moduleObj._get_instance();
+			this.modules[module] = moduleObj; // Cache the instance
+		}
+		
+		if (moduleObj[function_name] == undefined) {
+			alertify.error(t('Module function not found. ') + module + '.' + function_name);
+			return;
+		}
+		return moduleObj[function_name](param);
 	}
 
 	check_canvas_offset() {
@@ -270,6 +389,7 @@ class Base_gui_class {
 	}
 
 	load_saved_changes() {
+		restore_panels();
 		var targets = document.querySelectorAll('.toggle');
 		for (var i = 0; i < targets.length; i++) {
 			if (targets[i].dataset.target == undefined)
@@ -277,7 +397,9 @@ class Base_gui_class {
 
 			var target = document.getElementById(targets[i].dataset.target);
 			var saved = this.Helper.getCookie(targets[i].dataset.target);
-			if (saved === 0) {
+			//layer details are collapsed by default, so the Layers panel has enough space
+			var collapsed = saved === 0 || ((saved === null || saved === undefined) && (target.id == 'toggle_details' || target.id == 'toggle_history' || target.id == 'toggle_histogram'));
+			if (collapsed) {
 				targets[i].classList.toggle('toggled');
 				target.classList.add('hidden');
 			}
@@ -285,17 +407,21 @@ class Base_gui_class {
 	}
 
 	load_translations() {
-		var lang = this.Helper.getCookie('language');
+		var lang = this.Tools_translate.get_language_setting();
+		this.Tools_translate.auto = (lang == AUTO);
+		if (lang == AUTO) {
+			lang = this.Tools_translate.get_system_language();
+		}
 		
 		//load from params
 		var params = this.Helper.get_url_parameters();
 		if(params.lang != undefined){
-			lang = params.lang.replace(/([^a-z]+)/gi, '');
+			lang = normalize_lang_code(params.lang) || lang;
+			this.Tools_translate.auto = false;
 		}
 		
 		if (lang != null && lang != config.LANG) {
-			config.LANG = lang.replace(/([^a-z]+)/gi, '');
-			this.Tools_translate.translate(config.LANG);
+			this.Tools_translate.translate(lang);
 		}
 	}
 
@@ -469,24 +595,37 @@ class Base_gui_class {
 	/**
 	 * change theme or set automatically from cookie if possible
 	 * 
-	 * @param {string} theme_name
+	 * @param {string} theme_name theme name, "auto" (follow system) or null (use saved setting)
 	 */
+	/**
+	 * Settings > Large controls - bigger text and controls (easier to read and to hit with a finger)
+	 */
+	apply_large_ui() {
+		document.documentElement.classList.toggle('large_ui', Boolean(this.Tools_settings.get_setting('large_ui')));
+	}
+
 	change_theme(theme_name = null){
 		if(theme_name == null){
-			//auto detect
-			var theme_cookie = this.Helper.getCookie('theme');
-			if (theme_cookie) {
-				theme_name = theme_cookie;
-			}
-			else {
-				theme_name = this.Tools_settings.get_setting('theme');
-			}
+			theme_name = this.Tools_settings.get_setting('theme');
 		}
+		this.theme_setting = theme_name;
+		var theme = resolve_theme(theme_name, system_prefers_dark(), config.themes);
 
+		var body = document.querySelector('body');
 		for(var i in config.themes){
-			document.querySelector('body').classList.remove('theme-' + config.themes[i]);
+			body.classList.remove('theme-' + config.themes[i]);
 		}
-		document.querySelector('body').classList.add('theme-' + theme_name);
+		body.classList.add('theme-' + theme);
+
+		if (this.theme_listener_registered !== true) {
+			//follow system light/dark changes while "auto" is selected
+			this.theme_listener_registered = true;
+			on_system_theme_change(() => {
+				if (this.theme_setting == AUTO) {
+					this.change_theme(AUTO);
+				}
+			});
+		}
 	}
 
 	get_language() {

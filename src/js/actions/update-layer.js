@@ -1,5 +1,8 @@
 import app from './../app.js';
 import config from './../config.js';
+import { blocks_update } from '../libs/layer-lock.js';
+import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 import { Base_action } from './base.js';
 
 export class Update_layer_action extends Base_action {
@@ -24,6 +27,11 @@ export class Update_layer_action extends Base_action {
 		if (!this.reference_layer) {
 			throw new Error('Aborted - layer with specified id doesn\'t exist');
 		}
+		if (blocks_update(this.reference_layer, this.settings)) {
+			alertify.error(t('Layer is locked.'));
+			this.reference_layer = null;
+			throw new Error('Aborted - layer is locked');
+		}
 		for (let i in this.settings) {
 			if (i == 'id')
 				continue;
@@ -37,6 +45,9 @@ export class Update_layer_action extends Base_action {
 		}
 		if (this.settings.params || this.settings.width || this.settings.height) {
 			config.need_render_changed_params = true;
+		}
+		if ('mask' in this.settings || 'mask_enabled' in this.settings || 'locked' in this.settings || 'group' in this.settings) {
+			app.GUI.GUI_layers.render_layers(); //the layer list shows the layer mask
 		}
 		config.need_render = true;
 	}
@@ -52,6 +63,9 @@ export class Update_layer_action extends Base_action {
 			}
 			if (this.old_settings.params || this.old_settings.width || this.old_settings.height) {
 				config.need_render_changed_params = true;
+			}
+			if ('mask' in this.old_settings || 'mask_enabled' in this.old_settings || 'locked' in this.old_settings || 'group' in this.old_settings) {
+				app.GUI.GUI_layers.render_layers();
 			}
 			this.old_settings = {};
 		}

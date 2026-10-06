@@ -9,6 +9,7 @@ import Base_gui_class from './base-gui.js';
 import Helper_class from './../libs/helpers.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 import app from '../app.js';
+import { t } from '../modules/tools/translate.js';
 
 var instance = null;
 
@@ -34,8 +35,34 @@ class Base_state_class {
 		this.action_history = [];
 		this.action_history_index = 0;
 		this.action_history_max = 50;
+		this.original_canvas = null;
 
 		this.set_events();
+	}
+
+	/**
+	 * picture of the document before its first change (for View > Split Compare), taken once
+	 * and dropped when the document is replaced (see GUI_documents.clear_history)
+	 */
+	remember_original(action) {
+		//actions that open or create content do not count as a change of the original
+		var skipped = [
+			'activate_tool', 'select_layer', 'reset_selection', 'set_selection', 'set_selection_mask', 'refresh_layers_gui',
+			'open_json_file', 'open_image', 'open_file_data_url', 'new_file', 'new_layer', 'paste_new', 'fill_layer',
+		];
+		if (this.original_canvas || skipped.includes(action.action_id)) {
+			return;
+		}
+		try {
+			var canvas = document.createElement('canvas');
+			canvas.width = config.WIDTH;
+			canvas.height = config.HEIGHT;
+			app.Layers.convert_layers_to_canvas(canvas.getContext('2d'), null, false);
+			this.original_canvas = canvas;
+		}
+		catch (error) {
+			this.original_canvas = null;
+		}
 	}
 
 	set_events() {
@@ -59,6 +86,7 @@ class Base_state_class {
 
 	async do_action(action, options = {}) {
 		let error_during_free = false;
+		this.remember_original(action);
 		try {
 			await action.do();
 		} catch (error) {
@@ -112,9 +140,15 @@ class Base_state_class {
 		}
 
 		if (error_during_free) {
-			alertify.error('A problem occurred while removing undo history. It\'s suggested you save your work and refresh the page in order to free up memory.');
+			alertify.error(t('A problem occurred while removing undo history. It\'s suggested you save your work and refresh the page in order to free up memory.'));
 		}
+		this.notify_history();
 		return { status: 'completed' };
+	}
+
+	//tells the History panel that the steps changed
+	notify_history() {
+		document.dispatchEvent(new Event('minipaint:history'));
 	}
 
 	can_redo() {
@@ -130,8 +164,9 @@ class Base_state_class {
 			const action = this.action_history[this.action_history_index];
 			await action.do();
 			this.action_history_index++;
+			this.notify_history();
 		} else {
-			alertify.success('There\'s nothing to redo', 3);
+			alertify.success(t('There\'s nothing to redo'), 3);
 		}
 	}
 
@@ -139,8 +174,9 @@ class Base_state_class {
 		if (this.can_undo()) {
 			this.action_history_index--;
 			await this.action_history[this.action_history_index].undo();
+			this.notify_history();
 		} else {
-			alertify.success('There\'s nothing to undo', 3);
+			alertify.success(t('There\'s nothing to undo'), 3);
 		}
 	}
 
@@ -189,7 +225,7 @@ class Base_state_class {
 			}
 		}
 		if (has_error) {
-			alertify.error('A problem occurred while removing undo history. It\'s suggested you save your work and refresh the page in order to free up memory.');
+			alertify.error(t('A problem occurred while removing undo history. It\'s suggested you save your work and refresh the page in order to free up memory.'));
 		}
 		return {
 			total_memory_freed,

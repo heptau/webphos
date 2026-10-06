@@ -9,6 +9,8 @@ import Helper_class from './../libs/helpers.js';
 import Dialog_class from './../libs/popup.js';
 import WebFont from 'webfontloader';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { get_user_error_message, safe_execute_async } from './../libs/error-handler.js';
+import { t } from '../modules/tools/translate.js';
 
 /**
  * TODO
@@ -63,7 +65,7 @@ function load_font_family({ family, variants }, successCallback) {
 					resolve();
 				},
 				fontinactive: (family) => {
-					alertify.error('Font ' + family + ' could not be loaded.');
+					alertify.error(t('Font ') + family + ' could not be loaded.');
 					fontLoadPromiseMap.delete(family);
 					reject();
 				}
@@ -1591,20 +1593,11 @@ class Text_editor_class {
 				let ascenderSize = 0;
 				let descenderSize = 0;
 				for (let span of wrap.spans) {
-					let fontMetrics;
 					const family = span.meta.family || metaDefaults.family;
 					const leading = span.meta.leading != null ? span.meta.leading : metaDefaults.leading;
-					if (isHorizontalTextDirection) {
-						fontMetrics = this.get_span_font_metrics(span, !fontLoadMap.get(family));
-					} else {
-						ctx.font =
-							' ' + (span.meta.italic ? 'italic' : '') +
-							' ' + (span.meta.bold ? 'bold' : '') +
-							' ' + (span.meta.size || metaDefaults.size) + 'px' +
-							' ' + family;
-					}
-					let spanAscenderSize = isHorizontalTextDirection ? fontMetrics.baseline : ctx.measureText(character).width;
-					let spanDescenderSize = isHorizontalTextDirection ? Math.abs(fontMetrics.baseline - fontMetrics.height) : ctx.measureText(character).width;
+					const fontMetrics = this.get_span_font_metrics(span, !fontLoadMap.get(family));
+					let spanAscenderSize = fontMetrics.baseline;
+					let spanDescenderSize = Math.abs(fontMetrics.baseline - fontMetrics.height);
 					if (leading) {
 						spanAscenderSize += leading;
 						if (spanAscenderSize < 0) {
@@ -1887,15 +1880,18 @@ class Google_fonts_search_class {
 			if (!font) break;
 			const isSelected = !!this.selectedFonts[font.family];
 			load_font_family({ family: font.family, variants: font.variants });
+			const family = String(font.family);
+			const family_esc = this.Helper.escapeHtml(family);
+			const family_css = family.replace(/['\\]/g, '\\$&');
 			html += `
 				<div class="selection_card">
-					<input type="checkbox" id="google_font_selection_${font.family}" value="${font.family}" ${isSelected ? 'checked="checked"' : ''}>
-					<label for="google_font_selection_${font.family}"">
-						<div class="font_preview" style="font-family: '${font.family}'">
+					<input type="checkbox" id="google_font_selection_${family_esc}" value="${family_esc}" ${isSelected ? 'checked="checked"' : ''}>
+					<label for="google_font_selection_${family_esc}">
+						<div class="font_preview" style="font-family: '${family_css}'">
 							The quick brown fox jumps over the lazy dog.
 						</div>
 						<div class="text_muted">
-							${font.family}
+							${family_esc}
 						</div>
 					</label>
 				</div>
@@ -1977,14 +1973,42 @@ class Google_fonts_search_class {
 					}
 				});
 
-				const apiKey = config.google_webfonts_key;
-				$.getJSON(`https://www.googleapis.com/webfonts/v1/webfonts?key=${apiKey}&sort=popularity`, (data) => {
-					this.fontList = data.items;
-					this.fontListFiltered = data.items;
-					this.render_font_list();
-				}).fail(function () {
-					alertify.error('Error loading the list of fonts from Google.');
-				});
+const apiKey = config.google_webfonts_key;
+			if (!apiKey || apiKey === '') {
+				alertify.error(t('Google Web Fonts API key is not configured. Please set window.Google_Webfonts_API_Key before using font search.'));
+				return;
+			}
+			
+			// Rate limiting for Google Fonts API
+			if (!window._lastGoogleFontsRequest) {
+				window._lastGoogleFontsRequest = 0;
+			}
+			const now = Date.now();
+			if (now - window._lastGoogleFontsRequest < 2000) { // 2 seconds between requests
+				alertify.error(t('Please wait before making another font request.'));
+				return;
+			}
+			window._lastGoogleFontsRequest = now;
+			
+			safe_execute_async(async function() {
+				var response = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${apiKey}&sort=popularity`);
+				if (!response.ok) {
+					if (response.status === 429) {
+						throw new Error('Rate limit exceeded');
+					}
+					if (response.status === 401 || response.status === 403) {
+						throw new Error('API key invalid or missing');
+					}
+					throw new Error('Service error: ' + response.status);
+				}
+				var data = await response.json();
+				this.fontList = data.items;
+				this.fontListFiltered = data.items;
+				this.render_font_list();
+			}.bind(this), 'Google Fonts API').catch(function(error) {
+				var userMessage = get_user_error_message(error, 'Google Fonts API');
+				alertify.error(userMessage);
+			});
 			},
 			on_finish: () => {
 				this.popup = null;
@@ -2169,12 +2193,14 @@ class Text_class extends Base_tools_class {
 								editor.selection.set_position(lastLine, editor.document.get_line_character_count(lastLine), true);
 								break;
 							}
+							// falls through
 						case 'b':
 							if (e.ctrlKey) {
 								e.preventDefault();
 								document.querySelector('#action_attributes #bold').click();
 								break;
 							}
+							// falls through
 						case 'c':
 							if (e.ctrlKey) {
 								e.preventDefault();
@@ -2185,18 +2211,21 @@ class Text_class extends Base_tools_class {
 								this.textarea.value = '';
 								break;
 							}
+							// falls through
 						case 'i':
 							if (e.ctrlKey) {
 								e.preventDefault();
 								document.querySelector('#action_attributes #italic').click();
 								break;
 							}
+							// falls through
 						case 'u':
 							if (e.ctrlKey) {
 								e.preventDefault();
 								document.querySelector('#action_attributes #underline').click();
 								break;
 							}
+							// falls through
 						case 'x':
 							if (e.ctrlKey) {
 								e.preventDefault();
@@ -2208,6 +2237,7 @@ class Text_class extends Base_tools_class {
 								editor.delete_selection();
 								break;
 							}
+							// falls through
 						default:
 							handled = false;
 					}
@@ -2240,7 +2270,28 @@ class Text_class extends Base_tools_class {
 		this.mouseup(event);
 	}
 
+	/**
+	 * the text color follows the foreground color
+	 */
+	sync_fill_with_foreground() {
+		const text_tool = config.TOOLS.find((tool) => tool.name == 'text');
+		if (text_tool && typeof config.COLOR == 'string' && config.COLOR[0] == '#') {
+			text_tool.attributes.fill = config.COLOR;
+		}
+	}
+
+	on_activate() {
+		this.sync_fill_with_foreground();
+		this.GUI_tools.show_action_attributes();
+	}
+
 	load() {
+		document.addEventListener('minipaint:color', () => {
+			if (config.TOOL && config.TOOL.name == 'text') {
+				this.sync_fill_with_foreground();
+				this.GUI_tools.show_action_attributes();
+			}
+		});
 		// Mouse events
 		document.addEventListener('mousedown', (event) => {
 			this.dragStart(event);
@@ -2675,7 +2726,20 @@ class Text_class extends Base_tools_class {
 
 			// Create initial layer data if new layer
 			if (!layer.data) {
-				const params = this.getParams();
+				//the text tool settings are only available while the text tool is active, otherwise the defaults are used
+				const params = config.TOOL && config.TOOL.name == 'text' ? this.getParams() : {
+					font: {value: metaDefaults.family},
+					size: metaDefaults.size,
+					bold: {value: metaDefaults.bold},
+					italic: {value: metaDefaults.italic},
+					underline: {value: metaDefaults.underline},
+					strikethrough: {value: metaDefaults.strikethrough},
+					fill: config.COLOR,
+					stroke: metaDefaults.stroke_color,
+					stroke_size: metaDefaults.stroke_size,
+					kerning: metaDefaults.kerning,
+					leading: metaDefaults.leading,
+				};
 				layer.data = [[{
 					text: '',
 					meta: {
@@ -2685,7 +2749,7 @@ class Text_class extends Base_tools_class {
 						italic: params.italic.value !== metaDefaults.italic ? params.italic.value : undefined,
 						underline: params.underline.value !== metaDefaults.underline ? params.underline.value : undefined,
 						strikethrough: params.strikethrough.value !== metaDefaults.strikethrough ? params.strikethrough.value : undefined,
-						fill_color: params.fill !== metaDefaults.fill_color ? params.fill : undefined,
+						fill_color: params.fill,
 						stroke_color: params.stroke !== metaDefaults.stroke_color ? params.stroke : undefined,
 						stroke_size: params.stroke_size !== metaDefaults.stroke_size && !isNaN(params.stroke_size) ? params.stroke_size : undefined,
 						kerning: params.kerning !== metaDefaults.kerning && !isNaN(params.kerning) ? params.kerning : undefined,

@@ -4,6 +4,7 @@ import Base_layers_class from './../../core/base-layers.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 var instance = null;
 
@@ -39,7 +40,7 @@ class Image_autoAdjust_class {
 
 	auto_adjust() {
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

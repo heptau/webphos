@@ -4,6 +4,7 @@ import colorThief_class from './../../libs/color-thief.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
+import { t } from '../tools/translate.js';
 
 class Image_color_class {
 
@@ -16,7 +17,7 @@ class Image_color_class {
 
 	palette() {
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 		var palette = this.alertify.getPalette(config.layer.link);

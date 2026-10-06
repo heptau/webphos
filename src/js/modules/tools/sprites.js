@@ -5,6 +5,7 @@ import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Image_trim_class from './../image/trim.js';
 import Base_gui_class from './../../core/base-gui.js';
+import { t } from './translate.js';
 
 class Tools_sprites_class {
 
@@ -34,7 +35,7 @@ class Tools_sprites_class {
 		gap = parseInt(gap);
 
 		if (config.layers.length == 1) {
-			alertify.error('There is only 1 layer.');
+			alertify.error(t('There is only 1 layer.'));
 			return false;
 		}
 

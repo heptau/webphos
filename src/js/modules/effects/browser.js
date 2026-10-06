@@ -2,6 +2,7 @@ import config from './../../config.js';
 import Base_tools_class from './../../core/base-tools.js';
 import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 class Effects_browser_class extends Base_tools_class {
 
@@ -17,7 +18,7 @@ class Effects_browser_class extends Base_tools_class {
 		var html = '';
 
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

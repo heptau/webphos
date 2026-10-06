@@ -3,6 +3,7 @@
  * author: Vilius L.
  */
 
+import { draw_rect_ants, ant_phase } from './../libs/marching-ants.js';
 import config from './../config.js';
 
 var instance = null;
@@ -18,6 +19,21 @@ const DRAG_TYPE_RIGHT = 8;
 /**
  * Selection class - draws rectangular selection on canvas, can be resized.
  */
+var ants_timer = null;
+
+/**
+ * the marching ants move, so the canvas is redrawn a few times a second while a selection is shown
+ */
+export function schedule_ants_redraw() {
+	if (ants_timer !== null) {
+		return;
+	}
+	ants_timer = setTimeout(() => {
+		ants_timer = null;
+		config.need_render = true;
+	}, 90);
+}
+
 class Base_selection_class {
 
 	/**
@@ -202,10 +218,21 @@ class Base_selection_class {
 			y = Math.round(-data.height / 2);
 		}
 
-		//fill
-		if (settings.enable_background == true) {
+		if (settings.ants === true && typeof window.report_selection_size == 'function' && w > 0 && h > 0) {
+			window.report_selection_size(w, h);
+		}
+
+		//fill - a tint inside (older tools); selection tools show marching ants only, crop darkens the outside
+		if (settings.enable_background == true && settings.ants !== true) {
 			this.ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
 			this.ctx.fillRect(x, y, w, h);
+		}
+		if (settings.shade_outside === true && !isRotated) {
+			this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+			this.ctx.beginPath();
+			this.ctx.rect(0, 0, config.WIDTH, config.HEIGHT);
+			this.ctx.rect(x, y, w, h);
+			this.ctx.fill('evenodd');
 		}
 
 		const wholeLineWidth = 2 / config.ZOOM;
@@ -213,27 +240,37 @@ class Base_selection_class {
 
 		//borders
 		if (settings.enable_borders == true && (x != 0 || y != 0 || w != config.WIDTH || h != config.HEIGHT)) {
-			this.ctx.lineWidth = wholeLineWidth;
-			this.ctx.strokeStyle = 'rgb(255, 255, 255)';
-			this.ctx.strokeRect(x - halfLineWidth, y - halfLineWidth, w + wholeLineWidth, h + wholeLineWidth);
-			this.ctx.lineWidth = halfLineWidth;
-			this.ctx.strokeStyle = 'rgb(0, 0, 0)';
-			this.ctx.strokeRect(x - wholeLineWidth, y - wholeLineWidth, w + (wholeLineWidth * 2), h + (wholeLineWidth * 2));
+			if (settings.ants === true) {
+				//rectangle selection: marching ants (a custom mask draws its own outline, see tools)
+				if (settings.enable_background == true) {
+					draw_rect_ants(this.ctx, x, y, w, h, config.ZOOM, ant_phase());
+					schedule_ants_redraw();
+				}
+			}
+			else {
+				//thin light line with a faint dark one around it, visible on any background
+				var thin = 1 / config.ZOOM;
+				this.ctx.lineWidth = thin;
+				this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+				this.ctx.strokeRect(x - thin, y - thin, w + thin * 2, h + thin * 2);
+				this.ctx.strokeStyle = 'rgb(255, 255, 255)';
+				this.ctx.strokeRect(x, y, w, h);
+			}
 		}
 
 		//show crop lines
 		if(settings.crop_lines === true){
 
 			for(var part = 1; part < 3; part++) {
-				this.ctx.lineWidth = wholeLineWidth;
-				this.ctx.strokeStyle = 'rgb(255, 255, 255)';
+				this.ctx.lineWidth = 1 / config.ZOOM;
+				this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
 				this.ctx.beginPath();
 				this.ctx.moveTo(x + w / 3 * part - halfLineWidth, y);
 				this.ctx.lineTo(x + w / 3 * part - halfLineWidth, y + h);
 				this.ctx.stroke();
 
-				this.ctx.lineWidth = halfLineWidth;
-				this.ctx.strokeStyle = 'rgb(0, 0, 0)';
+				this.ctx.lineWidth = 1 / config.ZOOM;
+				this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
 				this.ctx.beginPath();
 				this.ctx.moveTo(x + w / 3 * part - halfLineWidth, y);
 				this.ctx.lineTo(x + w / 3 * part - halfLineWidth, y + h);
@@ -241,15 +278,15 @@ class Base_selection_class {
 			}
 
 			for(var part = 1; part < 3; part++) {
-				this.ctx.lineWidth = wholeLineWidth;
-				this.ctx.strokeStyle = 'rgb(255, 255, 255)';
+				this.ctx.lineWidth = 1 / config.ZOOM;
+				this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
 				this.ctx.beginPath();
 				this.ctx.moveTo(x, y + h / 3 * part - halfLineWidth);
 				this.ctx.lineTo(x + w, y + h / 3 * part - halfLineWidth);
 				this.ctx.stroke();
 
-				this.ctx.lineWidth = halfLineWidth;
-				this.ctx.strokeStyle = 'rgb(0, 0, 0)';
+				this.ctx.lineWidth = 1 / config.ZOOM;
+				this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
 				this.ctx.beginPath();
 				this.ctx.moveTo(x, y + h / 3 * part - halfLineWidth);
 				this.ctx.lineTo(x + w, y + h / 3 * part - halfLineWidth);

@@ -1,3 +1,5 @@
+import { UNIT_NAMES, is_unit, to_pixels, from_pixels, clamp_dpi } from './../../libs/units.js';
+import { link_unit_fields } from './../../libs/dialog-units.js';
 import app from './../../app.js';
 import config from './../../config.js';
 import Base_gui_class from './../../core/base-gui.js';
@@ -5,6 +7,7 @@ import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Tools_settings_class from './../tools/settings.js';
 import Helper_class from './../../libs/helpers.js';
+import { t } from '../tools/translate.js';
 
 class Image_size_class {
 
@@ -29,15 +32,18 @@ class Image_size_class {
 		}
 
 		//convert units
-		var width = this.Helper.get_user_unit(config.WIDTH, units, resolution);
-		var height = this.Helper.get_user_unit(config.HEIGHT, units, resolution);
+		var width = from_pixels(config.WIDTH, units, resolution);
+		var height = from_pixels(config.HEIGHT, units, resolution);
 
 		var settings = {
 			title: 'Canvas Size',
 			params: [
-				{name: "w", title: "Width:", value: width, placeholder: width, comment: units},
-				{name: "h", title: "Height:", value: height, placeholder: height, comment: units},
-				{name: "resolution", title: "Resolution:", values: resolutions},
+				{name: "w", title: "Width:", value: width, placeholder: width},
+				{name: "h", title: "Height:", value: height, placeholder: height},
+				{name: "units", title: "Units:", type: "select", values: UNIT_NAMES, value: units},
+				{name: "dpi", title: "Resolution (dpi):", value: parseInt(resolution, 10) || 72},
+				{title: "Pixels:", html: '<span id="size_pixels">-</span>'},
+				{name: "resolution", title: "Preset:", values: resolutions},
 				{name: "layout", title: "Layout:", value: "Custom", values: ["Custom", "Landscape", "Portrait"]},
 				{name: "enable_autoresize", title: "Enable autoresize:", value: enable_autoresize},
 				{name: "in_proportion", title: "In proportion:", value: false},
@@ -47,14 +53,15 @@ class Image_size_class {
 			},
 		};
 		this.POP.show(settings);
+		link_unit_fields({width: 'w', height: 'h', units: 'units', dpi: 'dpi'}, 'size_pixels');
 	}
 
 	size_handler(data) {
 		var width = parseFloat(data.w);
 		var height = parseFloat(data.h);
 		var ratio = config.WIDTH / config.HEIGHT;
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		var units = is_unit(data.units) ? data.units : this.Tools_settings.get_setting('default_units');
+		var resolution = clamp_dpi(data.dpi);
 
 		if (width < 0){
 			width = 1;
@@ -67,7 +74,7 @@ class Image_size_class {
 		
 		//aspect ratio
 		if (isNaN(width) && isNaN(height)){
-			alertify.error('Wrong dimensions');
+			alertify.error(t('Wrong dimensions'));
 			return;
 		}
 		if (isNaN(width)){
@@ -91,15 +98,17 @@ class Image_size_class {
 		}
 		else{
 			//convert units
-			width = this.Helper.get_internal_unit(width, units, resolution);
-			height = this.Helper.get_internal_unit(height, units, resolution);
+			width = to_pixels(width, units, resolution);
+			height = to_pixels(height, units, resolution);
 		}
 
 		var actions = [
 			new app.Actions.Prepare_canvas_action('undo'),
 			new app.Actions.Update_config_action({
 				WIDTH: parseInt(width),
-				HEIGHT: parseInt(height)
+				HEIGHT: parseInt(height),
+				RESOLUTION: resolution,
+				UNITS: units,
 			}),
 		];
 

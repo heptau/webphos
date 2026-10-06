@@ -4,6 +4,7 @@ import Base_tools_class from './../core/base-tools.js';
 import Base_layers_class from './../core/base-layers.js';
 import Helper_class from './../libs/helpers.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 class Fill_class extends Base_tools_class {
 
@@ -43,7 +44,7 @@ class Fill_class extends Base_tools_class {
 			return;
 		}
 		if (config.layer.rotate || 0 > 0) {
-			alertify.error('Erase on rotate object is disabled. Please rasterize first.');
+			alertify.error(t('Erase on rotate object is disabled. Please rasterize first.'));
 			return;
 		}
 
@@ -58,15 +59,15 @@ class Fill_class extends Base_tools_class {
 		}
 
 		if (config.layer.type != 'image' && config.layer.type !== null) {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 		if (config.layer.is_vector == true) {
-			alertify.error('Layer is vector, convert it to raster to apply this tool.');
+			alertify.error(t('Layer is vector, convert it to raster to apply this tool.'));
 			return;
 		}
 		if (config.ALPHA == 0) {
-			alertify.error('Color alpha value can not be zero.');
+			alertify.error(t('Color alpha value can not be zero.'));
 			return;
 		}
 

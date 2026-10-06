@@ -10,6 +10,8 @@ import Pica from './../../../../node_modules/pica/dist/pica.js';
 import Helper_class from './../../libs/helpers.js';
 import Tools_settings_class from './../tools/settings.js';
 import { metaDefaults as textMetaDefaults } from '../../tools/text.js';
+import { t } from '../tools/translate.js';
+import { UNIT_NAMES, is_unit, to_pixels, from_pixels, convert_size, dpi_for, clamp_dpi } from './../../libs/units.js';
 
 var instance = null;
 
@@ -51,19 +53,24 @@ class Image_resize_class {
 	resize() {
 		var _this = this;
 		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		var resolution = parseInt(this.Tools_settings.get_setting('resolution'), 10) || 72;
 
 		//convert units
-		var width = this.Helper.get_user_unit(config.WIDTH, units, resolution);
-		var height = this.Helper.get_user_unit(config.HEIGHT, units, resolution);
+		var width = from_pixels(config.WIDTH, units, resolution);
+		var height = from_pixels(config.HEIGHT, units, resolution);
 
 		var settings = {
 			title: 'Resize',
 			params: [
-				{name: "width", title: "Width:", value: '', placeholder: width, comment: units},
-				{name: "height", title: "Height:", value: '', placeholder: height, comment: units},
-				{name: "width_percent", title: "Width (%):", value: '', placeholder: 100, comment: "%"},
-				{name: "height_percent", title: "Height (%):", value: '', placeholder: 100, comment: "%"},
+				{name: "width", title: "Width:", value: width},
+				{name: "height", title: "Height:", value: height},
+				{name: "units", title: "Units:", type: "select", values: UNIT_NAMES, value: units},
+				{name: "dpi", title: "Resolution (dpi):", value: resolution},
+				{name: "width_percent", title: "Width (%):", value: 100, comment: "%"},
+				{name: "height_percent", title: "Height (%):", value: 100, comment: "%"},
+				{name: "constrain", title: "Constrain proportions:", value: true},
+				{name: "resample", title: "Resample:", value: true},
+				{title: "Pixels:", html: '<span id="resize_pixels">-</span>'},
 				{name: "mode", title: "Mode:", values: ["Lanczos", "Hermite", "Basic"]},
 
 				{name: "sharpen", title: "Sharpen:", value: false},
@@ -75,16 +82,131 @@ class Image_resize_class {
 		};
 		this.POP.show(settings);
 
+		this.link_size_fields();
 		document.getElementById("pop_data_width").select();
+	}
+
+	/**
+	 * keeps width, height, resolution, unit and percent fields of the dialog consistent (like Image Size in Photoshop):
+	 * with "Resample" the pixels change and the resolution stays, without it the pixels stay
+	 * and the resolution (or the other dimension) is recalculated, so nothing is lost.
+	 * "Constrain proportions" keeps the aspect ratio
+	 */
+	link_size_fields() {
+		var field = (name) => document.getElementById('pop_data_' + name);
+		var orig_w = config.WIDTH;
+		var orig_h = config.HEIGHT;
+		var unit = field('units').value;
+		var number = (name) => parseFloat(field(name).value);
+		var locked = () => field('constrain').checked;
+		var resample = () => field('resample').checked;
+		var dpi = () => clamp_dpi(field('dpi').value);
+		var format = (value, u) => String(u == 'pixels' ? Math.round(value) : parseFloat(value.toFixed(3)));
+		var set_dpi = (value) => {
+			field('dpi').value = String(parseFloat(value.toFixed(2)));
+		};
+		var pixels = () => resample() ? [to_pixels(number('width'), unit, dpi()), to_pixels(number('height'), unit, dpi())] : [orig_w, orig_h];
+		var refresh = () => {
+			var px = pixels();
+			if (!isNaN(px[0])) field('width_percent').value = String(Math.round(px[0] / orig_w * 100));
+			if (!isNaN(px[1])) field('height_percent').value = String(Math.round(px[1] / orig_h * 100));
+			document.getElementById('resize_pixels').textContent = (isNaN(px[0]) || isNaN(px[1])) ? '-' : px[0] + ' x ' + px[1] + ' px';
+		};
+		//fields from pixels at the current resolution
+		var set_fields = (w, h) => {
+			field('width').value = format(from_pixels(w, unit, dpi()), unit);
+			field('height').value = format(from_pixels(h, unit, dpi()), unit);
+		};
+		//the user typed one dimension: `typed` is its name
+		var typed_dimension = (typed) => {
+			var value = number(typed);
+			if (!(value > 0)) return;
+			var other = typed == 'width' ? 'height' : 'width';
+			var orig_typed = typed == 'width' ? orig_w : orig_h;
+			var orig_other = typed == 'width' ? orig_h : orig_w;
+			if (resample()) {
+				if (locked()) {
+					var px = to_pixels(value, unit, dpi());
+					var other_px = Math.max(1, Math.round(orig_other * px / orig_typed));
+					field(other).value = format(from_pixels(other_px, unit, dpi()), unit);
+				}
+			}
+			else if (unit != 'pixels') {
+				//pixels stay: the resolution changes and the other dimension follows
+				var new_dpi = dpi_for(orig_typed, value, unit);
+				if (!isNaN(new_dpi)) {
+					set_dpi(new_dpi);
+					field(other).value = format(from_pixels(orig_other, unit, dpi()), unit);
+				}
+			}
+			refresh();
+		};
+
+		field('width').addEventListener('input', () => typed_dimension('width'));
+		field('height').addEventListener('input', () => typed_dimension('height'));
+		field('width_percent').addEventListener('input', () => {
+			var value = number('width_percent');
+			if (isNaN(value) || value <= 0 || !resample()) return;
+			var h_percent = locked() ? value : (number('height_percent') || value);
+			set_fields(orig_w * value / 100, orig_h * h_percent / 100);
+			refresh();
+			field('width_percent').value = String(Math.round(value));
+		});
+		field('height_percent').addEventListener('input', () => {
+			var value = number('height_percent');
+			if (isNaN(value) || value <= 0 || !resample()) return;
+			var w_percent = locked() ? value : (number('width_percent') || value);
+			set_fields(orig_w * w_percent / 100, orig_h * value / 100);
+			refresh();
+			field('height_percent').value = String(Math.round(value));
+		});
+		field('units').addEventListener('change', () => {
+			var next = field('units').value;
+			['width', 'height'].forEach((name) => {
+				field(name).value = format(convert_size(number(name), unit, next, dpi()), next);
+			});
+			unit = next;
+			refresh();
+		});
+		field('dpi').addEventListener('input', () => {
+			if (!resample()) {
+				//pixels stay, the physical size follows the resolution
+				set_fields(orig_w, orig_h);
+			}
+			refresh();
+		});
+		field('resample').addEventListener('change', () => {
+			if (!resample()) {
+				//back to the pixels of the picture
+				set_fields(orig_w, orig_h);
+			}
+			refresh();
+		});
+		field('constrain').addEventListener('change', () => {
+			if (locked() && isNaN(number('width')) == false) {
+				typed_dimension('width');
+			}
+		});
+		refresh();
 	}
 
 	async do_resize(params) {
 		//validate
 		if (isNaN(params.width) && isNaN(params.height) && isNaN(params.width_percent) && isNaN(params.height_percent)) {
-			alertify.error('Missing at least 1 size parameter.');
+			alertify.error(t('Missing at least 1 size parameter.'));
 			return false;
 		}
 		
+		if (params.resample === false) {
+			//no resampling: only the physical size (unit and resolution) of the same pixels changes
+			return app.State.do_action(
+				new app.Actions.Update_config_action({
+					RESOLUTION: clamp_dpi(params.dpi),
+					UNITS: is_unit(params.units) ? params.units : config.UNITS,
+				})
+			).then(() => this.Base_gui.GUI_information.update_units());
+		}
+
 		// Build a list of actions to execute for resize
 		let actions = [];
 		
@@ -120,8 +242,8 @@ class Image_resize_class {
 	 * @returns {Promise<object>} Returns array of actions to perform
 	 */
 	async resize_layer(layer, params) {
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		var units = is_unit(params.units) ? params.units : this.Tools_settings.get_setting('default_units');
+		var resolution = clamp_dpi(params.dpi || this.Tools_settings.get_setting('resolution'));
 		var mode = params.mode;
 		var width = parseFloat(params.width);
 		var height = parseFloat(params.height);
@@ -208,7 +330,7 @@ class Image_resize_class {
 		//only images supported at this point
 		else if (layer.type != 'image') {
 			//error - no support
-			alertify.error('Layer must be vector or image (convert it to raster).');
+			alertify.error(t('Layer must be vector or image (convert it to raster).'));
 			throw new Error('Layer is not compatible with resize');
 		}
 		
@@ -218,7 +340,7 @@ class Image_resize_class {
 
 		//validate
 		if (mode == "Hermite" && (width > canvas.width || height > canvas.height)) {
-			alertify.warning('Scaling up is not supported in Hermite, using Lanczos.');
+			alertify.warning(t('Scaling up is not supported in Hermite, using Lanczos.'));
 			mode = "Lanczos";
 		}
 		
@@ -279,8 +401,8 @@ class Image_resize_class {
 	}
 	
 	resize_gui(params) {
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		var units = is_unit(params.units) ? params.units : this.Tools_settings.get_setting('default_units');
+		var resolution = clamp_dpi(params.dpi || this.Tools_settings.get_setting('resolution'));
 
 		var width = parseFloat(params.width);
 		var height = parseFloat(params.height);
@@ -318,7 +440,9 @@ class Image_resize_class {
 			new app.Actions.Prepare_canvas_action('undo'),
 			new app.Actions.Update_config_action({
 				WIDTH: parseInt(width),
-				HEIGHT: parseInt(height)
+				HEIGHT: parseInt(height),
+				RESOLUTION: resolution,
+				UNITS: units,
 			}),
 			new app.Actions.Prepare_canvas_action('do')
 		];

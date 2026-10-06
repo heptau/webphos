@@ -10,12 +10,17 @@ config.HEIGHT = null;
 config.visible_width = null;
 config.visible_height = null;
 config.COLOR = '#008000';
+config.COLOR_BG = '#ffffff';
 config.ALPHA = 255;
+config.UNITS = null; //unit of the document size (see libs/units.js), null = the default from Settings
+config.RESOLUTION = null; //dpi of the document, null = the default resolution from Settings
 config.ZOOM = 1;
 config.SNAP = true;
-config.pixabay_key = '3ca2cd8af3fde33af218bea02-9021417';
+// API keys should be configured via environment variables or a separate config file
+// For security, these are not hardcoded. Set them via:
+// window.Google_Webfonts_API_Key = 'your-key-here';
 config.safe_search_can_be_disabled = true;
-config.google_webfonts_key = 'AIzaSyBES3AipG'+'YVYNLtS,Vk-hJ11bbhJ9sTpRbA'.replace(',', '');
+config.google_webfonts_key = (typeof window !== 'undefined' && window.Google_Webfonts_API_Key) || '';
 config.layers = [];
 config.layer = null;
 config.need_render = false;
@@ -28,6 +33,8 @@ config.swatches = {
 config.user_fonts = {};
 config.guides_enabled = true;
 config.guides = [];
+config.freeze_render = false; //true while the history is replayed
+config.compare = null; //View > Split Compare: {before: canvas, x}
 config.ruler_active = false;
 config.enable_autoresize_by_default = true;
 
@@ -36,6 +43,7 @@ config.themes = [
 	'dark',
 	'light',
 	'green',
+	'contrast',
 ];
 
 //no-translate BEGIN
@@ -89,8 +97,89 @@ config.TOOLS = [
 	},
 	{
 		name: 'selection',
-		attributes: {},
+		attributes: {
+			shape: {
+				value: 'Rectangle',
+				values: ['Rectangle', 'Ellipse'],
+			},
+		},
 		on_leave: 'on_leave',
+		keep_selection: true,
+	},
+	{
+		name: 'lasso',
+		title: 'Lasso (Shift: add, Alt: subtract)',
+		attributes: {
+			polygonal: false,
+			feather: {
+				value: 0,
+				min: 0,
+				max: 100,
+			},
+		},
+		on_leave: 'on_leave',
+		keep_selection: true,
+	},
+	{
+		name: 'magic_wand',
+		title: 'Magic Wand (Shift: add, Alt: subtract)',
+		attributes: {
+			tolerance: {
+				value: 32,
+				min: 0,
+				max: 255,
+			},
+			contiguous: true,
+			feather: {
+				value: 0,
+				min: 0,
+				max: 100,
+			},
+		},
+		on_leave: 'on_leave',
+		keep_selection: true,
+	},
+	{
+		name: 'quick_select',
+		title: 'Quick Selection (paint over the object, Alt: subtract)',
+		attributes: {
+			size: 40,
+			tolerance: {
+				value: 25,
+				min: 1,
+				max: 100,
+			},
+			feather: {
+				value: 0,
+				min: 0,
+				max: 100,
+			},
+		},
+		on_leave: 'on_leave',
+		keep_selection: true,
+	},
+	{
+		name: 'quick_mask',
+		title: 'Quick Mask (paint selection, Q)',
+		attributes: {
+			size: {
+				value: 30,
+				min: 1,
+				max: 500,
+			},
+			softness: {
+				value: 0,
+				min: 0,
+				max: 100,
+			},
+			subtract: false,
+			target: {
+				value: 'Selection',
+				values: ['Selection', 'Layer mask'],
+			},
+		},
+		on_leave: 'on_leave',
+		keep_selection: true,
 	},
 	{
 		name: 'brush',
@@ -110,6 +199,10 @@ config.TOOLS = [
 		name: 'pick_color',
 		attributes: {
 			global: false,
+			sample: {
+				value: 'Point',
+				values: ['Point', '3x3', '5x5', '11x11', '31x31'],
+			},
 		},
 	},
 	{
@@ -187,14 +280,6 @@ config.TOOLS = [
 			border_color: '#555555',
 			fill_color: '#aaaaaa',
 			circle: false,
-		},
-	},
-	{
-		name: 'media',
-		title: 'Search Images',
-		on_activate: 'on_activate',
-		attributes: {
-			size: 30,
 		},
 	},
 	{
@@ -380,6 +465,7 @@ config.TOOLS = [
 	{
 		name: 'text',
 		on_update: 'on_params_update',
+		on_activate: 'on_activate',
 		attributes: {
 			font: {
 				value: 'Arial',
@@ -476,6 +562,33 @@ config.TOOLS = [
 		},
 	},
 	{
+		name: 'smudge',
+		title: 'Smudge Tool',
+		attributes: {
+			size: 40,
+			strength: {
+				value: 50,
+				min: 1,
+				max: 100,
+			},
+			anti_aliasing: true,
+		},
+	},
+	{
+		name: 'dodge_burn',
+		title: 'Dodge/Burn Tool',
+		attributes: {
+			size: 50,
+			exposure: {
+				value: 15,
+				min: 1,
+				max: 100,
+			},
+			burn: false,
+			anti_aliasing: true,
+		},
+	},
+	{
 		name: 'bulge_pinch',
 		title: 'Bulge/Pinch Tool',
 		attributes: {
@@ -483,6 +596,66 @@ config.TOOLS = [
 			power: 50,
 			bulge: true,
 		},
+	},
+	{
+		name: 'heal',
+		title: 'Healing Brush (paint over a blemish)',
+		attributes: {
+			size: 30,
+			match_color: true,
+		},
+	},
+	{
+		name: 'red_eye',
+		title: 'Red Eye (click on the eye)',
+		attributes: {
+			size: 40,
+			strength: {
+				value: 100,
+				min: 10,
+				max: 100,
+			},
+		},
+	},
+	{
+		name: 'background_eraser',
+		title: 'Background Eraser (erases the color under the pointer)',
+		attributes: {
+			size: 40,
+			tolerance: {
+				value: 30,
+				min: 1,
+				max: 100,
+			},
+		},
+	},
+	{
+		name: 'liquify',
+		title: 'Liquify (push pixels)',
+		attributes: {
+			size: 80,
+			strength: {
+				value: 50,
+				min: 1,
+				max: 100,
+			},
+		},
+	},
+	{
+		name: 'measure',
+		title: 'Measure (drag a line: size, length, angle)',
+		on_leave: 'on_leave',
+		attributes: {},
+	},
+	{
+		name: 'hand',
+		title: 'Hand (Space)',
+		attributes: {},
+	},
+	{
+		name: 'zoom',
+		title: 'Zoom (click: in, Alt + click: out, Z)',
+		attributes: {},
 	},
 	{
 		name: 'animation',

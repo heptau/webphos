@@ -1,3 +1,5 @@
+import { draw_mask_ants, ant_phase } from './../libs/marching-ants.js';
+import { schedule_ants_redraw } from './../core/base-selection.js';
 import app from './../app.js';
 import config from './../config.js';
 import Base_tools_class from './../core/base-tools.js';
@@ -5,7 +7,10 @@ import Base_layers_class from './../core/base-layers.js';
 import Base_selection_class from './../core/base-selection.js';
 import GUI_tools_class from './../core/gui/gui-tools.js';
 import Helper_class from './../libs/helpers.js';
+import Selection_mask_class from './../core/selection-mask-state.js';
+import { erase_with_mask } from './../libs/selection-mask.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 var instance = null;
 
@@ -38,6 +43,7 @@ class Selection_class extends Base_tools_class {
 		};
 
 		var sel_config = {
+			ants: true,
 			enable_background: true,
 			enable_borders: true,
 			enable_controls: false,
@@ -47,6 +53,9 @@ class Selection_class extends Base_tools_class {
 				return _this.selection;
 			},
 		};
+		this.sel_config = sel_config;
+		this.Selection_mask = new Selection_mask_class();
+		this.Selection_mask.bind(() => this.selection);
 		this.mousedown_selection = null;
 		this.Base_selection = new Base_selection_class(ctx, sel_config, this.name);
 		this.GUI_tools = new GUI_tools_class();
@@ -128,7 +137,7 @@ class Selection_class extends Base_tools_class {
 			return;
 
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
@@ -226,15 +235,22 @@ class Selection_class extends Base_tools_class {
 				width: Math.abs(details.width),
 				height: Math.abs(details.height),
 			};
+			var shape = this.getParams().shape;
+			var is_ellipse = shape && (shape.value || shape) == 'Ellipse';
 			app.State.do_action(
 				new app.Actions.Set_selection_action(this.selection.x, this.selection.y, this.selection.width, this.selection.height, this.mousedown_selection)
-			);
+			).then(function () {
+				if (is_ellipse) {
+					//the elliptical marquee is the rectangle turned into an ellipse mask
+					app.GUI.run_target('edit/selection.to_ellipse');
+				}
+			});
 		}
 	}
 
 	select_all() {
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 		let actions = [];
@@ -254,6 +270,29 @@ class Selection_class extends Base_tools_class {
 
 	render(ctx, layer) {
 		//nothing
+	}
+
+	/**
+	 * Custom masks (feathered, inverted, elliptical...) are shown as a green tint instead of the rectangle fill.
+	 */
+	render_overlay(ctx) {
+		var current = this.Selection_mask.get();
+		var preview = this.Selection_mask.get_preview();
+		var custom = preview != null || (current != null && current.kind == 'custom');
+		if (this.sel_config.enable_background === custom) {
+			this.sel_config.enable_background = !custom;
+			setTimeout(() => {
+				config.need_render = true;
+			}, 0);
+		}
+		if (preview) {
+			ctx.drawImage(preview.overlay, 0, 0);
+		}
+		else if (custom) {
+			//marching ants along the edge of the mask
+			draw_mask_ants(ctx, current.mask, ant_phase());
+			schedule_ants_redraw();
+		}
 	}
 
 	save_translate() {
@@ -276,12 +315,18 @@ class Selection_class extends Base_tools_class {
 		var layer = config.layer;
 
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
 		if (selection == null) {
-			alertify.error('Nothing is selected.');
+			alertify.error(t('Nothing is selected.'));
+			return;
+		}
+
+		var current = this.Selection_mask.get();
+		if (current != null && current.kind == 'custom') {
+			this.delete_masked(current.mask);
 			return;
 		}
 
@@ -311,6 +356,28 @@ class Selection_class extends Base_tools_class {
 		this.reset_tmp_canvas();
 	}
 
+	/**
+	 * Erases pixels according to a custom selection mask (soft edges erase partially)
+	 */
+	delete_masked(mask) {
+		var layer = config.layer;
+		this.init_tmp_canvas();
+		var image = this.tmpCanvasCtx.getImageData(0, 0, this.tmpCanvas.width, this.tmpCanvas.height);
+		erase_with_mask(image, mask, layer);
+		this.tmpCanvasCtx.putImageData(image, 0, 0);
+
+		app.State.do_action(
+			new app.Actions.Bundle_action('delete_selection', 'Delete Selection', [
+				new app.Actions.Update_layer_image_action(this.tmpCanvas),
+				new app.Actions.Reset_selection_action(this.selection)
+			])
+		);
+
+		this.reset_tmp_canvas();
+		delete config.layer.link_canvas;
+		this.reset_tmp_canvas();
+	}
+
 	init_tmp_canvas() {
 		this.tmpCanvas = document.createElement('canvas');
 		this.tmpCanvasCtx = this.tmpCanvas.getContext("2d");
@@ -320,10 +387,16 @@ class Selection_class extends Base_tools_class {
 	}
 
 	on_leave() {
+		if (!app.Layers || !app.Layers.Base_selection) {
+			//app is still starting (the saved tool is being activated), nothing to reset
+			return [];
+		}
 		let actions = [
 			new app.Actions.Reset_selection_action(this.selection)
 		];
-		delete config.layer.link_canvas;
+		if (config.layer) {
+			delete config.layer.link_canvas;
+		}
 		this.reset_tmp_canvas();
 		return actions;
 	}

@@ -1,4 +1,6 @@
 import config from "../config";
+import { to_pixels, from_pixels } from "./units.js";
+import { read_config, write_config, read_cookie_value } from "./cookie-config.js";
 
 /**
  * various helpers
@@ -69,11 +71,7 @@ class Helper_class {
 	 * @returns {object|string}
 	 */
 	getCookie(name) {
-		var cookie = this._getCookie('config');
-		if (cookie == '')
-			cookie = {};
-		else
-			cookie = JSON.parse(cookie);
+		var cookie = read_config();
 
 		if (cookie[name] != undefined)
 			return cookie[name];
@@ -88,30 +86,19 @@ class Helper_class {
 	 * @param {string|number} value
 	 */
 	setCookie(name, value) {
-		var cookie = this._getCookie('config');
-		if (cookie == '')
-			cookie = {};
-		else
-			cookie = JSON.parse(cookie);
-
+		var cookie = read_config();
 		cookie[name] = value;
-		var cookie = JSON.stringify(cookie);
-
-		this._setCookie('config', cookie);
+		write_config(cookie);
 	}
 
 	_getCookie(NameOfCookie) {
-		if (document.cookie.length > 0) {
-			var begin = document.cookie.indexOf(NameOfCookie + "=");
-			if (begin != -1) {
-				begin += NameOfCookie.length + 1;
-				var end = document.cookie.indexOf(";", begin);
-				if (end == -1)
-					end = document.cookie.length;
-				return document.cookie.substring(begin, end);
-			}
+		var value = read_cookie_value(document.cookie, NameOfCookie) || '';
+		try {
+			return decodeURIComponent(value);
 		}
-		return '';
+		catch (error) {
+			return value;
+		}
 	}
 
 	_setCookie(NameOfCookie, value, expire_days) {
@@ -119,14 +106,20 @@ class Helper_class {
 			expire_days = 180;
 		var ExpireDate = new Date();
 		ExpireDate.setTime(ExpireDate.getTime() + (expire_days * 24 * 3600 * 1000));
-		document.cookie = NameOfCookie + "=" + value +
-			((expire_days == null) ? "" : "; expires=" + ExpireDate.toGMTString());
+		document.cookie = NameOfCookie + "=" + encodeURIComponent(value) +
+			((expire_days == null) ? "" : "; expires=" + ExpireDate.toUTCString()) + "; SameSite=Lax";
 	}
 
-	delCookie(NameOfCookie) {
-		if (this.getCookie(NameOfCookie)) {
-			document.cookie = NameOfCookie + "=" +
-				"; expires=Thu, 01-Jan-70 00:00:01 GMT";
+	/**
+	 * removes value from global cookie
+	 *
+	 * @param {string} name
+	 */
+	delCookie(name) {
+		var cookie = read_config();
+		if (cookie[name] !== undefined) {
+			delete cookie[name];
+			write_config(cookie);
 		}
 	}
 
@@ -427,7 +420,7 @@ class Helper_class {
 	 */
 	number_format(n, maximumFractionDigits) {
 		let x = parseFloat(n);
-		var number = x.toLocaleString('us', {minimumFractionDigits: 0, maximumFractionDigits: maximumFractionDigits});
+		var number = x.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: maximumFractionDigits});
 		number = number.replaceAll(',', '');
 		number = parseFloat(number);
 
@@ -550,7 +543,7 @@ class Helper_class {
 	}
 	
 	is_input(element) {
-		if (!element) {
+		if (!element || typeof element.closest != 'function') {
 			return false;
 		}
 		if (element.type == 'text' || element.tagName == 'INPUT' || element.type == 'textarea') {
@@ -676,15 +669,8 @@ class Helper_class {
 			//no conversion
 			return parseInt(data);
 		}
-		else if(type == 'inches'){
-			return this.number_format(data / resolution, 3);
-		}
-		else if(type == 'centimeters'){
-			return this.number_format(data / resolution * 2.54, 3);
-		}
-		else if(type == 'millimetres'){
-			return this.number_format(data / resolution * 25.4, 3);
-		}
+		var value = from_pixels(data, type, resolution);
+		return isNaN(value) ? undefined : this.number_format(value, 3);
 	}
 
 	/**
@@ -693,7 +679,6 @@ class Helper_class {
 	 * @param data
 	 * @param type
 	 * @param resolution
-	 * @returns {number}
 	 */
 	get_internal_unit(data, type, resolution){
 		data = parseFloat(data);
@@ -702,15 +687,8 @@ class Helper_class {
 			//no conversion
 			return parseInt(data);
 		}
-		else if(type == 'inches'){
-			return Math.ceil(data * resolution);
-		}
-		else if(type == 'centimeters'){
-			return Math.ceil(data * resolution / 2.54);
-		}
-		else if(type == 'millimetres'){
-			return Math.ceil(data * resolution / 25.4);
-		}
+		var value = to_pixels(data, type, resolution);
+		return isNaN(value) ? undefined : value;
 	}
 
 }

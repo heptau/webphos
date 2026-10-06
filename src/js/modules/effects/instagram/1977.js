@@ -3,6 +3,7 @@ import config from '../../../config.js';
 import Dialog_class from '../../../libs/popup.js';
 import Base_layers_class from '../../../core/base-layers.js';
 import alertify from 'alertifyjs/build/alertify.min.js';
+import { t } from '../../tools/translate.js';
 
 class Effects_1977_class {
 
@@ -14,7 +15,7 @@ class Effects_1977_class {
 
 	1977() {
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

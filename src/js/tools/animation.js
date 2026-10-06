@@ -6,6 +6,7 @@ import GUI_tools_class from './../core/gui/gui-tools.js';
 import Base_gui_class from './../core/base-gui.js';
 import Base_selection_class from './../core/base-selection.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 class Animation_class extends Base_tools_class {
 
@@ -53,7 +54,7 @@ class Animation_class extends Base_tools_class {
 
 		var params = this.getParams();
 		if (config.layers.length == 1) {
-			alertify.error('Can not animate 1 layer.');
+			alertify.error(t('Can not animate 1 layer.'));
 			return;
 		}
 		this.stop();

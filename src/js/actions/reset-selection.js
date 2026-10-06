@@ -1,5 +1,6 @@
 import app from '../app.js';
 import config from '../config.js';
+import Selection_mask_class from '../core/selection-mask-state.js';
 import { Base_action } from './base.js';
 
 export class Reset_selection_action extends Base_action {
@@ -13,6 +14,7 @@ export class Reset_selection_action extends Base_action {
 		this.mirror_selection_settings = mirror_selection_settings;
 		this.settings_reference = null;
 		this.old_settings_data = null;
+		this.old_custom_mask = null;
 	}
 
 	async do() {
@@ -31,6 +33,10 @@ export class Reset_selection_action extends Base_action {
 			this.mirror_selection_settings.width = null;
 			this.mirror_selection_settings.height = null;
 		}
+		var mask_state = new Selection_mask_class();
+		this.old_custom_mask = mask_state.get_custom_state();
+		mask_state.set_custom_state(null);
+		this.memory_estimate = this.old_custom_mask ? this.old_custom_mask.mask.data.length : 0;
 		config.need_render = true;
 	}
 
@@ -44,12 +50,15 @@ export class Reset_selection_action extends Base_action {
 				}
 			}
 		}
+		new Selection_mask_class().set_custom_state(this.old_custom_mask);
+		this.old_custom_mask = null;
 		this.settings_reference = null;
 		this.old_settings_data = null;
 		config.need_render = true;
 	}
 
 	free() {
+		this.old_custom_mask = null;
 		this.settings_reference = null;
 		this.old_settings_data = null;
 		this.mirror_selection_settings = null;

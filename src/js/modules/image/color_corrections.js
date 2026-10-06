@@ -5,6 +5,7 @@ import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
 import ImageFilters_class from './../../libs/imagefilters.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 class Image_colorCorrections_class {
 
@@ -19,7 +20,7 @@ class Image_colorCorrections_class {
 		var _this = this;
 
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

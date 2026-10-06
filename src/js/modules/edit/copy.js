@@ -1,8 +1,10 @@
 import config from "../../config";
 import Base_layers_class from './../../core/base-layers.js';
 import File_save_class from './../file/save.js';
+import Edit_selection_class from './selection.js';
 import Helper_class from './../../libs/helpers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 var instance = null;
 
@@ -26,21 +28,58 @@ class Copy_class {
 			if (this.Helper.is_input(event.target))
 				return;
 
+			if (code == "x" && ctrlDown == true && !event.shiftKey && !event.altKey) {
+				//cut
+				this.cut();
+				event.preventDefault();
+			}
 			if (code == "c" && ctrlDown == true) {
-				//copy to clipboard
-				this.copy_to_clipboard();
+				//copy to clipboard, with Shift all visible layers merged
+				this.copy_to_clipboard(event.shiftKey ? 'merged' : null);
+				if (event.shiftKey) {
+					event.preventDefault();
+				}
 			}
 		}, false);
 	}
 
-	async copy_to_clipboard(){
+	/**
+	 * Edit > Cut (Ctrl+X) - copies the selection to the clipboard and deletes it from the layer
+	 */
+	async cut() {
+		if (this.Edit_selection == null) {
+			this.Edit_selection = new Edit_selection_class();
+		}
+		if (this.Edit_selection.has_selection() == false) {
+			alertify.error(t('Empty selection'));
+			return;
+		}
+		var copied = await this.copy_to_clipboard();
+		if (copied !== true) {
+			return; //never delete pixels that did not reach the clipboard
+		}
+		this.Edit_selection.delete();
+	}
+
+	/**
+	 * Copies the selection (or the whole layer) to the clipboard
+	 *
+	 * @param {string|null} [mode] 'merged' copies all visible layers merged together
+	 * @returns {Promise<boolean>} true when the image is in the clipboard
+	 */
+	async copy_to_clipboard(mode){
 		var _this = this;
 
 		const canWriteToClipboard = await this.askWritePermission();
 		if (canWriteToClipboard) {
 
-			//get data - current layer
-			var canvas = this.Base_layers.convert_layer_to_canvas();
+			//get data - selected part of the current layer (honors masks), or the whole layer
+			if (this.Edit_selection == null) {
+				this.Edit_selection = new Edit_selection_class();
+			}
+			var merged = mode === 'merged';
+			var part = this.Edit_selection.get_selection_canvas(config.layer, merged);
+			var canvas = part ? part.canvas : (merged ? this.Edit_selection.get_merged_canvas() : this.Base_layers.convert_layer_to_canvas());
 			var ctx = canvas.getContext("2d");
 
 			if (config.TRANSPARENCY == false) {
@@ -51,12 +90,21 @@ class Copy_class {
 			}
 
 			//save using lib
-			canvas.toBlob(function (blob) {
-				_this.setToClipboard(blob);
-			});
+			try {
+				var blob = await new Promise(function (resolve) {
+					canvas.toBlob(resolve);
+				});
+				await _this.setToClipboard(blob);
+				return true;
+			}
+			catch (error) {
+				alertify.error(t('Missing permissions to write to Clipboard.cc'));
+				return false;
+			}
 		}
 		else{
-			alertify.error('Missing permissions to write to Clipboard.cc');
+			alertify.error(t('Missing permissions to write to Clipboard.cc'));
+			return false;
 		}
 	}
 

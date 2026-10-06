@@ -3,6 +3,8 @@ import config from './../../config.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
+import { validate_layer_name } from './../../libs/input-validator.js';
+import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 
 class Layer_rename_class {
 
@@ -26,11 +28,16 @@ class Layer_rename_class {
 				document.querySelector('#pop_data_name').select();
 			},
 			on_finish: function (params) {
+				var validation = validate_layer_name(params.name);
+				if (!validation.valid) {
+					alertify.error(validation.error);
+					return;
+				}
 				app.State.do_action(
 					new app.Actions.Bundle_action('rename_layer', 'Rename Layer', [
 						new app.Actions.Refresh_layers_gui_action('undo'),
 						new app.Actions.Update_layer_action(id || config.layer.id, {
-							name: _this.validate_name(params.name)
+							name: validation.sanitized
 						}),
 						new app.Actions.Refresh_layers_gui_action('do')
 					])
@@ -38,17 +45,6 @@ class Layer_rename_class {
 			},
 		};
 		this.POP.show(settings);
-	}
-
-	validate_name(text) {
-		text = text
-			.replace(/&/g, "-")
-			.replace(/</g, "-")
-			.replace(/>/g, "-")
-			.replace(/"/g, "-")
-			.replace(/'/g, "-");
-
-		return text;
 	}
 }
 

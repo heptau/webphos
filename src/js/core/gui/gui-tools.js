@@ -5,8 +5,9 @@
 
 import app from './../../app.js';
 import config from './../../config.js';
+import { is_tool_disabled } from './../../libs/raster-tools.js';
 import Helper_class from './../../libs/helpers.js';
-import Tools_translate_class from './../../modules/tools/translate.js';
+import Tools_translate_class, { t } from './../../modules/tools/translate.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Base_gui_class from '../base-gui.js';
 
@@ -78,7 +79,7 @@ class GUI_tools_class {
 		var target_id = "tools_container";
 		var _this = this;
 		var saved_tool = this.Helper.getCookie('active_tool');
-		if(saved_tool == 'media' || saved_tool == 'shape') {
+		if(saved_tool == 'shape') {
 			//bringing this back by default gives bad UX
 			saved_tool = null
 		}
@@ -86,17 +87,39 @@ class GUI_tools_class {
 			this.active_tool = saved_tool;
 		}
 
-		//left menu
-		for (var i in config.TOOLS) {
-			var item = config.TOOLS[i];
+		const container = document.getElementById(target_id);
+		container.setAttribute('role', 'toolbar');
+		container.setAttribute('aria-label', 'Drawing tools');
+		container.innerHTML = '';
+
+		//left menu - tools in Photoshop-like groups
+		var ordered = this.get_ordered_tools();
+		var last_group = null;
+		for (var i = 0; i < ordered.length; i++) {
+			var item = ordered[i].tool;
+			if (item.visible !== false) {
+				if (last_group !== null && last_group !== ordered[i].group) {
+					var separator = document.createElement('div');
+					separator.className = 'separator';
+					separator.setAttribute('role', 'separator');
+					container.appendChild(separator);
+				}
+				last_group = ordered[i].group;
+			}
 			if(item.title)
 				var title = item.title;
 			else
 				var title = this.Helper.ucfirst(item.name).replace(/_/, ' ');
 
-			var itemDom = document.createElement('span');
+			var itemDom = document.createElement('button');
+			itemDom.type = 'button';
 			itemDom.id = item.name;
+			itemDom.setAttribute('aria-label', title);
 			itemDom.title = title;
+			itemDom.setAttribute('role', 'radio');
+			itemDom.setAttribute('aria-checked', item.name == this.active_tool ? 'true' : 'false');
+			itemDom.setAttribute('tabindex', item.name == this.active_tool ? '0' : '-1');
+			
 			if (item.name == this.active_tool) {
 				itemDom.className = 'item trn active ' + item.name;
 			}
@@ -112,16 +135,116 @@ class GUI_tools_class {
 				_this.activate_tool(this.id);
 			});
 
+			// Keyboard support
+			itemDom.addEventListener('keydown', function (event) {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					_this.activate_tool(this.id);
+				}
+			});
+
 			//register
-			document.getElementById(target_id).appendChild(itemDom);
+			container.appendChild(itemDom);
 		}
+
+		//arrow keys move between tools (toolbar pattern), Enter / Space select
+		container.addEventListener('keydown', function (event) {
+			var keys = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
+			if (keys.indexOf(event.key) < 0 || !event.target.classList.contains('item')) {
+				return;
+			}
+			var items = Array.from(container.querySelectorAll('.item')).filter(function (item) {
+				return item.style.display != 'none';
+			});
+			var index = items.indexOf(event.target);
+			var step = (event.key == 'ArrowDown' || event.key == 'ArrowRight') ? 1 : -1;
+			var next = event.key == 'Home' ? 0 : (event.key == 'End' ? items.length - 1 : (index + step + items.length) % items.length);
+			event.preventDefault();
+			items[index].setAttribute('tabindex', '-1');
+			items[next].setAttribute('tabindex', '0');
+			items[next].focus();
+		});
 
 		this.show_action_attributes();
 		new app.Actions.Activate_tool_action(this.active_tool, true).do();
 		this.Base_gui.check_canvas_offset();
 	}
 
+	/**
+	 * tools in the order of the Photoshop toolbar. Unknown tools go to the end.
+	 *
+	 * @returns {{tool: object, group: number}[]}
+	 */
+	get_ordered_tools() {
+		//the order of the Photoshop toolbar read row by row in two columns; the groups have an even number
+		//of tools (the animation is the last one) so no hole is left before a separator
+		var groups = [
+			//Move, Marquee, Lasso, Quick Selection, Magic Wand
+			['select', 'selection', 'lasso', 'quick_select', 'magic_wand', 'quick_mask'],
+			//Crop, Eyedropper, Ruler, Healing, Red Eye, Clone Stamp
+			['crop', 'pick_color', 'measure', 'heal', 'red_eye', 'clone'],
+			//Brush, Pencil, Eraser, Background Eraser, Magic Eraser, Gradient
+			['brush', 'pencil', 'erase', 'background_eraser', 'magic_erase', 'gradient'],
+			//Paint Bucket, Blur, Sharpen, Smudge, Dodge/Burn, Sponge, Liquify, Bulge/Pinch
+			['fill', 'blur', 'sharpen', 'smudge', 'dodge_burn', 'desaturate', 'liquify', 'bulge_pinch'],
+			//Type, Shapes
+			['text', 'shape'],
+			//Hand, Zoom
+			['hand', 'zoom', 'animation'],
+		];
+		var result = [];
+		var used = {};
+		for (var g = 0; g < groups.length; g++) {
+			for (var k = 0; k < groups[g].length; k++) {
+				for (var i in config.TOOLS) {
+					if (config.TOOLS[i].name == groups[g][k]) {
+						result.push({tool: config.TOOLS[i], group: g});
+						used[config.TOOLS[i].name] = true;
+					}
+				}
+			}
+		}
+		for (var j in config.TOOLS) {
+			if (used[config.TOOLS[j].name] != true) {
+				result.push({tool: config.TOOLS[j], group: groups.length});
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * disables tools that work only with raster layers while a vector layer is active
+	 */
+	update_disabled_tools() {
+		var container = document.getElementById('tools_container');
+		if (!container) {
+			return;
+		}
+		var layer = config.layer;
+		container.querySelectorAll('.item').forEach(function (button) {
+			var disabled = is_tool_disabled(button.id, layer);
+			button.classList.toggle('disabled', disabled);
+			if (disabled) {
+				button.setAttribute('aria-disabled', 'true');
+			}
+			else {
+				button.removeAttribute('aria-disabled');
+			}
+		});
+		//the active tool can not stay on a layer it does not work on
+		if (is_tool_disabled(this.active_tool, layer) && this.tool_switching != true) {
+			this.tool_switching = true;
+			this.activate_tool('select').finally(() => {
+				this.tool_switching = false;
+			});
+		}
+	}
+
 	async activate_tool(key) {
+		if (is_tool_disabled(key, config.layer)) {
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
+			return;
+		}
 		return app.State.do_action(
 			new app.Actions.Activate_tool_action(key)
 		);
@@ -370,7 +493,7 @@ class GUI_tools_class {
 				itemDom.appendChild($colorInput[0]);
 			}
 			else {
-				alertify.error('Error: unsupported attribute type:' + typeof item + ', ' + k);
+				alertify.error(t('Error: unsupported attribute type:') + typeof item + ', ' + k);
 			}
 		}
 

@@ -4,6 +4,7 @@ import Dialog_class from './../../libs/popup.js';
 import Base_layers_class from './../../core/base-layers.js';
 import ImageFilters from './../../libs/imagefilters.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../tools/translate.js';
 
 class Effects_oil_class {
 
@@ -16,7 +17,7 @@ class Effects_oil_class {
 		var _this = this;
 
 		if (config.layer.type != 'image') {
-			alertify.error('This layer must contain an image. Please convert it to raster to apply this tool.');
+			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 

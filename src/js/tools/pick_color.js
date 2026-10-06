@@ -3,6 +3,7 @@ import Base_tools_class from './../core/base-tools.js';
 import Base_layers_class from './../core/base-layers.js';
 import Helper_class from './../libs/helpers.js';
 import Base_gui_class from './../core/base-gui.js';
+import { average_color, sample_radius } from './../libs/color-sampling.js';
 
 class Pick_color_class extends Base_tools_class {
 
@@ -60,6 +61,7 @@ class Pick_color_class extends Base_tools_class {
 		if (mouse.click_valid == false) {
 			return;
 		}
+		this.to_background = Boolean(e.altKey);
 
 		this.pick_color(mouse);
 	}
@@ -69,6 +71,7 @@ class Pick_color_class extends Base_tools_class {
 		if (mouse.is_drag == false || mouse.click_valid == false) {
 			return;
 		}
+		this.to_background = Boolean(e.altKey);
 
 		this.pick_color(mouse);
 	}
@@ -90,14 +93,35 @@ class Pick_color_class extends Base_tools_class {
 			canvas.height = config.HEIGHT;
 			this.Base_layers.convert_layers_to_canvas(ctx, null, false);
 		}
-		//find color
-		var c = ctx.getImageData(mouse.x, mouse.y, 1, 1).data;
+		//find color - a point or the average of a square area (sample size)
+		var sample = params.sample && params.sample.value !== undefined ? params.sample.value : params.sample;
+		var radius = sample_radius(sample);
+		var c;
+		if (radius == 0) {
+			c = ctx.getImageData(mouse.x, mouse.y, 1, 1).data;
+		}
+		else {
+			var x0 = Math.max(0, Math.floor(mouse.x) - radius);
+			var y0 = Math.max(0, Math.floor(mouse.y) - radius);
+			var area = ctx.getImageData(x0, y0, radius * 2 + 1, radius * 2 + 1);
+			c = average_color(area, Math.floor(mouse.x) - x0, Math.floor(mouse.y) - y0, radius);
+		}
 		var hex = this.Helper.rgbToHex(c[0], c[1], c[2]);
 
 		const newColorDefinition = { hex };
 		if (c[3] > 0) {
 			//set alpha
 			newColorDefinition.a = c[3];
+		}
+		if (this.to_background) {
+			//Alt + click sets the background color (as in Photoshop)
+			config.COLOR_BG = hex;
+			var swatch = document.querySelector('.fgbg .bg_swatch');
+			if (swatch) {
+				swatch.value = hex;
+			}
+			this.Helper.setCookie('color_bg', hex);
+			return;
 		}
 		this.Base_gui.GUI_colors.set_color(newColorDefinition);
 	}

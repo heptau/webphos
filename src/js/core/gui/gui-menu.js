@@ -6,10 +6,50 @@
 import config from './../../config.js';
 import menuDefinition from './../../config-menu.js';
 import Tools_translate_class from './../../modules/tools/translate.js';
+import { format_shortcut_mac, is_mac_platform } from './../../libs/shortcuts.js';
+import { is_panel_visible } from './../../libs/panels.js';
+import { menu_icon } from './../../libs/menu-icons.js';
+import Helper_class from './../../libs/helpers.js';
+
+/**
+ * Check mark state of a menu item: true / false for items that switch something on or off or choose one
+ * of several options, null for ordinary commands.
+ */
+function get_check_state(definition) {
+	var helper = new Helper_class();
+	if (definition.panel) {
+		return is_panel_visible(definition.panel);
+	}
+	var target = definition.target || '';
+	var parameter = definition.parameter;
+	switch (target) {
+		case 'view/proof.proof':
+			return (config.proof || 'none') == parameter;
+		case 'view/canvas_color.set_color':
+			return (helper.getCookie('canvas_color') || 'default') == parameter;
+		case 'tools/settings.set_theme':
+			return (helper.getCookie('theme') || 'auto') == parameter;
+		case 'view/guides.toggle':
+			return config.guides_enabled !== false;
+		case 'view/guides.toggle_snap':
+			return config.SNAP !== false;
+		case 'view/ruler.ruler':
+			return config.ruler_active === true;
+		case 'view/split_compare.toggle':
+			return !!config.compare;
+		case 'view/full_screen.fs':
+			return !!document.fullscreenElement;
+	}
+	return null;
+}
 
 /**
  * class responsible for rendering main menu
  */
+function escape_html(text) {
+	return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 class GUI_menu_class {
 
 	constructor() {
@@ -19,11 +59,18 @@ class GUI_menu_class {
 		this.menuBarNode = null;
 		this.lastFocusedMenuBarLink = 0;
 		this.dropdownStack = [];
+		this.press = null;
+		this.suppress_click_until = 0;
+		this.mac = is_mac_platform();
 
 		this.Tools_translate = new Tools_translate_class();
 	}
 
 	render_main() {
+		if (this.initialized) {
+			return;
+		}
+		this.initialized = true;
 		this.menuContainer = document.getElementById('main_menu');
 
 		let menuTemplate = '<ul class="menu_bar" role="menubar" tabindex="0">';
@@ -36,6 +83,9 @@ class GUI_menu_class {
 		this.menuContainer.innerHTML = menuTemplate;
 		this.menuBarNode = this.menuContainer.querySelector('[role="menubar"]');
 
+		this.menuContainer.addEventListener('mousedown', (event) => { return this.on_mouse_down_menu(event); }, true);
+		document.addEventListener('mouseup', (event) => { return this.on_mouse_up_menu(event); }, true);
+		this.menuContainer.addEventListener('mouseover', (event) => { return this.on_mouse_over_menu(event); });
 		this.menuContainer.addEventListener('click', (event) => { return this.on_click_menu(event); }, true);
 		this.menuContainer.addEventListener('keydown', (event) => { return this.on_key_down_menu(event); }, true);
 		this.menuBarNode.addEventListener('focus', (event) => { return this.on_focus_menu_bar(event); });
@@ -44,7 +94,7 @@ class GUI_menu_class {
 			link.addEventListener('focus', (event) => { return this.on_focus_menu_bar_link(event); });
 		});
 		document.body.addEventListener('mousedown', (event) => { return this.on_mouse_down_body(event); }, true);
-		document.body.addEventListener('touchstart', (event) => { return this.on_mouse_down_body(event); }, true);
+		document.body.addEventListener('touchstart', (event) => { return this.on_mouse_down_body(event); }, {capture: true, passive: true});
 		window.addEventListener('resize', (event) => { return this.on_resize_window(event); }, true);
 		
 		document.body.classList.add('loaded');
@@ -75,7 +125,7 @@ class GUI_menu_class {
 		return `
 			<li>
 				<a id="main_menu_0_${index}" role="menuitem" tabindex="-1" aria-haspopup="true" aria-expanded="false"
-					href="javascript:void(0)" data-level="0" data-index="${ index }"><span class="name trn">${ definition.name }</span></a>
+					href="javascript:void(0)" data-level="0" data-index="${ index }"><span class="name ${ definition.app_menu ? 'app_name' : 'trn' }">${ definition.name }</span></a>
 			</li>
 		`.trim();
 	}
@@ -88,15 +138,20 @@ class GUI_menu_class {
 				</li>
 			`.trim();
 		} else {
+			const name = escape_html(definition.name);
 			return `
 				<li>
 					<a id="main_menu_${ level }_${ index }" role="menuitem" tabindex="-1" aria-haspopup="${ (!!definition.children) + '' }"
 						href="${ definition.href ? definition.href : 'javascript:void(0)' }"
 						target="${ definition.href ? '_blank' : '_self' }"
+						${ definition.href ? 'rel="noopener noreferrer"' : '' }
+						${ definition.disabled ? 'aria-disabled="true" class="disabled"' : '' }
+						${ definition.checked ? 'data-checked="true"' : '' }
 						data-level="${ level }" data-index="${ index }">
-						<span class="name"><span class="trn">${ definition.name }</span>${ definition.ellipsis ? ' ...' : '' }</span>
-						${ !!definition.shortcut ? `
-							<span class="shortcut"><span class="sr_only">Shortcut Key:</span> ${ definition.shortcut }</span>
+						${ this.icons_in_dropdown ? `<span class="menu_icon" aria-hidden="true">${ menu_icon(definition.name) }</span>` : '' }
+						<span class="name"><span class="${ definition.verbatim ? '' : 'trn' }">${ name }</span>${ definition.ellipsis ? '…' : '' }</span>
+						${ definition.shortcut ? `
+							<span class="shortcut"><span class="sr_only">Shortcut Key:</span> ${ this.mac ? format_shortcut_mac(definition.shortcut) : definition.shortcut }</span>
 						` : `` }
 					</a>
 				</li>
@@ -157,8 +212,17 @@ class GUI_menu_class {
 				else if (['Down', 'ArrowDown'].includes(event.key)) {
 					if (activeElement.getAttribute('aria-haspopup') === 'true') {
 						event.preventDefault();
-						activeElement.click();
+						if (activeElement.getAttribute('aria-expanded') === 'true' && this.dropdownStack[0]) {
+							//menu was opened with the mouse - move into it
+							this.dropdownStack[0].element.querySelector('a:not(.disabled)').focus();
+						}
+						else {
+							activeElement.click();
+						}
 					}
+				}
+				else if (['Esc', 'Escape'].includes(event.key)) {
+					this.close_child_dropdowns(0);
 				}
 				else if (event.key === 'Home') {
 					menuParent.querySelector(`[data-index="0"]`).focus();
@@ -171,27 +235,19 @@ class GUI_menu_class {
 					activeElement.click();
 				}
 			} else {
+				const enabled_links = Array.from(menuParent.querySelectorAll(':scope > li > a:not(.disabled)'));
+				const position = enabled_links.indexOf(activeElement);
 				if (['Up', 'ArrowUp'].includes(event.key)) {
 					event.preventDefault();
-					let previousLink = menuParent.querySelector(`[data-index="${ linkIndex - 1 }"]`);
-					if (!previousLink) {
-						previousLink = menuParent.querySelector(`[data-index="${ linkIndex - 2 }"]`); // Skip dividers
+					if (enabled_links.length > 0) {
+						enabled_links[(position - 1 + enabled_links.length) % enabled_links.length].focus();
 					}
-					if (!previousLink) {
-						previousLink = menuParent.querySelector(`[data-index="${ this.dropdownStack[linkLevel - 1].children.length - 1 }"]`);
-					}
-					previousLink.focus();
 				}
 				else if (['Down', 'ArrowDown'].includes(event.key)) {
 					event.preventDefault();
-					let nextLink = menuParent.querySelector(`[data-index="${ linkIndex + 1 }"]`);
-					if (!nextLink) {
-						nextLink = menuParent.querySelector(`[data-index="${ linkIndex + 2 }"]`); // Skip dividers
+					if (enabled_links.length > 0) {
+						enabled_links[(position + 1) % enabled_links.length].focus();
 					}
-					if (!nextLink) {
-						nextLink = menuParent.querySelector(`[data-index="0"]`);
-					}
-					nextLink.focus();
 				}
 				else if (['Right', 'ArrowRight'].includes(event.key)) {
 					if (activeElement.getAttribute('aria-haspopup') === 'true') {
@@ -225,11 +281,11 @@ class GUI_menu_class {
 						previousLink.click();
 					}
 				}
-				else if (event.key === 'Home') {
-					menuParent.querySelector(`[data-index="0"]`).focus();
+				else if (event.key === 'Home' && enabled_links.length > 0) {
+					enabled_links[0].focus();
 				}
-				else if (event.key === 'End') {
-					menuParent.querySelector(`[data-index="${ this.dropdownStack[linkLevel - 1].children.length - 1 }"]`).focus();
+				else if (event.key === 'End' && enabled_links.length > 0) {
+					enabled_links[enabled_links.length - 1].focus();
 				}
 				else if ([' ', 'Enter'].includes(event.key)) {
 					event.preventDefault();
@@ -247,13 +303,108 @@ class GUI_menu_class {
 		}
 	}
 
+	/**
+	 * Mouse pressed on a menu bar title: open the menu right away (macOS behaviour), so the user
+	 * can keep the button down, move to an item and release over it to run it.
+	 */
+	on_mouse_down_menu(event) {
+		//a click that was never delivered after the previous press must not eat this one
+		this.suppress_click_until = 0;
+		if (event.button !== 0) {
+			return;
+		}
+		const link = event.target.closest ? event.target.closest('a') : null;
+		if (!link || link.getAttribute('data-level') !== '0') {
+			return;
+		}
+		if (link.getAttribute('aria-expanded') === 'true') {
+			//second click on the open title closes it (handled by click)
+			this.press = null;
+			return;
+		}
+		this.press = { link: link };
+		this.suppress_click();
+		this.toggle_dropdown(link, true);
+		//keyboard navigation works also after the menu was opened with the mouse
+		link.focus({preventScroll: true});
+	}
+
+	/**
+	 * Mouse released: when the button was held since the menu title, the item under the pointer is run.
+	 * Release over the same title keeps the menu open, release anywhere else closes it.
+	 */
+	on_mouse_up_menu(event) {
+		const press = this.press;
+		if (!press) {
+			return;
+		}
+		this.press = null;
+		const target = document.elementFromPoint(event.clientX, event.clientY);
+		const link = target && target.closest ? target.closest('a') : null;
+		if (link && link === press.link) {
+			this.suppress_click();
+			return;
+		}
+		if (this.dropdownStack.length == 0) {
+			return;
+		}
+		if (link && this.menuContainer.contains(link) && link.getAttribute('data-level') !== '0') {
+			if (link.getAttribute('aria-haspopup') === 'true') {
+				return;
+			}
+			this.suppress_click();
+			this.trigger_link(link);
+			return;
+		}
+		this.suppress_click();
+		this.close_child_dropdowns(0);
+	}
+
+	/**
+	 * Hover: with an open menu, pointing at another title switches menus, pointing at a submenu
+	 * item opens it, pointing at a normal item closes deeper submenus.
+	 */
+	on_mouse_over_menu(event) {
+		if (this.dropdownStack.length == 0) {
+			return;
+		}
+		const link = event.target.closest ? event.target.closest('a') : null;
+		if (!link || !this.menuContainer.contains(link)) {
+			return;
+		}
+		const level = parseInt(link.getAttribute('data-level'), 10) || 0;
+		const hasPopup = link.getAttribute('aria-haspopup') === 'true';
+		if (hasPopup) {
+			if (link.getAttribute('aria-expanded') !== 'true') {
+				this.toggle_dropdown(link, true);
+			}
+		}
+		else if (level > 0) {
+			this.close_child_dropdowns(level);
+		}
+	}
+
+	//ignore the click event that follows mouse down / up already handled above
+	suppress_click() {
+		this.suppress_click_until = Date.now() + 300;
+	}
+
 	on_click_menu(event) {
+		if (Date.now() < this.suppress_click_until) {
+			this.suppress_click_until = 0;
+			return;
+		}
 		const target = event.target.closest('a');
 
 		// Any link in the menu is clicked.
 		if (target && target.tagName === 'A') {
 			const hasPopup = target.getAttribute('aria-haspopup') === 'true';			
 			if (hasPopup) {
+				//submenu already opened by hovering stays open (macOS behaviour)
+				if (event.isTrusted && target.getAttribute('data-level') !== '0'
+					&& target.getAttribute('aria-expanded') === 'true') {
+					return;
+				}
 				this.toggle_dropdown(target, event.isTrusted);
 			} else {
 				this.trigger_link(target);
@@ -296,6 +447,10 @@ class GUI_menu_class {
 		}
 		let definition = children[index];
 
+		if (definition.disabled) {
+			return;
+		}
+
 		// Close the dropdown
 		this.close_child_dropdowns(0);
 
@@ -335,6 +490,23 @@ class GUI_menu_class {
 		dropdownElement.tabIndex = 0;
 		dropdownElement.setAttribute('aria-labelledby', 'main_menu_' + level + '_' + index);
 		let dropdownTemplate = '';
+		//menu items that show / hide panels get a check mark
+		const states = children.map((child) => child.divider ? null : get_check_state(child));
+		const has_checks = states.some((state) => state !== null);
+		if (has_checks) {
+			dropdownElement.classList.add('has_checks');
+			children.forEach((child, i) => {
+				if (states[i] !== null) {
+					child.checked = states[i];
+				}
+			});
+		}
+		//icons in front of the names (only when at least one item of the menu has one)
+		const has_icons = children.some((child) => !child.divider && menu_icon(child.name) != '');
+		if (has_icons) {
+			dropdownElement.classList.add('has_icons');
+		}
+		this.icons_in_dropdown = has_icons;
 		for (let i = 0; i < children.length; i++) {
 			dropdownTemplate += this.generate_menu_dropdown_item_template(children[i], level + 1, i);
 		}

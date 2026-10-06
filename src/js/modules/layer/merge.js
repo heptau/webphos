@@ -2,6 +2,7 @@ import app from './../../app.js';
 import config from './../../config.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Base_layers_class from './../../core/base-layers.js';
+import { t } from '../tools/translate.js';
 
 class Layer_merge_class {
 
@@ -11,7 +12,7 @@ class Layer_merge_class {
 
 	merge() {
 		if (this.Base_layers.find_previous(config.layer.id) == null) {
-			alertify.error('There are no layers behind.');
+			alertify.error(t('There are no layers behind.'));
 			return false;
 		}
 

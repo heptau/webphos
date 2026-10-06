@@ -2,6 +2,7 @@ import app from './../app.js';
 import config from './../config.js';
 import { Base_action } from './base.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 export class Activate_tool_action extends Base_action {
 	/**
@@ -26,8 +27,18 @@ export class Activate_tool_action extends Base_action {
 			//reset last
 			document.querySelector('#tools_container .' + this.old_key).classList.remove("active");
 
+			//tools that share the selection (selection, lasso, magic wand, quick mask) do not reset it when switching between them
+			var next_tool = config.TOOLS.find((tool) => tool.name == key);
+			var keeps_selection = Boolean(config.TOOL.keep_selection && next_tool && next_tool.keep_selection);
+			if (keeps_selection) {
+				var old_object = app.GUI.GUI_tools.tools_modules[config.TOOL.name].object;
+				if (typeof old_object.on_switch_keep_selection == 'function') {
+					old_object.on_switch_keep_selection();
+				}
+			}
+
 			//send exit event to old previous tool
-			if (config.TOOL.on_leave != undefined) {
+			if (config.TOOL.on_leave != undefined && !keeps_selection) {
 				var moduleKey = config.TOOL.name;
 				var functionName = config.TOOL.on_leave;
 				this.tool_leave_actions = app.GUI.GUI_tools.tools_modules[moduleKey].object[functionName]();
@@ -50,13 +61,13 @@ export class Activate_tool_action extends Base_action {
 
 			//check module
 			if (app.GUI.GUI_tools.tools_modules[key] == undefined) {
-				alertify.error('Tools class not found: ' + key);
+				alertify.error(t('Tools class not found: ') + key);
 				return;
 			}
 
 			//set default cursor
 			const mainWrapper = document.getElementById('main_wrapper');
-			const defaultCursor = config.TOOL && config.TOOL.name === 'text' ? 'text' : 'default';
+			const defaultCursor = ({text: 'text', hand: 'grab', zoom: 'zoom-in'})[config.TOOL && config.TOOL.name] || 'default';
 			if (mainWrapper.style.cursor != defaultCursor) {
 				mainWrapper.style.cursor = defaultCursor;
 			}
@@ -111,7 +122,7 @@ export class Activate_tool_action extends Base_action {
 
 		//set default cursor
 		const mainWrapper = document.getElementById('main_wrapper');
-		const defaultCursor = config.TOOL && config.TOOL.name === 'text' ? 'text' : 'default';
+		const defaultCursor = ({text: 'text', hand: 'grab', zoom: 'zoom-in'})[config.TOOL && config.TOOL.name] || 'default';
 		if (mainWrapper.style.cursor != defaultCursor) {
 			mainWrapper.style.cursor = defaultCursor;
 		}
