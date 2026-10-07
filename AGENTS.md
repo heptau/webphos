@@ -107,7 +107,7 @@ Položka v `config-menu.js`:
 - Žádné odesílání dat na server (privacy-first); externí volání jen přes existující `url-validator`/`input-validator` knihovny.
 - Uživatelský vstup z URL/souborů validuj (`libs/input-validator.js`, `libs/url-validator.js`).
 - Nastavení (téma, jazyk) se ukládá do cookie přes `libs/cookie-config.js`; téma/jazyk mají režim `auto` (podle systému, `libs/system-preferences.js`).
-- Komunikace s uživatelem a komentáře v commitech: čeština nebo angličtina, commit zprávy anglicky ve stylu stávající historie.
+- Komunikace s uživatelem a komentáře v commitech: čeština nebo angličtina, commit zprávy anglicky podle Conventional Commits (`feat(scope): …`, `fix: …`, `docs:`, `ci:`, `chore:`; viz `CONTRIBUTING.md`).
 - Nepřidávej osobní údaje zákazníků (PII) do kódu, testů ani odpovědí.
 
 ## Hotové funkce ve stylu Photoshopu

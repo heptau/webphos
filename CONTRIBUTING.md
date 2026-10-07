@@ -47,11 +47,15 @@ New texts must be translated: add them to `src/js/languages/cs.json`, run
 
 ## Commit messages
 
-Commit messages are written in English, short and in the style of the existing
-history (an imperative summary of what changed), for example:
+Commit messages are written in English and follow
+[Conventional Commits](https://www.conventionalcommits.org/):
+`<type>(optional scope): <imperative summary>`. Common types are `feat`, `fix`,
+`docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci` and `chore`; mark
+breaking changes with `!` after the type (`feat!: ...`). Examples:
 
-- `add Layer Mask commands to the Layer menu`
-- `fix text color reverting to the default`
+- `feat(layer): add Layer Mask commands to the Layer menu`
+- `fix(text): keep text color instead of reverting to the default`
+- `ci: audit only production dependencies`
 
 ## Code Style
 
