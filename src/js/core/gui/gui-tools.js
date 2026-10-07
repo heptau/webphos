@@ -5,7 +5,8 @@
 
 import app from './../../app.js';
 import config from './../../config.js';
-import { is_tool_disabled } from './../../libs/raster-tools.js';
+import { is_tool_disabled, needs_raster_layer } from './../../libs/raster-tools.js';
+import Layer_raster_class from './../../modules/layer/raster.js';
 import Helper_class from './../../libs/helpers.js';
 import Tools_translate_class, { t } from './../../modules/tools/translate.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
@@ -179,18 +180,18 @@ class GUI_tools_class {
 		//the order of the Photoshop toolbar read row by row in two columns; the groups have an even number
 		//of tools (the animation is the last one) so no hole is left before a separator
 		var groups = [
-			//Move, Marquee, Lasso, Quick Selection, Magic Wand
+			//Move, Marquee, Lasso, Quick Selection, Magic Wand, Quick Mask
 			['select', 'selection', 'lasso', 'quick_select', 'magic_wand', 'quick_mask'],
-			//Crop, Eyedropper, Ruler, Healing, Red Eye, Clone Stamp
-			['crop', 'pick_color', 'measure', 'heal', 'red_eye', 'clone'],
-			//Brush, Pencil, Eraser, Background Eraser, Magic Eraser, Gradient
-			['brush', 'pencil', 'erase', 'background_eraser', 'magic_erase', 'gradient'],
-			//Paint Bucket, Blur, Sharpen, Smudge, Dodge/Burn, Sponge, Liquify, Bulge/Pinch
-			['fill', 'blur', 'sharpen', 'smudge', 'dodge_burn', 'desaturate', 'liquify', 'bulge_pinch'],
-			//Type, Shapes
-			['text', 'shape'],
-			//Hand, Zoom
-			['hand', 'zoom', 'animation'],
+			//Crop, Eyedropper, Ruler, Healing, Patch, Red Eye, Brush, Pencil, Clone Stamp, History Brush, Eraser,
+			//Background Eraser, Magic Eraser, Gradient, Paint Bucket, Blur, Sharpen, Smudge, Dodge/Burn, Sponge,
+			//Liquify, Bulge/Pinch
+			['crop', 'pick_color', 'measure', 'heal', 'patch', 'red_eye', 'brush', 'pencil', 'clone', 'history_brush',
+				'erase', 'background_eraser', 'magic_erase', 'gradient', 'fill', 'blur', 'sharpen', 'smudge', 'dodge_burn',
+				'sponge', 'liquify', 'bulge_pinch'],
+			//Pen, Type, Shapes, Hand
+			['pen', 'text', 'shape', 'hand'],
+			//Zoom, Animation
+			['zoom', 'animation'],
 		];
 		var result = [];
 		var used = {};
@@ -231,6 +232,14 @@ class GUI_tools_class {
 				button.removeAttribute('aria-disabled');
 			}
 		});
+		//the empty first layer becomes a picture when the tool needs one
+		if (needs_raster_layer(this.active_tool, layer) && this.tool_switching != true) {
+			this.tool_switching = true;
+			Promise.resolve(new Layer_raster_class().raster_empty()).finally(() => {
+				this.tool_switching = false;
+			});
+			return;
+		}
 		//the active tool can not stay on a layer it does not work on
 		if (is_tool_disabled(this.active_tool, layer) && this.tool_switching != true) {
 			this.tool_switching = true;
@@ -244,6 +253,13 @@ class GUI_tools_class {
 		if (is_tool_disabled(key, config.layer)) {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
+		}
+		if (needs_raster_layer(key, config.layer)) {
+			//the empty first layer has no pixels: it becomes a transparent picture and the tool is chosen, in one step of
+			//the history (one Undo takes back both)
+			var actions = new Layer_raster_class().empty_actions();
+			actions.push(new app.Actions.Activate_tool_action(key));
+			return app.State.do_action(new app.Actions.Bundle_action('convert_to_raster', 'Convert to Raster', actions));
 		}
 		return app.State.do_action(
 			new app.Actions.Activate_tool_action(key)

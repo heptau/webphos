@@ -7,6 +7,9 @@ import { build_zip } from './../../libs/zip.js';
 import { sprite_layout, print_tiles } from './../../libs/effects3.js';
 import Base_layers_class from './../../core/base-layers.js';
 import { save_blob } from './../../libs/file-save.js';
+import { layer_file_names } from './../../libs/export-names.js';
+import { build_psd, content_bounds } from './../../libs/psd-write.js';
+import { effective_alpha, group_props_of, is_isolated, nest_layers } from './../../libs/layer-groups.js';
 import { t } from '../tools/translate.js';
 
 //sizes of an app icon set (iOS, Android, web, PWA)
@@ -128,6 +131,111 @@ class File_export_extra_class {
 				files.push({name: 'icon-' + size + '.png', data: await canvas_to_bytes(this.scaled(source, size, size, true))});
 			}
 			await save_blob(new Blob([build_zip(files)], {type: 'application/zip'}), this.base_name() + '-icons.zip', this.use_picker());
+		}
+		catch (error) {
+			alertify.error(t('Export failed.'));
+		}
+	}
+
+	/**
+	 * File > Export Layers - every visible layer as its own PNG (cut to its content, with its layer style) in one ZIP
+	 */
+	export_layers() {
+		var layers = config.layers.filter((layer) => layer.type != null && layer.visible !== false).sort((a, b) => a.order - b.order);
+		if (layers.length == 0) {
+			alertify.error(t('There are no visible layers to export.'));
+			return;
+		}
+		this.POP.show({
+			title: 'Export Layers',
+			params: [
+				{name: "full_size", title: "Size of the document:", value: false},
+			],
+			on_finish: async (params) => {
+				try {
+					var names = layer_file_names(layers);
+					var files = [];
+					for (var i = 0; i < layers.length; i++) {
+						var canvas = this.Base_layers.convert_layer_to_canvas(layers[i].id, false, params.full_size !== true);
+						files.push({name: names[i], data: await canvas_to_bytes(canvas)});
+					}
+					await save_blob(new Blob([build_zip(files)], {type: 'application/zip'}), this.base_name() + '-layers.zip', this.use_picker());
+				}
+				catch (error) {
+					alertify.error(t('Export failed.'));
+				}
+			},
+		});
+	}
+
+	/**
+	 * File > Export as PSD - a Photoshop file with the layers (pixels, place, opacity, visibility, blend mode, name) and
+	 * the flattened picture. Adjustment layers, masks and clipping are not written as such; every layer is drawn the way it
+	 * looks (with its effects and mask) and trimmed to its visible part.
+	 */
+	async export_psd() {
+		var layers = config.layers.filter((layer) => layer.type != null && layer.type != 'adjustment').sort((a, b) => a.order - b.order);
+		if (layers.length == 0) {
+			alertify.error(t('There are no layers to export.'));
+			return;
+		}
+		try {
+			var width = config.WIDTH;
+			var height = config.HEIGHT;
+			var work = document.createElement('canvas');
+			work.width = width;
+			work.height = height;
+			var ctx = work.getContext('2d', {willReadFrequently: true});
+			var out = [];
+			var records = new Map();
+			for (var layer of layers) {
+				ctx.clearRect(0, 0, width, height);
+				ctx.globalAlpha = 1;
+				ctx.globalCompositeOperation = 'source-over';
+				this.Base_layers.render_object(ctx, layer);
+				var image = ctx.getImageData(0, 0, width, height);
+				var box = content_bounds(image.data, width, height);
+				if (box == null) {
+					continue;
+				}
+				var part = ctx.getImageData(box.x, box.y, box.width, box.height);
+				records.set(layer, {
+					name: String(layer.name), x: box.x, y: box.y, width: box.width, height: box.height,
+					opacity: Math.round(effective_alpha(layer) * 100), visible: layer.visible !== false,
+					composition: layer.composition, data: part.data,
+				});
+			}
+			if (records.size == 0) {
+				alertify.error(t('There are no layers to export.'));
+				return;
+			}
+			//the groups with their settings, from the bottom to the top (the divider that starts a group comes first)
+			var write = (items) => {
+				for (var i = items.length - 1; i >= 0; i--) {
+					var item = items[i];
+					if (item.kind == 'layer') {
+						if (records.has(item.layer)) {
+							out.push(records.get(item.layer));
+						}
+						continue;
+					}
+					var first = layers.find((member) => member.group === item.name || (member.group || '').indexOf(item.name + '/') === 0);
+					var props = group_props_of(first, item.name);
+					out.push({section: 'end'});
+					write(item.items);
+					out.push({section: 'start', name: item.label, opacity: props.opacity, visible: true, composition: props.composition, pass: !is_isolated(props)});
+				}
+			};
+			write(nest_layers(layers.slice().reverse()));
+			if (out.length == 0) {
+				alertify.error(t('There are no layers to export.'));
+				return;
+			}
+			ctx.clearRect(0, 0, width, height);
+			this.Base_layers.convert_layers_to_canvas(ctx);
+			var composite = ctx.getImageData(0, 0, width, height).data;
+			var bytes = build_psd(width, height, out, composite);
+			await save_blob(new Blob([bytes], {type: 'image/vnd.adobe.photoshop'}), this.base_name() + '.psd', this.use_picker());
 		}
 		catch (error) {
 			alertify.error(t('Export failed.'));

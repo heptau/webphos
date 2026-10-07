@@ -8,6 +8,8 @@ import Clipboard_class from './../../libs/clipboard.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import EXIF from './../../../../node_modules/exif-js/exif.js';
 import GUI_tools_class from "../../core/gui/gui-tools";
+import { parse_psd } from './../../libs/psd.js';
+import { group_ancestors, is_isolated } from './../../libs/layer-groups.js';
 import { validate_file, validate_json_file, validate_data_url, sanitize_filename } from './../../libs/input-validator.js';
 import { t } from '../tools/translate.js';
 import Tools_settings_class from './../tools/settings.js';
@@ -69,17 +71,6 @@ class File_open_class {
 		window.ondragover = function (e) {
 			e.preventDefault();
 		};
-		document.addEventListener('keydown', (event) => {
-			var code = event.key.toLowerCase();
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == "o") {
-				//open
-				this.open_file();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	on_paste(data, width, height) {
@@ -155,6 +146,58 @@ class File_open_class {
 		document.querySelector('#file_open').click();
 	}
 	
+	/**
+	 * File > Open > Open as Layer - the pictures are added to the current document as new layers
+	 * (File > Open File would open them in a new document tab)
+	 */
+	open_as_layer() {
+		var _this = this;
+		document.getElementById("tmp").innerHTML = '';
+		var input = document.createElement('input');
+		input.setAttribute("id", "file_open_layer");
+		input.type = 'file';
+		input.multiple = 'multiple';
+		input.accept = 'image/*';
+		document.getElementById("tmp").appendChild(input);
+		input.addEventListener('change', function () {
+			_this.add_files_as_layers(Array.from(input.files));
+		}, false);
+		input.click();
+	}
+
+	async add_files_as_layers(files) {
+		for (var file of files) {
+			var validation = validate_file(file);
+			if (!validation.valid) {
+				alertify.error(validation.error);
+				continue;
+			}
+			try {
+				//createImageBitmap: the page does not allow blob: images (CSP)
+				var bitmap = await createImageBitmap(file);
+				var canvas = document.createElement('canvas');
+				canvas.width = bitmap.width;
+				canvas.height = bitmap.height;
+				canvas.getContext('2d').drawImage(bitmap, 0, 0);
+				if (bitmap.close) {
+					bitmap.close();
+				}
+				await app.State.do_action(
+					new app.Actions.Bundle_action('open_as_layer', 'Open as Layer', [
+						new app.Actions.Insert_layer_action({
+							name: sanitize_filename(file.name),
+							type: 'image',
+							data: canvas.toDataURL('image/png'),
+						}, false),
+					])
+				);
+			}
+			catch (error) {
+				alertify.error(t('Sorry, image could not be loaded.'));
+			}
+		}
+	}
+
 	open_webcam(){
 		return this.webcam_ops.open_webcam();
 	}
@@ -252,7 +295,7 @@ class File_open_class {
 		}
 
 		//an image opens in a new document tab (if the current document has content and the setting allows it)
-		var has_image = Array.from(files).some((file) => file.type && file.type.match('image.*'));
+		var has_image = Array.from(files).some((file) => (file.type && file.type.match('image.*')) || /\.psd$/i.test(file.name));
 		if (has_image && this.Tools_settings.get_setting('open_in_new_tab') && app.GUI.GUI_documents.has_content()) {
 			await app.GUI.GUI_documents.new_blank();
 			auto_increment = this.Base_layers.auto_increment;
@@ -283,6 +326,12 @@ class File_open_class {
 
 		for (var i = 0, f; i < files.length; i++) {
 			f = files[i];
+
+			//Photoshop files are read by our own reader
+			if (/\.psd$/i.test(f.name)) {
+				await this.open_psd(f);
+				continue;
+			}
 
 			// Validate file
 			var fileValidation = validate_file(f);
@@ -355,6 +404,86 @@ class File_open_class {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Opens a Photoshop file: every layer becomes a layer here (pixels, place, opacity, visibility, blend mode, name).
+	 * Effects, masks, text, smart objects and groups are not read.
+	 *
+	 * @param {File} file
+	 */
+	async open_psd(file) {
+		if (file.size > 300 * 1024 * 1024) {
+			alertify.error(t('The file is too big.'));
+			return;
+		}
+		var psd;
+		try {
+			psd = parse_psd(await file.arrayBuffer());
+		}
+		catch (error) {
+			alertify.error(t('The Photoshop file could not be read:') + ' ' + t(error && error.message ? error.message : 'Unknown error'));
+			return;
+		}
+		var name = sanitize_filename(file.name);
+		this.SAVE_NAME = name.replace(/\.psd$/i, '');
+		var to_data = (data, width, height) => {
+			var canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			canvas.getContext('2d').putImageData(new ImageData(data, width, height), 0, 0);
+			var url = canvas.toDataURL('image/png');
+			canvas.width = 1;
+			canvas.height = 1;
+			return url;
+		};
+		//the opacity and blend mode of the groups of a layer, as they are kept on every layer of a group
+		var group_props_of_layer = (layer) => {
+			var map = {};
+			group_ancestors(layer.group).forEach((path) => {
+				var group = psd.groups[path];
+				if (group && is_isolated({opacity: group.opacity, composition: group.composition, mask: null})) {
+					map[path] = {opacity: group.opacity, composition: group.composition, mask: null};
+				}
+			});
+			return Object.keys(map).length > 0 ? map : null;
+		};
+		var layers = psd.layers;
+		if (layers.length == 0 && psd.composite) {
+			layers = [{name: name, x: 0, y: 0, width: psd.width, height: psd.height, opacity: 100, visible: true, composition: 'source-over', data: psd.composite}];
+		}
+		if (layers.length == 0) {
+			alertify.error(t('The Photoshop file has no picture.'));
+			return;
+		}
+		var actions = [];
+		var first = layers[0];
+		if (first.x != 0 || first.y != 0 || first.width != psd.width || first.height != psd.height) {
+			//the first layer sets the size of the document, so a transparent one with the size of the file comes first
+			var base = document.createElement('canvas');
+			base.width = psd.width;
+			base.height = psd.height;
+			actions.push(new app.Actions.Insert_layer_action({
+				name: t('Canvas'), type: 'image', data: base.toDataURL('image/png'), x: 0, y: 0, width: psd.width, height: psd.height,
+			}));
+		}
+		layers.forEach((layer) => {
+			actions.push(new app.Actions.Insert_layer_action({
+				name: layer.name,
+				type: 'image',
+				data: to_data(layer.data, layer.width, layer.height),
+				x: layer.x,
+				y: layer.y,
+				width: layer.width,
+				height: layer.height,
+				opacity: layer.opacity,
+				visible: layer.visible,
+				composition: layer.composition,
+				group: layer.group || null,
+				group_props: group_props_of_layer(layer),
+			}, layers.indexOf(layer) > 0 || actions.length > 0 ? false : true));
+		});
+		await app.State.do_action(new app.Actions.Bundle_action('open_psd', 'Open Image', actions));
 	}
 
 	traverseFileTree(item, path) {

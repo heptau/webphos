@@ -79,6 +79,42 @@ export function ellipse_mask(rect, width, height) {
 }
 
 /**
+ * Rectangle with rounded corners (the edge is smooth)
+ *
+ * @param {Rect} rect
+ * @param {number} radius corner radius in pixels, at most half of the shorter side
+ * @param {number} width canvas width
+ * @param {number} height canvas height
+ * @returns {Mask}
+ */
+export function rounded_rect_mask(rect, radius, width, height) {
+	var mask = create_mask(width, height);
+	if (rect.width <= 0 || rect.height <= 0) {
+		return mask;
+	}
+	var r = clamp(radius, 0, Math.min(rect.width, rect.height) / 2);
+	var top = clamp(Math.floor(rect.y), 0, height);
+	var bottom = clamp(Math.ceil(rect.y + rect.height), 0, height);
+	var left = clamp(Math.floor(rect.x), 0, width);
+	var right = clamp(Math.ceil(rect.x + rect.width), 0, width);
+	var half_w = rect.width / 2;
+	var half_h = rect.height / 2;
+	var center_x = rect.x + half_w;
+	var center_y = rect.y + half_h;
+	for (var y = top; y < bottom; y++) {
+		for (var x = left; x < right; x++) {
+			//signed distance from the edge of the rounded rectangle (negative inside)
+			var qx = Math.abs(x + 0.5 - center_x) - (half_w - r);
+			var qy = Math.abs(y + 0.5 - center_y) - (half_h - r);
+			var distance = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
+			//half a pixel of anti-aliasing at the edge
+			mask.data[y * width + x] = Math.round(clamp(0.5 - distance, 0, 1) * 255);
+		}
+	}
+	return mask;
+}
+
+/**
  * @param {Mask} mask
  * @returns {Mask} new mask with inverted values
  */
@@ -878,6 +914,77 @@ export function translate_mask(mask, dx, dy) {
 		var to = Math.min(w, w - dx);
 		for (var x = from; x < to; x++) {
 			result.data[ny * w + x + dx] = mask.data[y * w + x];
+		}
+	}
+	return result;
+}
+
+/**
+ * Transform Selection - the selection (not its pixels) is scaled and turned around its center and moved.
+ * Every pixel of the result takes its value from the matching place of the original (smooth, so the edge stays soft).
+ *
+ * @param {Mask} mask
+ * @param {object} params scale_x, scale_y (1-1000 %, default 100), rotate (degrees, clockwise), dx, dy (pixels)
+ * @returns {Mask} new mask of the same size
+ */
+export function transform_mask(mask, params) {
+	var w = mask.width;
+	var h = mask.height;
+	var result = create_mask(w, h);
+	var bounds = mask_bounds(mask);
+	if (bounds == null) {
+		return result;
+	}
+	var sx = clamp(parseFloat(params.scale_x ?? 100) || 100, 1, 1000) / 100;
+	var sy = clamp(parseFloat(params.scale_y ?? 100) || 100, 1, 1000) / 100;
+	var angle = (parseFloat(params.rotate) || 0) * Math.PI / 180;
+	var dx = parseFloat(params.dx) || 0;
+	var dy = parseFloat(params.dy) || 0;
+	var cos = Math.cos(angle);
+	var sin = Math.sin(angle);
+	var cx = bounds.x + bounds.width / 2;
+	var cy = bounds.y + bounds.height / 2;
+
+	//the area the transformed selection can cover (corners of the old bounds), so the rest is not even visited
+	var left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+	[[bounds.x, bounds.y], [bounds.x + bounds.width, bounds.y], [bounds.x, bounds.y + bounds.height], [bounds.x + bounds.width, bounds.y + bounds.height]].forEach(function (corner) {
+		var ux = (corner[0] - cx) * sx;
+		var uy = (corner[1] - cy) * sy;
+		var x = cx + dx + ux * cos - uy * sin;
+		var y = cy + dy + ux * sin + uy * cos;
+		left = Math.min(left, x);
+		right = Math.max(right, x);
+		top = Math.min(top, y);
+		bottom = Math.max(bottom, y);
+	});
+	var x_from = clamp(Math.floor(left) - 1, 0, w);
+	var x_to = clamp(Math.ceil(right) + 1, 0, w);
+	var y_from = clamp(Math.floor(top) - 1, 0, h);
+	var y_to = clamp(Math.ceil(bottom) + 1, 0, h);
+
+	for (var y = y_from; y < y_to; y++) {
+		for (var x = x_from; x < x_to; x++) {
+			//back from the result to the original: undo the move, the turn and the scale
+			var px = x + 0.5 - cx - dx;
+			var py = y + 0.5 - cy - dy;
+			var ox = (px * cos + py * sin) / sx + cx - 0.5;
+			var oy = (-px * sin + py * cos) / sy + cy - 0.5;
+			var x0 = Math.floor(ox);
+			var y0 = Math.floor(oy);
+			var fx = ox - x0;
+			var fy = oy - y0;
+			var value = 0;
+			for (var j = 0; j < 2; j++) {
+				for (var i = 0; i < 2; i++) {
+					var xx = x0 + i;
+					var yy = y0 + j;
+					if (xx < 0 || yy < 0 || xx >= w || yy >= h) {
+						continue;
+					}
+					value += mask.data[yy * w + xx] * (i ? fx : 1 - fx) * (j ? fy : 1 - fy);
+				}
+			}
+			result.data[y * w + x] = Math.round(value);
 		}
 	}
 	return result;

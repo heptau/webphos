@@ -19,15 +19,6 @@ class File_quickload_class {
 	set_events() {
 		var _this = this;
 
-		document.addEventListener('keydown', function (event) {
-			var code = event.keyCode;
-
-			if (code == 121) {
-				//F10
-				_this.quickload();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	quickload() {

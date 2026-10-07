@@ -2,6 +2,14 @@ import app from './../app.js';
 import config from './../config.js';
 import Base_tools_class from './../core/base-tools.js';
 import Base_layers_class from './../core/base-layers.js';
+import { stabilize } from './../libs/stabilizer.js';
+import { stroke_scale, is_stretched } from './../libs/stroke-scale.js';
+import { load_stored_tip } from './../libs/brush-tip.js';
+import { symmetry_transforms } from './../libs/symmetry.js';
+import { stamps_along } from './../libs/brush-tip.js';
+import { has_dynamics, apply_dynamics } from './../libs/brush-dynamics.js';
+import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
+import { t } from '../modules/tools/translate.js';
 
 class Brush_class extends Base_tools_class {
 
@@ -22,6 +30,11 @@ class Brush_class extends Base_tools_class {
 	load() {
 		var _this = this;
 		var is_touch = false;
+
+		//the tip defined in an earlier session
+		if (!config.brush_tip) {
+			config.brush_tip = load_stored_tip();
+		}
 
 		//pointer events
 		document.addEventListener('pointerdown', function (event) {
@@ -201,12 +214,12 @@ class Brush_class extends Base_tools_class {
 
 		var params_hash = this.get_params_hash();
 
-		if (config.layer.type != this.name || params_hash != this.params_hash) {
-			//register new object - current layer is not ours or params changed
+		if (config.layer.type != this.name || params_hash != this.params_hash || is_stretched(config.layer)) {
+			//register new object - current layer is not ours, params changed or the layer was stretched with the handles
 			this.layer = {
 				type: this.name,
 				data: [[]],
-				params: this.clone(this.getParams()),
+				params: Object.assign(this.clone(this.getParams()), {symmetry_center: [config.WIDTH / 2, config.HEIGHT / 2]}, this.tip_params()),
 				status: 'draft',
 				render_function: [this.name, 'render'],
 				x: 0,
@@ -276,6 +289,9 @@ class Brush_class extends Base_tools_class {
 		var mouse_x = mouse_coords.x;
 		var mouse_y = mouse_coords.y;
 
+		//the stabilizer follows the stroke from its first point
+		this.smooth_last = {x: mouse_x, y: mouse_y};
+
 		current_group.push([mouse_x - config.layer.x, mouse_y - config.layer.y, new_size]);
 		this.Base_layers.render();
 	}
@@ -315,8 +331,11 @@ class Brush_class extends Base_tools_class {
 		}
 
 		var mouse_coords = this.get_mouse_coordinates_from_event(e);
-		var mouse_x = mouse_coords.x;
-		var mouse_y = mouse_coords.y;
+		//stabilizer: the brush follows the mouse with a lag
+		var smooth = stabilize(this.smooth_last, mouse_coords, params.stabilizer);
+		this.smooth_last = smooth;
+		var mouse_x = smooth.x;
+		var mouse_y = smooth.y;
 
 		current_group.push([mouse_x - config.layer.x, mouse_y - config.layer.y, new_size]);
 		config.layer.status = 'draft';
@@ -336,6 +355,102 @@ class Brush_class extends Base_tools_class {
 		this.Base_layers.render();
 	}
 
+	/**
+	 * the custom tip (when it is chosen in the tool options) goes with the layer, so it stays as it was drawn
+	 */
+	tip_params() {
+		var tip = this.getParams().tip;
+		var custom = (tip && tip.value !== undefined ? tip.value : tip) == 'Custom';
+		if (custom && config.brush_tip) {
+			return {tip_data: config.brush_tip.data};
+		}
+		if (custom) {
+			alertify.warning(t('Define a brush tip first (Edit > Define Brush).'));
+		}
+		return {};
+	}
+
+	/**
+	 * a new brush tip (Edit > Define Brush) starts a new brush layer
+	 */
+	get_params_hash() {
+		return super.get_params_hash() + '|' + (config.brush_tip ? config.brush_tip.id : '');
+	}
+
+	/**
+	 * The custom tip as a canvas filled with the color of the brush (white mask of the tip is painted over).
+	 * The picture loads in the background; until it is there, null is returned and the layer is drawn again when it loads.
+	 *
+	 * @param {string} data_url PNG data URL of the tip mask
+	 * @param {string} color
+	 * @returns {HTMLCanvasElement|null}
+	 */
+	get_tip_canvas(data_url, color) {
+		if (typeof data_url != 'string' || data_url.indexOf('data:image/png;base64,') != 0) {
+			return null;
+		}
+		this.tip_images = this.tip_images || {};
+		this.tip_canvases = this.tip_canvases || {};
+		var key = data_url.length + ':' + data_url.slice(-64) + '|' + color;
+		if (this.tip_canvases[key]) {
+			return this.tip_canvases[key];
+		}
+		var image = this.tip_images[data_url];
+		if (!image) {
+			image = new Image();
+			image.onload = () => {
+				config.need_render = true;
+			};
+			image.src = data_url;
+			this.tip_images[data_url] = image;
+		}
+		if (!image.complete || !image.naturalWidth) {
+			return null;
+		}
+		var canvas = document.createElement('canvas');
+		canvas.width = image.naturalWidth;
+		canvas.height = image.naturalHeight;
+		var ctx = canvas.getContext('2d');
+		ctx.drawImage(image, 0, 0);
+		ctx.globalCompositeOperation = 'source-in';
+		ctx.fillStyle = color;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		this.tip_canvases[key] = canvas;
+		return canvas;
+	}
+
+	/**
+	 * Strokes made of stamps: of the custom tip, or of round dots when only the dynamics are on.
+	 * One stamp every "spacing" percent of the brush size; the dynamics change every stamp a little.
+	 */
+	render_tip_strokes(ctx, data, params, tip) {
+		var spacing = Math.max(1, params.size * (parseFloat(params.spacing) || 25) / 100);
+		var longest = tip ? Math.max(tip.width, tip.height) : 1;
+		var base_alpha = ctx.globalAlpha;
+		for (var k = 0; k < data.length; k++) {
+			var stamps = stamps_along(data[k], spacing).map(function (stamp) {
+				return {x: stamp.x, y: stamp.y, size: params.pressure == true ? stamp.size : params.size};
+			});
+			apply_dynamics(stamps, params, k).forEach(function (stamp) {
+				ctx.save();
+				ctx.globalAlpha = base_alpha * stamp.alpha;
+				ctx.translate(stamp.x, stamp.y);
+				ctx.rotate(stamp.angle);
+				if (tip) {
+					var w = stamp.size * tip.width / longest;
+					var h = stamp.size * tip.height / longest;
+					ctx.drawImage(tip, -w / 2, -h / 2, w, h);
+				}
+				else {
+					ctx.beginPath();
+					ctx.arc(0, 0, stamp.size / 2, 0, 2 * Math.PI, false);
+					ctx.fill();
+				}
+				ctx.restore();
+			});
+		}
+	}
+
 	render(ctx, layer) {
 		if (layer.data.length == 0)
 			return;
@@ -352,12 +467,48 @@ class Brush_class extends Base_tools_class {
 		ctx.lineJoin = 'round';
 
 		ctx.translate(layer.x, layer.y);
-
-		var data = layer.data;
+		//the layer was resized with the handles: the strokes are stretched with it
+		var scale = stroke_scale(layer);
+		ctx.scale(scale.x, scale.y);
 
 		//check for legacy format
-		data = this.check_legacy_format(data);
+		var data = this.check_legacy_format(layer.data);
 
+		//symmetry: the same strokes again, mirrored or turned around the center of the picture
+		var center = params.symmetry_center || [config.WIDTH / 2, config.HEIGHT / 2];
+		var center_x = (center[0] - layer.x) / scale.x;
+		var center_y = (center[1] - layer.y) / scale.y;
+		symmetry_transforms(params.symmetry).forEach((transform, index) => {
+			if (index == 0) {
+				this.render_strokes(ctx, data, params, size);
+				return;
+			}
+			ctx.save();
+			ctx.translate(center_x, center_y);
+			ctx.rotate(transform.angle);
+			ctx.scale(transform.sx, transform.sy);
+			ctx.translate(-center_x, -center_y);
+			this.render_strokes(ctx, data, params, size);
+			ctx.restore();
+		});
+
+		ctx.translate(-layer.x, -layer.y);
+		ctx.restore();
+	}
+
+	render_strokes(ctx, data, params, size) {
+		if (params.tip_data || has_dynamics(params)) {
+			//custom brush tip and / or dynamics - until the tip is loaded nothing is drawn
+			var tip = null;
+			if (params.tip_data) {
+				tip = this.get_tip_canvas(params.tip_data, ctx.fillStyle);
+				if (tip == null) {
+					return;
+				}
+			}
+			this.render_tip_strokes(ctx, data, params, tip);
+			return;
+		}
 		var n = data.length;
 		for (var k = 0; k < n; k++) {
 			var group_data = data[k]; //data from mouse down till mouse release
@@ -405,9 +556,6 @@ class Brush_class extends Base_tools_class {
 				}
 			}
 		}
-
-		ctx.translate(-layer.x, -layer.y);
-		ctx.restore();
 	}
 
 	/**
@@ -557,6 +705,9 @@ class Brush_class extends Base_tools_class {
 				y: config.layer.y + min_y,
 				width: max_x - min_x,
 				height: max_y - min_y,
+				//the size of the strokes: the layer can be stretched with the handles and the strokes with it
+				width_original: max_x - min_x,
+				height_original: max_y - min_y,
 				data
 			}),
 			{

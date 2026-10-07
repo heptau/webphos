@@ -28,17 +28,6 @@ class Image_trim_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 84 && has_modifier(event) == false) {
-				//trim
-				this.trim();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	trim() {

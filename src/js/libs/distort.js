@@ -297,3 +297,221 @@ export function lensFlare(image, params) {
 	}
 	return image;
 }
+
+/**
+ * Spherize - the middle of the image bulges like on a ball (positive amount) or is pinched (negative)
+ *
+ * @param {Image_data} image
+ * @param {object} params amount (-100..100 %), radius (10-100 % of the shorter side, default 100)
+ * @returns {Image_data}
+ */
+export function spherize(image, params) {
+	var amount = clamp(parseFloat(params.amount) || 0, -100, 100) / 100 * 0.95;
+	var radius = clamp(parseFloat(params.radius ?? 100) || 100, 10, 100) / 100 * Math.min(image.width, image.height) / 2;
+	if (amount == 0) {
+		return image;
+	}
+	var cx = image.width / 2;
+	var cy = image.height / 2;
+	return remap(image, function (x, y, position) {
+		var dx = x - cx;
+		var dy = y - cy;
+		var r = Math.sqrt(dx * dx + dy * dy) / radius;
+		if (r >= 1) {
+			return;
+		}
+		//a smooth lens: the source is closer to the center (bulge) or farther from it (pinch)
+		var k = 1 - amount * (1 - r * r);
+		position[0] = cx + dx * k;
+		position[1] = cy + dy * k;
+	});
+}
+
+/**
+ * Ripple - circles spreading from the center, like a stone dropped in water
+ *
+ * @param {Image_data} image
+ * @param {object} params amplitude (0-10 % of the shorter side), wavelength (1-100 % of the shorter side)
+ * @returns {Image_data}
+ */
+export function ripple(image, params) {
+	var size = Math.min(image.width, image.height);
+	var amplitude = clamp(parseFloat(params.amplitude) || 0, 0, 10) / 100 * size;
+	var wavelength = Math.max(2, clamp(parseFloat(params.wavelength ?? 10) || 10, 1, 100) / 100 * size);
+	if (amplitude == 0) {
+		return image;
+	}
+	var cx = image.width / 2;
+	var cy = image.height / 2;
+	return remap(image, function (x, y, position) {
+		var dx = x - cx;
+		var dy = y - cy;
+		var distance = Math.sqrt(dx * dx + dy * dy);
+		if (distance == 0) {
+			return;
+		}
+		var shift = amplitude * Math.sin(2 * Math.PI * distance / wavelength);
+		position[0] = x + dx / distance * shift;
+		position[1] = y + dy / distance * shift;
+	});
+}
+
+/**
+ * Kaleidoscope - one wedge of the image is mirrored around the center
+ *
+ * @param {Image_data} image
+ * @param {object} params segments (2-24), angle (0-360 degrees, turns the wedge)
+ * @returns {Image_data}
+ */
+export function kaleidoscope(image, params) {
+	var segments = clamp(Math.round(parseFloat(params.segments ?? 6)) || 6, 2, 24);
+	var offset = (parseFloat(params.angle) || 0) * Math.PI / 180;
+	var cx = image.width / 2;
+	var cy = image.height / 2;
+	var wedge = 2 * Math.PI / segments;
+	return remap(image, function (x, y, position) {
+		var dx = x - cx;
+		var dy = y - cy;
+		var distance = Math.sqrt(dx * dx + dy * dy);
+		var theta = Math.atan2(dy, dx) - offset;
+		theta = ((theta % wedge) + wedge) % wedge;
+		if (theta > wedge / 2) {
+			theta = wedge - theta; //the second half of the wedge is the mirror image
+		}
+		theta += offset;
+		position[0] = cx + distance * Math.cos(theta);
+		position[1] = cy + distance * Math.sin(theta);
+	});
+}
+
+/**
+ * Radial Blur - Spin blurs along circles around the center, Zoom along lines from the center
+ *
+ * @param {Image_data} image
+ * @param {object} params mode ('spin'|'zoom'), amount (0-100), center_x, center_y (0-100 % of the size, default 50)
+ * @returns {Image_data}
+ */
+export function radialBlur(image, params) {
+	var amount = clamp(parseFloat(params.amount) || 0, 0, 100) / 100;
+	if (amount == 0) {
+		return image;
+	}
+	var zoom = params.mode === 'zoom';
+	var w = image.width;
+	var h = image.height;
+	var cx = clamp(parseFloat(params.center_x ?? 50), 0, 100) / 100 * w;
+	var cy = clamp(parseFloat(params.center_y ?? 50), 0, 100) / 100 * h;
+	var src = new Uint8ClampedArray(image.data);
+	var data = image.data;
+	var STEPS = 16;
+	var color = [0, 0, 0, 0];
+	for (var y = 0; y < h; y++) {
+		for (var x = 0; x < w; x++) {
+			var dx = x + 0.5 - cx;
+			var dy = y + 0.5 - cy;
+			var r = 0, g = 0, b = 0, a = 0;
+			for (var s = 0; s < STEPS; s++) {
+				var t = s / (STEPS - 1) - 0.5; //-0.5 .. 0.5 around the pixel
+				var px, py;
+				if (zoom) {
+					var scale = 1 + t * amount * 0.5;
+					px = cx + dx * scale;
+					py = cy + dy * scale;
+				}
+				else {
+					var angle = t * amount * 0.5; //radians, up to about 28 degrees at most
+					var cos = Math.cos(angle);
+					var sin = Math.sin(angle);
+					px = cx + dx * cos - dy * sin;
+					py = cy + dx * sin + dy * cos;
+				}
+				sample(src, w, h, px, py, color);
+				//premultiplied sums, so transparent pixels do not darken the result
+				r += color[0] * color[3];
+				g += color[1] * color[3];
+				b += color[2] * color[3];
+				a += color[3];
+			}
+			var i = (y * w + x) * 4;
+			if (a > 0) {
+				data[i] = r / a;
+				data[i + 1] = g / a;
+				data[i + 2] = b / a;
+			}
+			data[i + 3] = a / STEPS;
+		}
+	}
+	return image;
+}
+
+/**
+ * Crystallize - the image breaks into irregular cells of one color each
+ *
+ * @param {Image_data} image
+ * @param {object} params size (1-30 % of the shorter side, the average cell size), seed (any number)
+ * @returns {Image_data}
+ */
+export function crystallize(image, params) {
+	var size = Math.max(3, clamp(parseFloat(params.size ?? 4) || 4, 1, 30) / 100 * Math.min(image.width, image.height));
+	var w = image.width;
+	var h = image.height;
+	var cols = Math.max(1, Math.ceil(w / size));
+	var rows = Math.max(1, Math.ceil(h / size));
+	var cell_w = w / cols;
+	var cell_h = h / rows;
+	var random = seeded_random(params.seed);
+
+	//one point in every cell of a grid, moved randomly inside its cell
+	var points = new Float32Array(cols * rows * 2);
+	for (var row = 0; row < rows; row++) {
+		for (var col = 0; col < cols; col++) {
+			var p = (row * cols + col) * 2;
+			points[p] = (col + 0.15 + random() * 0.7) * cell_w;
+			points[p + 1] = (row + 0.15 + random() * 0.7) * cell_h;
+		}
+	}
+
+	var owner = new Int32Array(w * h);
+	var sums = new Float64Array(cols * rows * 5);
+	var data = image.data;
+	for (var y = 0; y < h; y++) {
+		var cell_row = Math.min(rows - 1, Math.floor(y / cell_h));
+		for (var x = 0; x < w; x++) {
+			var cell_col = Math.min(cols - 1, Math.floor(x / cell_w));
+			//the nearest point is in the cell of the pixel or in one of its neighbors
+			var best = -1;
+			var best_distance = Infinity;
+			for (var r = Math.max(0, cell_row - 1); r <= Math.min(rows - 1, cell_row + 1); r++) {
+				for (var c = Math.max(0, cell_col - 1); c <= Math.min(cols - 1, cell_col + 1); c++) {
+					var q = (r * cols + c) * 2;
+					var ddx = points[q] - x - 0.5;
+					var ddy = points[q + 1] - y - 0.5;
+					var d = ddx * ddx + ddy * ddy;
+					if (d < best_distance) {
+						best_distance = d;
+						best = r * cols + c;
+					}
+				}
+			}
+			var index = y * w + x;
+			owner[index] = best;
+			var alpha = data[index * 4 + 3];
+			sums[best * 5] += data[index * 4] * alpha;
+			sums[best * 5 + 1] += data[index * 4 + 1] * alpha;
+			sums[best * 5 + 2] += data[index * 4 + 2] * alpha;
+			sums[best * 5 + 3] += alpha;
+			sums[best * 5 + 4] += 1;
+		}
+	}
+	for (var k = 0; k < w * h; k++) {
+		var o = owner[k] * 5;
+		var weight = sums[o + 3];
+		if (weight > 0) {
+			data[k * 4] = sums[o] / weight;
+			data[k * 4 + 1] = sums[o + 1] / weight;
+			data[k * 4 + 2] = sums[o + 2] / weight;
+		}
+		data[k * 4 + 3] = sums[o + 3] / sums[o + 4];
+	}
+	return image;
+}

@@ -11,6 +11,7 @@ import { smudgeBlend } from './../../libs/adjustments.js';
 import * as Filters from './../../libs/filters.js';
 import * as Distort from './../../libs/distort.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { build_curve_editor } from './curve_editor.js';
 import { t } from '../tools/translate.js';
 
 var instance = null;
@@ -109,6 +110,61 @@ class Image_adjustments_class {
 			{name: "lightness", title: "Lightness:", value: 0, range: [-100, 100]},
 			{name: "colorize", title: "Colorize:", value: false},
 		], (img, params) => Adjustments.hueSaturation(img, params));
+	}
+
+	vibrance() {
+		this.show_dialog('Vibrance', [
+			{name: "vibrance", title: "Vibrance:", value: 0, range: [-100, 100]},
+			{name: "saturation", title: "Saturation:", value: 0, range: [-100, 100]},
+		], (img, params) => Adjustments.vibrance(img, params));
+	}
+
+	replace_color() {
+		this.show_dialog('Replace Color', [
+			{name: "color", title: "Color:", value: '#ff0000', type: 'color'},
+			{name: "fuzziness", title: "Fuzziness:", value: 40, range: [0, 200]},
+			{heading: 'Result'},
+			{name: "hue", title: "Hue:", value: 0, range: [-180, 180]},
+			{name: "saturation", title: "Saturation:", value: 0, range: [-100, 100]},
+			{name: "lightness", title: "Lightness:", value: 0, range: [-100, 100]},
+		], (img, params) => Adjustments.replaceColor(img, params));
+	}
+
+	black_white() {
+		this.show_dialog('Black and White', [
+			{name: "reds", title: "Reds:", value: 40, range: [-200, 300]},
+			{name: "yellows", title: "Yellows:", value: 60, range: [-200, 300]},
+			{name: "greens", title: "Greens:", value: 40, range: [-200, 300]},
+			{name: "cyans", title: "Cyans:", value: 60, range: [-200, 300]},
+			{name: "blues", title: "Blues:", value: 20, range: [-200, 300]},
+			{name: "magentas", title: "Magentas:", value: 80, range: [-200, 300]},
+			{name: "tint", title: "Tint:", value: false},
+			{name: "tint_color", title: "Tint color:", value: '#e1c08c', type: 'color'},
+		], (img, params) => Adjustments.blackWhite(img, params));
+	}
+
+	solarize() {
+		this.show_dialog('Solarize', [
+			{name: "threshold", title: "Threshold:", value: 128, range: [0, 255]},
+		], (img, params) => Adjustments.solarize(img, params.threshold));
+	}
+
+	color_to_alpha() {
+		this.show_dialog('Color to Alpha', [
+			{name: "color", title: "Color:", value: '#ffffff', type: 'color'},
+			{name: "threshold", title: "Threshold:", value: 0, range: [0, 99]},
+		], (img, params) => Adjustments.colorToAlpha(img, params));
+	}
+
+	emboss() {
+		this.show_dialog('Emboss', [
+			{name: "angle", title: "Angle:", value: 135, range: [0, 360]},
+			{name: "amount", title: "Amount:", value: 100, range: [1, 500]},
+		], (img, params) => Filters.emboss(img, params));
+	}
+
+	find_edges() {
+		this.apply_direct((img) => Filters.findEdges(img));
 	}
 
 	exposure() {
@@ -304,160 +360,16 @@ class Image_adjustments_class {
 			{name: "channel", title: "Channel:", values: ['rgb', 'red', 'green', 'blue']},
 		], (img) => Adjustments.curvesFromPoints(img, curves), {
 			on_load: function (params, popup) {
-				_this.build_curve_editor(popup, curves);
+				var layer_canvas = null;
+				try {
+					layer_canvas = _this.Base_layers.convert_layer_to_canvas(null, true);
+				}
+				catch (error) {
+					layer_canvas = null;
+				}
+				_this.curve_editor = build_curve_editor(popup, curves, layer_canvas);
 			},
 		});
-	}
-
-	/**
-	 * Adds the curve graph to the Curves dialog
-	 */
-	build_curve_editor(popup, curves) {
-		var SIZE = 256;
-		var canvas = document.createElement('canvas');
-		canvas.width = SIZE;
-		canvas.height = SIZE;
-		canvas.className = 'curve_editor';
-		canvas.style.cssText = 'display:block;margin:8px auto;border:1px solid #888;background:#fff;cursor:crosshair;touch-action:none;';
-		popup.el.querySelector('.dialog_content').appendChild(canvas);
-		var ctx = canvas.getContext('2d');
-		var dragged = null;
-
-		//histogram of the layer behind the curve (square root keeps small values visible)
-		var histogram = null;
-		try {
-			var layer_canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-			histogram = Adjustments.histograms(layer_canvas.getContext('2d').getImageData(0, 0, layer_canvas.width, layer_canvas.height));
-		}
-		catch (error) {
-			histogram = null;
-		}
-
-		var colors = {rgb: '#444', red: '#d33', green: '#2a2', blue: '#33d'};
-		var channel = () => (popup.get_params() || {}).channel || 'rgb';
-		var points = () => curves[channel()];
-
-		var to_canvas = (point) => [point[0], SIZE - 1 - point[1]];
-		var from_event = (event) => {
-			var rect = canvas.getBoundingClientRect();
-			var x = (event.clientX - rect.left) * SIZE / rect.width;
-			var y = (event.clientY - rect.top) * SIZE / rect.height;
-			return [Math.min(255, Math.max(0, Math.round(x))), Math.min(255, Math.max(0, Math.round(SIZE - 1 - y)))];
-		};
-		var nearest = (position) => {
-			var list = points();
-			for (var i = 0; i < list.length; i++) {
-				var p = to_canvas(list[i]);
-				var q = to_canvas(position);
-				if (Math.hypot(p[0] - q[0], p[1] - q[1]) <= 8) {
-					return i;
-				}
-			}
-			return -1;
-		};
-
-		var draw = () => {
-			ctx.clearRect(0, 0, SIZE, SIZE);
-			if (histogram) {
-				var counts = histogram[channel()];
-				var peak = Math.max.apply(null, counts) || 1;
-				ctx.fillStyle = colors[channel()];
-				ctx.globalAlpha = 0.25;
-				for (var h = 0; h < 256; h++) {
-					var bar = Math.sqrt(counts[h] / peak) * SIZE;
-					ctx.fillRect(h, SIZE - bar, 1, bar);
-				}
-				ctx.globalAlpha = 1;
-			}
-			ctx.strokeStyle = '#ddd';
-			ctx.lineWidth = 1;
-			for (var g = 64; g < SIZE; g += 64) {
-				ctx.beginPath();
-				ctx.moveTo(g + 0.5, 0);
-				ctx.lineTo(g + 0.5, SIZE);
-				ctx.moveTo(0, g + 0.5);
-				ctx.lineTo(SIZE, g + 0.5);
-				ctx.stroke();
-			}
-			ctx.strokeStyle = '#bbb';
-			ctx.beginPath();
-			ctx.moveTo(0, SIZE - 1);
-			ctx.lineTo(SIZE - 1, 0);
-			ctx.stroke();
-
-			var list = Adjustments.normalizeCurvePoints(points());
-			var lookup = Adjustments.curveLookup(list);
-			ctx.strokeStyle = colors[channel()];
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			for (var v = 0; v < 256; v++) {
-				ctx.lineTo(v + 0.5, SIZE - 1 - lookup[v] + 0.5);
-			}
-			ctx.stroke();
-
-			ctx.fillStyle = '#fff';
-			ctx.lineWidth = 1.5;
-			points().forEach((point) => {
-				var p = to_canvas(point);
-				ctx.beginPath();
-				ctx.arc(p[0] + 0.5, p[1] + 0.5, 4, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.stroke();
-			});
-		};
-		var changed = () => {
-			draw();
-			popup.onChangeEvent(); //refreshes the preview
-		};
-
-		canvas.addEventListener('pointerdown', (event) => {
-			var position = from_event(event);
-			var list = points();
-			var index = nearest(position);
-			if (index < 0) {
-				list.push(position);
-				list.sort((a, b) => a[0] - b[0]);
-				index = list.indexOf(position);
-			}
-			dragged = list[index];
-			canvas.setPointerCapture && canvas.setPointerCapture(event.pointerId);
-			changed();
-			event.preventDefault();
-		});
-		canvas.addEventListener('pointermove', (event) => {
-			if (dragged == null) {
-				return;
-			}
-			var list = points();
-			var position = from_event(event);
-			var index = list.indexOf(dragged);
-			var first = index == 0;
-			var last = index == list.length - 1;
-			//the input value stays between the neighbours (the end points keep their place)
-			var min_x = first ? 0 : list[index - 1][0] + 1;
-			var max_x = last ? 255 : list[index + 1][0] - 1;
-			dragged[0] = first ? list[index][0] : (last ? list[index][0] : Math.min(max_x, Math.max(min_x, position[0])));
-			dragged[1] = position[1];
-			changed();
-		});
-		var release = () => {
-			dragged = null;
-		};
-		canvas.addEventListener('pointerup', release);
-		canvas.addEventListener('pointercancel', release);
-		canvas.addEventListener('dblclick', (event) => {
-			var list = points();
-			var index = nearest(from_event(event));
-			if (index > 0 && index < list.length - 1) {
-				list.splice(index, 1);
-				changed();
-			}
-		});
-
-		//switching the channel redraws the graph
-		popup.el.addEventListener('change', () => setTimeout(draw, 0));
-		draw();
-		this.curve_editor = {canvas: canvas, draw: draw};
 	}
 
 	smart_blur() {
@@ -472,6 +384,50 @@ class Image_adjustments_class {
 			{name: "angle", title: "Angle:", value: 180, range: [-720, 720]},
 			{name: "radius", title: "Radius:", value: 60, range: [1, 100]},
 		], (img, params) => Distort.twirl(img, params));
+	}
+
+	spherize() {
+		this.show_dialog('Spherize', [
+			{name: "amount", title: "Amount:", value: 50, range: [-100, 100]},
+			{name: "radius", title: "Radius:", value: 100, range: [10, 100]},
+		], (img, params) => Distort.spherize(img, params));
+	}
+
+	ripple() {
+		this.show_dialog('Ripple', [
+			{name: "amplitude", title: "Amplitude:", value: 2, range: [0, 10], step: 0.1},
+			{name: "wavelength", title: "Wavelength:", value: 10, range: [1, 100]},
+		], (img, params) => Distort.ripple(img, params));
+	}
+
+	kaleidoscope() {
+		this.show_dialog('Kaleidoscope', [
+			{name: "segments", title: "Segments:", value: 6, range: [2, 24]},
+			{name: "angle", title: "Angle:", value: 0, range: [0, 360]},
+		], (img, params) => Distort.kaleidoscope(img, params));
+	}
+
+	radial_blur() {
+		this.show_dialog('Radial Blur', [
+			{name: "mode", title: "Mode:", values: ['spin', 'zoom']},
+			{name: "amount", title: "Amount:", value: 30, range: [0, 100]},
+			{name: "center_x", title: "Center horizontal:", value: 50, range: [0, 100]},
+			{name: "center_y", title: "Center vertical:", value: 50, range: [0, 100]},
+		], (img, params) => Distort.radialBlur(img, params));
+	}
+
+	surface_blur() {
+		this.show_dialog('Surface Blur', [
+			{name: "radius", title: "Radius:", value: 3, range: [1, 10]},
+			{name: "threshold", title: "Threshold:", value: 30, range: [1, 255]},
+		], (img, params) => Filters.surfaceBlur(img, params));
+	}
+
+	crystallize() {
+		this.show_dialog('Crystallize', [
+			{name: "size", title: "Cell size:", value: 4, range: [1, 30]},
+			{name: "seed", title: "Seed:", value: Math.floor(Math.random() * 1000), range: [0, 999]},
+		], (img, params) => Distort.crystallize(img, params));
 	}
 
 	wave() {

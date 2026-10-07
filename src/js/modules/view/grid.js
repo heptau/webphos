@@ -22,21 +22,13 @@ class View_grid_class {
 			this.GUI.grid_size = saved;
 		}
 
+		//pixel grid is on by default (it shows only when zoomed in a lot)
+		config.pixel_grid = this.Helper.getCookie('pixel_grid') !== '0' && this.Helper.getCookie('pixel_grid') !== 0;
+
 		this.set_events();
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 71 && event.ctrlKey != true && event.metaKey != true) {
-				//G - grid
-				this.grid({visible: !this.GUI.grid});
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	/**
@@ -57,6 +49,15 @@ class View_grid_class {
 				config.need_render = true;
 			},
 		});
+	}
+
+	/**
+	 * View > Pixel Grid - shows / hides the lines between pixels at high zoom
+	 */
+	pixel_grid() {
+		config.pixel_grid = config.pixel_grid === false;
+		this.Helper.setCookie('pixel_grid', config.pixel_grid ? '1' : '0');
+		config.need_render = true;
 	}
 
 	grid() {

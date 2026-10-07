@@ -3,10 +3,10 @@
  * they would only show an error, so the toolbar disables them.
  */
 export const RASTER_TOOLS = [
-	'selection', 'lasso', 'quick_select', 'magic_wand', 'quick_mask',
-	'clone', 'heal', 'red_eye', 'background_eraser', 'liquify',
+	'lasso', 'quick_select', 'magic_wand', 'quick_mask',
+	'clone', 'heal', 'patch', 'history_brush', 'red_eye', 'background_eraser', 'liquify',
 	'erase', 'magic_erase', 'fill',
-	'blur', 'sharpen', 'smudge', 'dodge_burn', 'desaturate', 'bulge_pinch',
+	'blur', 'sharpen', 'smudge', 'dodge_burn', 'sponge', 'bulge_pinch',
 ];
 
 //these refuse also an image that is still a vector (opened SVG) until it is converted to raster
@@ -37,4 +37,16 @@ export function is_vector_layer(layer) {
 		return false;
 	}
 	return layer.type != 'image' || layer.is_vector === true;
+}
+
+/**
+ * The empty first layer has no type and no pixels, and the tools that work on pixels refuse it. So when one of them is
+ * chosen, the layer is made a transparent picture first.
+ *
+ * @param {string} tool_name
+ * @param {{type: string|null, is_vector?: boolean}|null} layer active layer
+ * @returns {boolean}
+ */
+export function needs_raster_layer(tool_name, layer) {
+	return Boolean(layer) && layer.type == null && RASTER_TOOLS.includes(tool_name);
 }

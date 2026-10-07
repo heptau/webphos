@@ -15,6 +15,8 @@ config.ALPHA = 255;
 config.UNITS = null; //unit of the document size (see libs/units.js), null = the default from Settings
 config.RESOLUTION = null; //dpi of the document, null = the default resolution from Settings
 config.ZOOM = 1;
+//Rotate View / Flip View: only the way the picture is shown (see libs/view-transform.js)
+config.view = {rotate: 0, flip: false};
 config.SNAP = true;
 // API keys should be configured via environment variables or a separate config file
 // For security, these are not hardcoded. Set them via:
@@ -91,8 +93,16 @@ config.TOOLS = [
 	{
 		name: 'select',
 		title: 'Select object tool',
+		//the selection stays when the Move tool is chosen: a press inside of it drags it (see selection_content below)
+		on_leave: 'on_leave',
+		keep_selection: true,
 		attributes: {
 			auto_select: true,
+			//what a press inside of a selection drags: its pixels (Alt copies them), only its outline, or the whole layer
+			selection_content: {
+				value: 'Content',
+				values: ['Content', 'Outline', 'Layer'],
+			},
 		},
 	},
 	{
@@ -101,6 +111,20 @@ config.TOOLS = [
 			shape: {
 				value: 'Rectangle',
 				values: ['Rectangle', 'Ellipse'],
+			},
+			style: {
+				value: 'Normal',
+				values: ['Normal', 'Fixed Ratio', 'Fixed Size'],
+			},
+			fixed_width: {
+				value: 1,
+				min: 1,
+				max: 10000,
+			},
+			fixed_height: {
+				value: 1,
+				min: 1,
+				max: 10000,
 			},
 		},
 		on_leave: 'on_leave',
@@ -186,6 +210,45 @@ config.TOOLS = [
 		attributes: {
 			size: 4,
 			pressure: false,
+			stabilizer: {
+				value: 0,
+				min: 0,
+				max: 95,
+			},
+			tip: {
+				value: 'Round',
+				values: ['Round', 'Custom'],
+			},
+			spacing: {
+				value: 25,
+				min: 1,
+				max: 200,
+			},
+			scatter: {
+				value: 0,
+				min: 0,
+				max: 300,
+			},
+			size_jitter: {
+				value: 0,
+				min: 0,
+				max: 100,
+			},
+			angle_jitter: {
+				value: 0,
+				min: 0,
+				max: 100,
+			},
+			opacity_jitter: {
+				value: 0,
+				min: 0,
+				max: 100,
+			},
+			follow_direction: false,
+			symmetry: {
+				value: 'Off',
+				values: ['Off', 'Horizontal', 'Vertical', 'Both', 'Radial 3', 'Radial 4', 'Radial 6', 'Radial 8'],
+			},
 		},
 	},
 	{
@@ -193,6 +256,15 @@ config.TOOLS = [
 		attributes: {
 			size: 1,
 			pressure: false,
+			stabilizer: {
+				value: 0,
+				min: 0,
+				max: 95,
+			},
+			symmetry: {
+				value: 'Off',
+				values: ['Off', 'Horizontal', 'Vertical', 'Both', 'Radial 3', 'Radial 4', 'Radial 6', 'Radial 8'],
+			},
 		},
 	},
 	{
@@ -514,11 +586,16 @@ config.TOOLS = [
 	},
 	{
 		name: 'gradient',
+		on_update: 'on_params_update',
 		attributes: {
+			type: {
+				value: 'Linear',
+				values: ['Linear', 'Radial', 'Angular', 'Reflected', 'Diamond'],
+			},
 			color_1: '#008000',
 			color_2: '#ffffff',
 			alpha: 0,
-			radial: false,
+			reverse: false,
 			radial_power: 50,
 		},
 	},
@@ -555,9 +632,16 @@ config.TOOLS = [
 		},
 	},
 	{
-		name: 'desaturate',
+		name: 'sponge',
+		title: 'Sponge Tool',
 		attributes: {
 			size: 50,
+			flow: {
+				value: 15,
+				min: 1,
+				max: 100,
+			},
+			saturate: false,
 			anti_aliasing: true,
 		},
 	},
@@ -599,10 +683,59 @@ config.TOOLS = [
 	},
 	{
 		name: 'heal',
-		title: 'Healing Brush (paint over a blemish)',
+		title: 'Healing Brush (paint over a blemish; Alt + click chooses the source)',
 		attributes: {
 			size: 30,
 			match_color: true,
+			source: {
+				value: 'Automatic',
+				values: ['Automatic', 'Sampled'],
+			},
+		},
+	},
+	{
+		name: 'history_brush',
+		title: 'History Brush (paints back the original picture)',
+		attributes: {
+			size: 40,
+			hardness: {
+				value: 50,
+				min: 0,
+				max: 100,
+			},
+			opacity: {
+				value: 100,
+				min: 1,
+				max: 100,
+			},
+		},
+	},
+	{
+		name: 'pen',
+		title: 'Pen Tool (click for a corner, drag for a curve, click the first point to close)',
+		on_leave: 'on_leave',
+		attributes: {
+			size: 2,
+			mode: {
+				value: 'Stroke',
+				values: ['Stroke', 'Fill', 'Fill + Stroke'],
+			},
+		},
+	},
+	{
+		name: 'patch',
+		title: 'Patch Tool (draw around a blemish, drag it onto a clean place)',
+		on_leave: 'on_leave',
+		attributes: {
+			mode: {
+				value: 'Source',
+				values: ['Source', 'Destination'],
+			},
+			adapt: {
+				value: 100,
+				min: 0,
+				max: 100,
+			},
 		},
 	},
 	{
@@ -666,6 +799,11 @@ config.TOOLS = [
 			play: false,
 			delay: 400,
 		},
+	},
+	{
+		name: 'adjustment',
+		visible: false,
+		attributes: {},
 	},
 	{
 		name: 'polygon',

@@ -55,23 +55,6 @@ class File_save_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.key.toLowerCase();
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == "s") {
-				if(event.shiftKey){
-					//export
-					this.save();
-				}
-				else{
-					//save
-					this.export();
-				}
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	/**

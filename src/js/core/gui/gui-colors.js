@@ -7,6 +7,7 @@ import config from './../../config.js';
 import Helper_class from './../../libs/helpers.js';
 import Tools_translate_class, { t } from './../../modules/tools/translate.js';
 import { has_modifier } from './../../libs/shortcuts.js';
+import { push_color, parse_history } from './../../libs/color-history.js';
 
 const Helper = new Helper_class();
 
@@ -43,6 +44,7 @@ const sidebarTemplate = `
 			</button>
 		</div>
 	</div>
+	<div id="color_history" class="color_history" role="group" aria-label="Recent colors" title="Recent colors"></div>
 	<div id="color_section_swatches" class="block_section">
 		<div id="color_swatches"></div>
 	</div>
@@ -394,7 +396,49 @@ class GUI_colors_class {
 
 		if (this.uiType === 'sidebar') {
 			this.init_background_color();
+			this.init_color_history();
 		}
+	}
+
+	/**
+	 * Row of recently used colors under the color sample. A color counts as used when it stays selected
+	 * for a moment (so dragging in the picker does not fill the list). Click selects it again.
+	 */
+	init_color_history() {
+		const container = document.getElementById('color_history');
+		if (!container) {
+			return;
+		}
+		let history = parse_history(Helper.getCookie('color_history'));
+		let timer = null;
+
+		const render = () => {
+			container.innerHTML = '';
+			history.forEach((hex) => {
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'color_history_item';
+				button.style.background = hex;
+				button.title = hex;
+				button.setAttribute('aria-label', hex);
+				button.addEventListener('click', () => this.set_color({ hex }));
+				container.appendChild(button);
+			});
+		};
+		render();
+
+		document.addEventListener('minipaint:color', () => {
+			clearTimeout(timer);
+			timer = setTimeout(() => {
+				const next = push_color(history, config.COLOR);
+				if (next.join() == history.join()) {
+					return;
+				}
+				history = next;
+				Helper.setCookie('color_history', history.join(','));
+				render();
+			}, 700);
+		});
 	}
 
 	/**
@@ -446,20 +490,14 @@ class GUI_colors_class {
 		};
 		bg.addEventListener('input', () => set_background(bg.value));
 		swap.addEventListener('click', swap_colors);
-		reset.addEventListener('click', () => {
+		const reset_colors = () => {
 			this.set_color({ hex: '#000000' });
 			set_background('#ffffff');
-		});
-		document.addEventListener('keydown', (event) => {
-			var target = event.target;
-			var editable = target && (target.tagName == 'SELECT' || target.isContentEditable);
-			if (String(event.key || '').toLowerCase() != 'x' || event.repeat || has_modifier(event) || event.shiftKey
-				|| editable || Helper.is_input(target) || document.getElementById('popups').children.length > 0) {
-				return;
-			}
-			event.preventDefault();
-			swap_colors();
-		});
+		};
+		reset.addEventListener('click', reset_colors);
+		//the keys X and D run them (tools/colors.js)
+		this.swap_colors = swap_colors;
+		this.reset_colors = reset_colors;
 	}
 
 	/**

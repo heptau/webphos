@@ -7,6 +7,168 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Only changes since version 5.0.0 are listed here.
 
+## [Unreleased]
+
+### Changed
+
+- The license file uses standard copyright lines, so GitHub recognizes the MIT license.
+- Dialogs with fields have OK, Cancel and Preview in a column on the right, like in Photoshop.
+- Toolbar and menus follow the order of Photoshop: retouching, painting, blur and dodge tools form one group; File, Edit, Image (Adjustments), Layer, Select and View items are regrouped, all exports are in File > Export, Content Fill moved to Edit and Search to Help. The Effects menu is split into categories like the Photoshop Filter menu (Blur, Distort, Noise, Pixelate, Render, Sharpen, Stylize, Other).
+
+### Added
+
+- Type menu like in Photoshop: Character, Paragraph, Style (bold, italic, underline, strikethrough), Case, Warp Text (moved from Layer), Rasterize Type and Paste Lorem Ipsum for the active text layer; the style goes to the selected part of the text while the Text tool edits it.
+- The marquee works on vector layers too, and the Move tool drags the selected part of a vector layer (it becomes a picture layer; Alt copies it to a new layer).
+- Rectangular selection: handles resize it and dragging inside moves it. The Move tool drags the selection together with its pixels (Alt copies them), only its outline, or the whole layer (option "Selection content").
+
+- Resizing a vector layer with the handles keeps its proportions while Shift or Option is held (Ctrl / Cmd did already); with a picture the same keys free them.
+
+- Keyboard shortcuts: Export and Import buttons in the editor (a JSON file with the changes).
+
+- The rulers show the position of the mouse with a line.
+
+- Keyboard shortcuts can be changed: WebPhos > Keyboard Shortcuts… (also in Settings) lists every command, click a shortcut and press the new keys; conflicts are refused, changes are kept in the browser, the menus show the shortcut in use.
+- Tool shortcuts as in Photoshop (V move, M marquee, L lasso, W magic wand, C crop, I eyedropper, J healing, S clone stamp, B brush, E eraser, G gradient, K paint bucket, T type, U shapes, P pen, H hand, Z zoom …), D = default colors, Ctrl+Shift+Z = redo, Ctrl+G / Shift+Ctrl+G = group / ungroup, Ctrl+] / Ctrl+[ = layer up / down, Alt+Ctrl+N / Alt+Ctrl+W = new / close document.
+
+- Touch screens (iPad): holding a finger opens the context menu on a layer and, with tools that do not paint, on the canvas.
+
+- Layer groups: a group mask (Layer > Group > Group Mask from Selection) and dragging layers onto a group in the layer list.
+
+- File > Export as PSD (layers with place, opacity, visibility and blend mode, groups with their opacity and blend mode); File > Open reads groups from PSD files too.
+
+- Pen: Layer > Edit Path (or a double click on a path layer) edits a finished path; Select > Make Path from Selection.
+
+- File > Open reads Photoshop (.psd) files: layers with place, opacity, visibility and blend mode.
+
+- Pen tool: Bezier paths that become a stroke / fill layer or a selection (Select > Selection from Path).
+
+- Layer groups: groups inside groups (`Faces/Eyes`), group opacity and blend mode (drawn on their own), header rows with an eye and folding in the layer list, Layer > Group > Group Settings.
+
+- Patch tool works on rotated and stretched layers.
+
+- Edit > Warp stays accurate for larger moves of the points (the picture is sampled by inverting the displacement).
+
+- Fill opacity no longer fades Drop Shadow and Outer Glow (as in Photoshop).
+
+- Linked layers also follow when the active layer is resized or turned.
+
+- Define Brush: the tip is remembered after the browser is closed.
+
+- Pencil: Stabilizer and Symmetry options (as in Brush).
+
+- Layer > New Adjustment Layer > Curves (graph editor with master, red, green and blue curves, editable any time).
+
+- Marquee: Fixed Ratio and Fixed Size styles, Shift makes a square, Alt grows the selection from the center.
+- Edit > Paste in Place (Shift+Ctrl+V) and Paste Into (Alt+Shift+Ctrl+V, the selection becomes the layer mask);
+  File > Open > Open as Layer adds pictures to the current document.
+- Layer Fill opacity (fades the pixels of the layer, not its styles) next to Opacity in the Layers panel.
+- Image > Adjustments: Vibrance and Replace Color; Effects: Emboss and Find Edges.
+- Sponge tool (saturate / desaturate with a flow) replaces the Desaturate brush.
+- Alt + click with Brush, Pencil, Paint Bucket and Gradient picks the color under the cursor.
+- Recently used colors under the color sample; View > Pixel Grid (shown from 600 % zoom).
+
+- Layer > Create / Release Clipping Mask (Alt+Ctrl+G); several clipped layers on one base now clip correctly.
+- Gradient tool: Linear, Radial, Angular, Reflected and Diamond types, Reverse, and Tools > Gradient Editor
+  (color stops with opacity, presets; edits the active gradient layer or the tool).
+- History Brush: paints back the picture the document had before its first change.
+- Image > Adjustments > Color to Alpha.
+
+- Edit > Transform Again (Shift+Ctrl+T) repeats the last move, scale or rotation of the Move tool.
+- Image > Canvas Rotation > Arbitrary (any angle, the canvas grows) and Image > Straighten (the line drawn with the Ruler tool becomes horizontal).
+- Layer > Copy / Paste Layer Style, Reverse Layer Order, Delete Hidden Layers; File > Export Layers (one PNG per layer in a ZIP).
+- Brush stabilizer (smooths the stroke).
+- Image > Adjustments > Black and White (a slider for every color, optional tint) and Solarize.
+- Resize: Bicubic, Bilinear and Nearest Neighbor modes.
+
+- Effects: Spherize, Ripple, Kaleidoscope, Radial Blur (spin / zoom), Surface Blur and Crystallize.
+- Select > Modify > Round Corners.
+
+- Layer > Link Layers / Unlink Layer (Shift+click a layer in the panel): linked layers move together with the active one.
+- Brush symmetry: horizontal, vertical, both and radial (3, 4, 6, 8) around the center of the picture.
+
+- Edit > Define Brush: the selected part of the picture (or the whole picture) becomes the tip of the Brush
+  (options Tip: Round / Custom and Spacing).
+
+- Brush dynamics: Scatter, Size jitter, Angle jitter, Opacity jitter and Follow direction (with a round or a custom tip).
+
+- Select > Transform Selection: a frame with handles on the canvas scales, turns and moves the selection itself (live preview),
+  the pixels stay; Enter applies, Escape cancels, the bar has the numeric dialog (Numbers).
+
+- Layer > Warp Text: Arc, Bulge, Flag, Wave, Rise and Squeeze with a bend slider; the text stays editable.
+
+- Layer > Blend If: the layer shows only where its own brightness and / or the brightness of the layers below is in a range, with soft edges.
+
+- Adjustment layers (Layer > New Adjustment Layer): Brightness/Contrast, Levels, Hue/Saturation, Vibrance, Exposure,
+  Color Balance, Photo Filter, Temperature/Tint, Black and White, Gradient Map, Selective Color, Threshold, Posterize
+  and Invert. They change everything below, keep their settings (edit with Layer > Edit Adjustment Layer or a double
+  click), and respect opacity and a layer mask (a selection becomes the mask of a new layer).
+
+- Edit > Skew, Perspective and Distort for picture layers: drag the corners (edges for Skew) on the picture with a live preview;
+  Enter applies, Escape cancels, the bar has the old numeric dialog (Numbers).
+
+- Edit > Warp: a grid of points (3x3 to 6x6) over the picture of the layer; drag a point and the picture follows smoothly.
+
+- Patch tool: draw around a blemish and drag the shape onto a clean place; the texture comes from the clean place, the colors
+  from the surroundings of the blemish (modes Source / Destination, Adapt).
+
+- Window > Actions: record menu commands together with the settings of their dialogs and play them again on any picture;
+  actions are kept in the browser and can be exported / imported as a file.
+
+- View > Rotate View (90° steps or any angle) and Flip View: only the way the picture is shown changes, the tools work as usual.
+
+- Healing Brush: option Source (Automatic = spot healing in one click, Sampled = Alt + click chooses the place to copy from).
+
+### Changed
+
+- Fit window zooms to the next smaller whole percent, so the picture is never a few pixels too big for the free space.
+
+- The plain letter shortcuts of commands are gone, the letters belong to the tools: Open and Save are Ctrl+O and Ctrl+S (Save As Shift+Ctrl+S), Resize is Alt+Ctrl+I, Information Alt+Shift+Ctrl+I; Trim, Rotate 90°, Auto Adjust, Duplicate Layer, Grid (still Ctrl+'), New Layer (still Shift+Ctrl+N) and Rulers (still Ctrl+R) lost their plain letter. Every shortcut can be set again in the editor.
+
+- The menus are a little more transparent (and blur the picture under them) (the blur was on the menu bar itself, which kept the dropdowns from seeing the picture).
+
+- Documents with several adjustment or Blend If layers draw much faster (the cost grows with the number of layers, not with its square).
+- Painting on or moving a layer in a big document is much faster: the layers below the active one are drawn once and kept.
+- Dragging an adjustment slider (or a layer under an adjustment) in a big document shows a smaller preview until the mouse button is released.
+
+- Merge Down respects Blend If of the upper layer (the layer below is what it looks at).
+- Flatten, Stamp Visible and Copy Merged now draw the layers the same way as the canvas (clipping masks, Blend If and
+  adjustment layers count).
+- Arrow keys with the Move tool nudge by 1 px, Shift + arrow by 10 px (as in Photoshop).
+
+### Fixed
+
+- A saved JSON project keeps layer masks, locks, groups and color labels when it is opened (they were dropped as "wrong key").
+- Export dialog: closing it before the file size was calculated no longer throws an error.
+- A layer whose name has three letters (for example "pic") was taken for an SVG picture (the Move tool, Erase and Fill refused it).
+
+- Move tool: pressing in the frame of the selected stroke (where the pointer shows the move arrows) moves the stroke, not the picture below it.
+
+- The only open document can be closed (it is replaced by an empty new one; unsaved changes are asked about first).
+
+- Brush and pencil strokes are stretched when the layer is resized with the handles (they only moved before).
+
+- The empty first layer can be converted to a raster layer (the button works), and choosing a tool that works on pixels (eraser, bucket, blur, selections …) does it by itself instead of showing "This layer must contain an image".
+
+- Rulers: the shortcut is Alt+Ctrl+R (Cmd+R reloads the page in Safari). The shortcut editor marks the shortcuts that the browser may take for itself.
+
+- Keyboard shortcuts: holding a key no longer runs a command over and over (a shortcut that switches something, like the rulers, switched back and forth), and the shortcuts work after a click on a checkbox, slider or button.
+
+## [26.0.1]
+
+### Security
+
+- Code scanning alerts: the token of the CI workflows has the least permissions, the filename sanitizer drops `..` path
+  segments instead of stripping them with a regular expression, and the language loaders are kept in a `Map` instead of a
+  lookup by a dynamic property name.
+- Dependabot alerts: `qs` and the `uuid` used by `sockjs` are forced to patched versions; the CI audits production
+  dependencies only.
+
+### Changed
+
+- Commit messages follow Conventional Commits (see `CONTRIBUTING.md`).
+- The published site has a `security.txt`, and the build no longer ships the unused `effect-worker.js`.
+- The bundle analysis step of the CI writes clean webpack stats.
+
 ## [26.0.0]
 
 ### Added

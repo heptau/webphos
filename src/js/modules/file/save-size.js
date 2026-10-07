@@ -15,8 +15,13 @@ class File_save_size_class {
 	}
 
 	update_file_size(file_size) {
+		//the size is calculated asynchronously, the dialog may be closed by then
+		var element = document.getElementById('file_size');
+		if (!element) {
+			return;
+		}
 		if (typeof file_size == 'string') {
-			document.getElementById('file_size').innerHTML = file_size;
+			element.innerHTML = file_size;
 			return;
 		}
 
@@ -26,7 +31,7 @@ class File_save_size_class {
 			file_size = this.owner.Helper.number_format(file_size / 1024, 2) + ' KB';
 		else
 			file_size = (file_size) + ' B';
-		document.getElementById('file_size').innerHTML = file_size;
+		element.innerHTML = file_size;
 	}
 
 	/**
@@ -89,7 +94,7 @@ class File_save_size_class {
 		if (user_response.calc_size == false || user_response.layers == 'Separated'
 			|| user_response.layers == 'Separated (original types)') {
 
-			document.getElementById('file_size').innerHTML = '-';
+			this.update_file_size('-');
 			return;
 		}
 

@@ -7,8 +7,11 @@ import Base_layers_class from './../core/base-layers.js';
 import Base_selection_class from './../core/base-selection.js';
 import GUI_tools_class from './../core/gui/gui-tools.js';
 import Helper_class from './../libs/helpers.js';
+import { marquee_rect } from './../libs/marquee.js';
 import Selection_mask_class from './../core/selection-mask-state.js';
 import { erase_with_mask } from './../libs/selection-mask.js';
+import { point_in_selection, fit_mask_to_rect } from './../libs/selection-move.js';
+import Edit_selection_move_class from './../modules/edit/selection_move.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../modules/tools/translate.js';
 
@@ -46,9 +49,10 @@ class Selection_class extends Base_tools_class {
 			ants: true,
 			enable_background: true,
 			enable_borders: true,
-			enable_controls: false,
+			//handles resize the selection, dragging inside moves it (the outline; the Move tool takes the pixels along)
+			enable_controls: true,
 			enable_rotation: false,
-			enable_move: false,
+			enable_move: true,
 			data_function: function () {
 				return _this.selection;
 			},
@@ -101,11 +105,6 @@ class Selection_class extends Base_tools_class {
 					this.delete_selection();
 				}
 			}
-			if (code == 65 && (e.ctrlKey == true || e.metaKey)) {
-				//A
-				e.preventDefault();
-				this.select_all();
-			}
 		}, false);
 	}
 
@@ -136,30 +135,21 @@ class Selection_class extends Base_tools_class {
 		if (this.Base_selection.is_drag == false || mouse.click_valid == false)
 			return;
 
-		if (config.layer.type != 'image') {
-			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
-			return;
-		}
+		//the marquee only draws a rectangle: it works on any layer (also a vector one)
 
 		this.mousedown_selection = JSON.parse(JSON.stringify(this.selection));
+		this.mousedown_mask = this.Selection_mask.get();
 
-		if (this.selection.width != null && this.selection.height != null
-			&& mouse.x > this.selection.x
-			&& mouse.x < this.selection.x + this.selection.width
-			&& mouse.y > this.selection.y
-			&& mouse.y < this.selection.y + this.selection.height
-			&& layer.width == layer.width_original && layer.height == layer.height_original
-			) {
-			//move
-			this.type = 'move';
-
-			if (this.tmpCanvas == null) {
-				this.init_tmp_canvas();
-
-				//register tmp canvas for faster redraw
-				config.layer.link_canvas = this.tmpCanvas;
-				config.need_render = true;
-			}
+		if (this.Base_selection.mouse_lock != null && this.selection.width && this.selection.height) {
+			//a handle of the selection is dragged (the rectangle is changed by Base_selection, the result is set on mouse up)
+			this.type = 'resize';
+			return;
+		}
+		if (this.mousedown_mask != null && point_in_selection(this.mousedown_mask, {x: mouse.x, y: mouse.y})) {
+			//a press inside of the selection drags its outline (the pixels stay, see the Move tool)
+			this.type = 'move_outline';
+			this.outline_start = {x: mouse.x, y: mouse.y};
+			new Edit_selection_move_class().begin('Outline');
 		}
 		else {
 			//create new selection
@@ -171,6 +161,10 @@ class Selection_class extends Base_tools_class {
 			};
 			this.type = 'create';
 			this.selection_coords_from = {x: mouse.x, y: mouse.y};
+			if (this.marquee_options(e).style == 'Fixed Size') {
+				//a click is enough, the size is given
+				this.selection = this.round_rect(marquee_rect(this.selection_coords_from, this.selection_coords_from, this.marquee_options(e)));
+			}
 		}
 	}
 
@@ -178,16 +172,19 @@ class Selection_class extends Base_tools_class {
 		var mouse = this.get_mouse_info(e);
 		if (this.Base_selection.is_drag == false || mouse.is_drag == false)
 			return;
-		if (e.type == 'mousedown' && (mouse.click_valid == false) || config.layer.type != 'image') {
+		if (e.type == 'mousedown' && (mouse.click_valid == false)) {
+			return;
+		}
+		if (this.type == 'move_outline') {
+			new Edit_selection_move_class().update(mouse.x - this.outline_start.x, mouse.y - this.outline_start.y, false);
 			return;
 		}
 		if (this.selection_coords_from === null) {
 			return;
 		}
 		if (this.type == 'create') {
-			//create new selection
-			this.selection.width = mouse.x - mouse.click_x;
-			this.selection.height = mouse.y - mouse.click_y;
+			//create new selection (Shift = square, Alt = from the center, Fixed Ratio / Fixed Size options)
+			this.selection = this.round_rect(marquee_rect(this.selection_coords_from, mouse, this.marquee_options(e)));
 			config.need_render = true;
 		}
 	}
@@ -198,17 +195,19 @@ class Selection_class extends Base_tools_class {
 		if (!this.Base_selection.is_drag) {
 			return;
 		}
-		if ((e.type == 'mousedown' && mouse.click_valid == false) || config.layer.type != 'image') {
+		if (e.type == 'mousedown' && mouse.click_valid == false) {
 			return;
 		}
-		if (this.type === 'move') {
-			return; // Translate appears to not work at the moment
+		if (this.type === 'move_outline') {
+			this.type = null;
+			return new Edit_selection_move_class().finish(mouse.x - this.outline_start.x, mouse.y - this.outline_start.y, false);
+		}
+		if (this.type === 'resize') {
+			this.type = null;
+			return this.finish_resize();
 		}
 
-		var width = mouse.x - this.selection.x;
-		var height = mouse.y - this.selection.y;
-
-		if (width == 0 || height == 0) {
+		if (!this.selection.width || !this.selection.height) {
 			//cancel selection
 			app.State.do_action(
 				new app.Actions.Bundle_action('clear_selection', 'Clear Selection', this.on_leave())
@@ -248,11 +247,46 @@ class Selection_class extends Base_tools_class {
 		}
 	}
 
-	select_all() {
-		if (config.layer.type != 'image') {
-			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
+	/**
+	 * The handles of the selection were dragged: the new rectangle (a soft or odd shaped selection is stretched with it)
+	 * is set in one step of the history
+	 */
+	finish_resize() {
+		var rect = this.round_rect(this.selection);
+		var original = this.mousedown_selection;
+		var mask_before = this.mousedown_mask;
+		//back to the old rectangle first, so Undo brings it back
+		this.selection = original;
+		if (!rect.width || !rect.height || (rect.x == original.x && rect.y == original.y && rect.width == original.width && rect.height == original.height)) {
+			config.need_render = true;
 			return;
 		}
+		if (mask_before != null && mask_before.kind == 'custom') {
+			return app.GUI.run_target('edit/selection.set_mask_of_size', {mask: fit_mask_to_rect(mask_before.mask, rect)});
+		}
+		return app.State.do_action(new app.Actions.Set_selection_action(rect.x, rect.y, rect.width, rect.height));
+	}
+
+	round_rect(rect) {
+		return {x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height)};
+	}
+
+	/**
+	 * Marquee options from the tool settings and the keys held right now
+	 */
+	marquee_options(e) {
+		var params = this.getParams();
+		var value = (item) => (item && item.value !== undefined ? item.value : item);
+		return {
+			style: value(params.style),
+			fixed_width: params.fixed_width,
+			fixed_height: params.fixed_height,
+			shift: Boolean(e && e.shiftKey),
+			alt: Boolean(e && e.altKey),
+		};
+	}
+
+	select_all() {
 		let actions = [];
 
 		if (config.TOOL.name != this.name) {

@@ -33,6 +33,8 @@ function get_check_state(definition) {
 			return config.guides_enabled !== false;
 		case 'view/guides.toggle_snap':
 			return config.SNAP !== false;
+		case 'view/grid.pixel_grid':
+			return config.pixel_grid !== false;
 		case 'view/ruler.ruler':
 			return config.ruler_active === true;
 		case 'view/split_compare.toggle':

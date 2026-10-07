@@ -21,14 +21,6 @@ class File_quicksave_class {
 	set_events() {
 		var _this = this;
 
-		document.addEventListener('keydown', function (event) {
-			var code = event.keyCode;
-
-			if (code == 120) {
-				//F9
-				_this.quicksave();
-			}
-		}, false);
 	}
 
 	quicksave() {

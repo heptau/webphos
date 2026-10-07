@@ -16,17 +16,8 @@ class Layer_flatten_class {
 		canvas.height = config.HEIGHT;
 		var ctx = canvas.getContext("2d");
 		
-		var layers_sorted = this.Base_layers.get_sorted_layers();
-
-		//paint layers
-		for (var i = layers_sorted.length - 1; i >= 0; i--) {
-			var layer = layers_sorted[i];
-			
-			ctx.globalAlpha = layer.opacity / 100;
-			ctx.globalCompositeOperation = layer.composition;
-
-			this.Base_layers.render_object(ctx, layer);
-		}
+		//paint layers the same way the canvas is drawn: clipping masks, Blend If and adjustment layers count
+		this.Base_layers.convert_layers_to_canvas(ctx, null, false);
 
 		//create requested layer
 		var params = [];

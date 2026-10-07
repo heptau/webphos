@@ -74,7 +74,29 @@ class Tools_settings_class {
 				{name: "enable_autoresize", title: "Enable autoresize:", value: enable_autoresize},
 				{name: "open_in_new_tab", title: "Open files in a new document:", value: open_in_new_tab},
 				{name: "use_file_picker", title: "Ask where to save files:", value: use_file_picker},
+				{heading: "Keyboard", icon: '<svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>'},
 			],
+			on_load: function (params, popup) {
+				//the shortcuts have a dialog of their own, the last tab of the settings leads there
+				var panel = popup.el.querySelector('tbody.tab_panel:last-of-type');
+				if (!panel) {
+					return;
+				}
+				var row = document.createElement('tr');
+				var cell = document.createElement('td');
+				cell.colSpan = 3;
+				var button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'button';
+				button.textContent = t('Keyboard Shortcuts') + '\u2026';
+				button.addEventListener('click', function () {
+					popup.hide();
+					_this.Base_gui.run_target('tools/shortcuts_editor.open');
+				});
+				cell.appendChild(button);
+				row.appendChild(cell);
+				panel.appendChild(row);
+			},
 			on_change: function (params) {
 				this.Base_gui.change_theme(params.theme);
 			},

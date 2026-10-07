@@ -1,3 +1,4 @@
+import Edit_selection_transform_session_class from './selection_transform_session.js';
 import app from './../../app.js';
 import config from './../../config.js';
 import Dialog_class from './../../libs/popup.js';
@@ -5,7 +6,7 @@ import Helper_class from './../../libs/helpers.js';
 import { has_modifier } from './../../libs/shortcuts.js';
 import { grow_rect } from './../../libs/selection-area.js';
 import {
-	invert_mask, ellipse_mask, feather_mask, morph_mask, mask_bounds, color_range_mask, alpha_mask, keep_with_mask, resize_mask, combine_masks, select_similar_mask, select_subject_mask, luminosity_mask, edges_mask, select_sky_mask, rect_mask, smooth_mask, border_mask, refine_mask, stroke_mask, translate_mask
+	invert_mask, ellipse_mask, feather_mask, morph_mask, mask_bounds, color_range_mask, alpha_mask, keep_with_mask, resize_mask, combine_masks, select_similar_mask, select_subject_mask, luminosity_mask, edges_mask, select_sky_mask, rect_mask, rounded_rect_mask, transform_mask, smooth_mask, border_mask, refine_mask, stroke_mask, translate_mask
 } from './../../libs/selection-mask.js';
 import { selection_to_layer_rect } from './../../libs/selection-area.js';
 import { deserialize_layer_mask, apply_layer_mask } from './../../libs/layer-mask.js';
@@ -17,6 +18,7 @@ import Base_layers_class from './../../core/base-layers.js';
 import Selection_mask_class from './../../core/selection-mask-state.js';
 import Selection_class from './../../tools/selection.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
+import { clean_anchors, path_mask } from './../../libs/pen-path.js';
 import { t } from '../tools/translate.js';
 
 var instance = null;
@@ -43,13 +45,6 @@ class Edit_selection_class {
 		this.last_deselected = null; //mask of the selection removed by deselect()
 		this.Selection_mask.restore_saved(); //selections saved in previous sessions
 
-		document.addEventListener('keydown', (event) => {
-			if (event.key && event.key.toLowerCase() == 'q' && has_modifier(event) == false
-				&& !this.Helper.is_input(event.target)) {
-				this.quick_mask();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	/**
@@ -401,16 +396,8 @@ class Edit_selection_class {
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
 		var ctx = canvas.getContext('2d');
-		var layers = this.Base_layers.get_sorted_layers();
-		for (var i = layers.length - 1; i >= 0; i--) {
-			var layer = layers[i];
-			if (layer.visible == false || layer.type == null) {
-				continue;
-			}
-			ctx.globalAlpha = layer.opacity / 100;
-			ctx.globalCompositeOperation = layer.composition;
-			this.Base_layers.render_object(ctx, layer);
-		}
+		//the same way the canvas is drawn: clipping masks, Blend If and adjustment layers count
+		this.Base_layers.convert_layers_to_canvas(ctx, null, false);
 		ctx.globalAlpha = 1;
 		ctx.globalCompositeOperation = 'source-over';
 		return canvas;
@@ -476,6 +463,65 @@ class Edit_selection_class {
 			width_original: rect.width,
 			height_original: rect.height,
 		};
+	}
+
+	/**
+	 * Select > Selection from Path - the inside of the active path layer (made by the Pen tool) becomes the selection
+	 */
+	selection_from_path() {
+		var layer = config.layer;
+		if (layer == null || layer.type != 'pen') {
+			alertify.error(t('Select a path layer first.'));
+			return;
+		}
+		var moved = clean_anchors(layer.data).map((a) => ({
+			x: layer.x + a.x * layer.width / (layer.width_original || layer.width),
+			y: layer.y + a.y * layer.height / (layer.height_original || layer.height),
+			in: a.in ? {x: layer.x + a.in.x * layer.width / (layer.width_original || layer.width), y: layer.y + a.in.y * layer.height / (layer.height_original || layer.height)} : null,
+			out: a.out ? {x: layer.x + a.out.x * layer.width / (layer.width_original || layer.width), y: layer.y + a.out.y * layer.height / (layer.height_original || layer.height)} : null,
+		}));
+		if (moved.length < 3) {
+			alertify.error(t('A path needs at least 3 points.'));
+			return;
+		}
+		return this.set_mask(path_mask(moved, config.WIDTH, config.HEIGHT), true);
+	}
+
+	/**
+	 * Select > Transform Selection - a frame with handles on the canvas; scales, turns and moves the selection itself,
+	 * the pixels stay as they are
+	 */
+	transform_selection() {
+		return new Edit_selection_transform_session_class().start();
+	}
+
+	/**
+	 * The same with numbers in a dialog (Numbers in the bar of Transform Selection)
+	 */
+	transform_selection_numbers() {
+		this.mask_dialog('Transform Selection', [
+			{name: "scale_x", title: "Width (%):", value: 100, range: [1, 400]},
+			{name: "scale_y", title: "Height (%):", value: 100, range: [1, 400]},
+			{name: "rotate", title: "Rotate:", value: 0, range: [-180, 180], step: 0.5},
+			{name: "dx", title: "Horizontal:", value: 0, range: [-1000, 1000]},
+			{name: "dy", title: "Vertical:", value: 0, range: [-1000, 1000]},
+		], (mask, params) => transform_mask(mask, params));
+	}
+
+	/**
+	 * Select > Modify > Round Corners - the corners of the selection (its bounding rectangle) get rounded
+	 */
+	round_corners() {
+		if (this.has_selection() == false) {
+			alertify.error(t('Empty selection'));
+			return;
+		}
+		this.mask_dialog('Round Corners', [
+			{name: "radius", title: "Radius:", value: 20, range: [1, 500]},
+		], (mask, params) => {
+			var bounds = mask_bounds(mask);
+			return bounds ? rounded_rect_mask(bounds, parseInt(params.radius) || 0, mask.width, mask.height) : mask;
+		});
 	}
 
 	/**
@@ -925,23 +971,44 @@ class Edit_selection_class {
 	 * @param {boolean} [activate_tool] switch to the selection tool first (needed when there is no selection yet)
 	 */
 	async set_mask(mask, activate_tool) {
-		var bounds = mask_bounds(mask);
-		if (bounds == null) {
+		var actions = this.mask_actions(mask);
+		if (actions == null) {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var actions = [];
 		if (activate_tool && config.TOOL.name != this.Selection.name) {
-			actions.push(new app.Actions.Activate_tool_action(this.Selection.name));
+			actions.unshift(new app.Actions.Activate_tool_action(this.Selection.name));
 		}
-		actions.push(
-			new app.Actions.Set_selection_action(bounds.x, bounds.y, bounds.width, bounds.height),
-			new app.Actions.Set_selection_mask_action(mask, bounds)
-		);
 		await app.State.do_action(
 			new app.Actions.Bundle_action('set_selection_mask', 'Selection', actions)
 		);
 		config.need_render = true;
+	}
+
+	/**
+	 * Command form of set_mask for the tools (they run it through run_target)
+	 *
+	 * @param {{mask: object}} params
+	 */
+	set_mask_of_size(params) {
+		return this.set_mask(params.mask, false);
+	}
+
+	/**
+	 * The actions that make the mask the current selection (the rectangle of the selection becomes the bounds of the mask)
+	 *
+	 * @param {object} mask
+	 * @returns {object[]|null} null when the mask is empty
+	 */
+	mask_actions(mask) {
+		var bounds = mask_bounds(mask);
+		if (bounds == null) {
+			return null;
+		}
+		return [
+			new app.Actions.Set_selection_action(bounds.x, bounds.y, bounds.width, bounds.height),
+			new app.Actions.Set_selection_mask_action(mask, bounds)
+		];
 	}
 }
 

@@ -32,16 +32,6 @@ class Shape_class extends Base_tools_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 72 && has_modifier(event) == false) {
-				//H
-				this.show_shapes();
-			}
-		}, false);
 	}
 
 	load() {

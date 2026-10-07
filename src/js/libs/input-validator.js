@@ -200,6 +200,14 @@ function validate_layer(layer, index) {
 		}
 	}
 
+	// Validate fill opacity
+	if (layer.fill_opacity !== undefined) {
+		const fill_opacity = parseFloat(layer.fill_opacity);
+		if (isNaN(fill_opacity) || fill_opacity < 0 || fill_opacity > 100) {
+			return { valid: false, error: `Layer ${index}: fill opacity must be between 0 and 100` };
+		}
+	}
+
 	return { valid: true, error: null };
 }
 

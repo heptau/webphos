@@ -13,6 +13,10 @@ class View_documents_class {
 		this.docs.close(parseInt(index, 10));
 	}
 
+	close_active() {
+		this.docs.close(this.docs.active);
+	}
+
 	close_others(index) {
 		var keep = this.docs.documents[parseInt(index, 10)];
 		this.docs.documents.filter((doc) => doc !== keep).forEach((doc) => this.docs.close(this.docs.documents.indexOf(doc)));

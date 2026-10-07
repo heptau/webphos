@@ -105,6 +105,29 @@ export function heal_spot(img, cx, cy, radius, match_color) {
 		return false;
 	}
 
+	return heal_with_source(img, cx, cy, radius, best, match_color);
+}
+
+/**
+ * Healing brush with a chosen source: the disk is replaced by the texture of the place (source_x, source_y),
+ * its colors are shifted to the colors around the spot and the edge is feathered.
+ *
+ * @param {object} img image, modified in place
+ * @param {number} cx center x of the spot
+ * @param {number} cy center y of the spot
+ * @param {number} radius radius of the spot
+ * @param {number} source_x center x of the place to copy from
+ * @param {number} source_y center y of the place to copy from
+ * @param {boolean} [match_color] adapt the colors of the texture to the surroundings, default true
+ * @returns {boolean} true when the image was changed
+ */
+export function heal_from(img, cx, cy, radius, source_x, source_y, match_color) {
+	return heal_with_source(img, cx, cy, Math.max(2, radius), {x: source_x, y: source_y}, match_color);
+}
+
+function heal_with_source(img, cx, cy, radius, best, match_color) {
+	var inner = radius * 1.05;
+	var outer = radius * 1.5;
 	var target_mean = ring_mean(img, cx, cy, inner, outer, 2);
 	var source_mean = ring_mean(img, best.x, best.y, inner, outer, 2);
 	var shift = [0, 0, 0];
@@ -124,6 +147,9 @@ export function heal_spot(img, cx, cy, radius, match_color) {
 			var weight = 1 - smoothstep(radius * 0.55, radius, d);
 			var sxp = Math.round(x + (best.x - cx));
 			var syp = Math.round(y + (best.y - cy));
+			if (sxp < 0 || syp < 0 || sxp >= img.width || syp >= img.height) {
+				continue;
+			}
 			var from = (syp * img.width + sxp) * 4;
 			var to = (y * img.width + x) * 4;
 			for (var c = 0; c < 3; c++) {

@@ -13,6 +13,7 @@ import Effects_browser_class from './../../modules/effects/browser.js';
 import { is_vector_layer } from './../../libs/raster-tools.js';
 import Layer_duplicate_class from './../../modules/layer/duplicate.js';
 import Layer_raster_class from './../../modules/layer/raster.js';
+import { panel_rows, group_props_of } from './../../libs/layer-groups.js';
 import Tools_translate_class, { t } from './../../modules/tools/translate.js';
 
 //blend modes shown in the layers panel (like Photoshop), canvas composite operation -> label
@@ -44,6 +45,10 @@ var template = `
 		<label class="layer_opacity" title="Opacity">
 			<span class="trn">Opacity:</span>
 			<input type="number" id="layer_opacity" min="0" max="100" step="1" /> %
+		</label>
+		<label class="layer_opacity" title="Fill opacity: fades the layer's pixels, but not its styles">
+			<span class="trn">Fill:</span>
+			<input type="number" id="layer_fill_opacity" min="0" max="100" step="1" /> %
 		</label>
 	</div>
 	<div class="layer_buttons">
@@ -109,8 +114,19 @@ class GUI_layers_class {
 			}
 		});
 		list.addEventListener('drop', function (event) {
+			if (dragged === null) {
+				return;
+			}
+			var header = event.target.closest ? event.target.closest('button.group_toggle') : null;
+			if (header) {
+				//dropped on the row of a group: the layer goes into the group
+				event.preventDefault();
+				app.GUI.run_target('layer/group.move_into_group', [dragged, header.dataset.group]);
+				dragged = null;
+				return;
+			}
 			var target = event.target.closest ? event.target.closest('button.layer_name') : null;
-			if (dragged === null || !target) {
+			if (!target) {
 				return;
 			}
 			event.preventDefault();
@@ -118,12 +134,18 @@ class GUI_layers_class {
 				return button.dataset.id;
 			});
 			var steps = ids.indexOf(dragged) - ids.indexOf(target.dataset.id);
+			var moved = config.layers.find((layer) => layer.id == dragged);
+			var onto = config.layers.find((layer) => layer.id == target.dataset.id);
 			if (steps != 0) {
 				var actions = [];
 				for (var i = 0; i < Math.abs(steps); i++) {
 					actions.push(new app.Actions.Reorder_layer_action(dragged, steps > 0 ? 1 : -1));
 				}
 				app.State.do_action(new app.Actions.Bundle_action('reorder_layers', 'Reorder Layer', actions));
+			}
+			if (moved && onto && (moved.group || null) !== (onto.group || null)) {
+				//dropped among the layers of a group (or of no group): the layer is in that group now
+				app.GUI.run_target('layer/group.move_into_group', [moved.id, onto.group || null]);
 			}
 			dragged = null;
 		});
@@ -151,6 +173,14 @@ class GUI_layers_class {
 				value = 100;
 			}
 			change_layer_prop({opacity: Math.min(100, Math.max(0, value))});
+		});
+
+		document.getElementById('layer_fill_opacity').addEventListener('change', function () {
+			var value = parseInt(this.value, 10);
+			if (isNaN(value)) {
+				value = 100;
+			}
+			change_layer_prop({fill_opacity: Math.min(100, Math.max(0, value))});
 		});
 
 		document.getElementById('layers_base').addEventListener('click', function (event) {
@@ -185,6 +215,12 @@ class GUI_layers_class {
 					new app.Actions.Reorder_layer_action(config.layer.id, -1)
 				);
 			}
+			else if (target.classList && target.classList.contains('group_toggle')) {
+				app.GUI.run_target('layer/group.toggle_collapsed', target.dataset.group);
+			}
+			else if (target.classList && target.classList.contains('group_visibility')) {
+				app.GUI.run_target('layer/group.set_visibility', target.dataset.group);
+			}
 			else if (target.id == 'visibility') {
 				if (event.altKey) {
 					//Alt + click shows only this layer (a second Alt + click shows all again)
@@ -212,6 +248,11 @@ class GUI_layers_class {
 						}
 						app.GUI.run_target('edit/selection.layer_transparency');
 					})();
+					return;
+				}
+				if (event.shiftKey && target.dataset.id != config.layer.id) {
+					//Shift+click - link / unlink the layer with the active layer
+					app.GUI.run_target('layer/link.toggle_with_active', target.dataset.id);
 					return;
 				}
 				//select layer
@@ -262,7 +303,23 @@ class GUI_layers_class {
 
 		document.getElementById('layers_base').addEventListener('dblclick', function (event) {
 			var target = event.target;
+			if (target.classList && target.classList.contains('group_toggle')) {
+				//the settings of the group (the two clicks have folded and unfolded it again)
+				app.GUI.run_target('layer/group.group_settings', target.dataset.group);
+				return;
+			}
 			if (target.id == 'layer_name') {
+				var clicked = config.layers.find((layer) => layer.id == target.dataset.id);
+				if (clicked && clicked.type == 'adjustment') {
+					//an adjustment layer opens its settings
+					app.GUI.run_target('layer/adjustment.edit');
+					return;
+				}
+				if (clicked && clicked.type == 'pen') {
+					//a path layer goes back to the Pen tool
+					app.GUI.run_target('layer/path.edit_path');
+					return;
+				}
 				//rename layer directly in the list
 				_this.rename_inline(target);
 			}
@@ -363,7 +420,11 @@ class GUI_layers_class {
 			search.placeholder = t('Search layers');
 		}
 		var layer = config.layer;
+		var fill = document.getElementById('layer_fill_opacity');
 		select.disabled = opacity.disabled = !layer;
+		if (fill) {
+			fill.disabled = !layer;
+		}
 		if (!layer) {
 			return;
 		}
@@ -375,6 +436,9 @@ class GUI_layers_class {
 		}
 		if (document.activeElement !== opacity) {
 			opacity.value = layer.opacity;
+		}
+		if (fill && document.activeElement !== fill) {
+			fill.value = layer.fill_opacity === undefined ? 100 : layer.fill_opacity;
 		}
 	}
 
@@ -392,7 +456,27 @@ class GUI_layers_class {
 		var html = '';
 		
 		if (config.layer) {
-			for (var i in layers) {
+			//layers of a group get a header row and can be folded (not while searching, the matches must stay visible)
+			var rows = this.layer_filter
+				? layers.map((layer) => ({kind: 'layer', layer: layer}))
+				: panel_rows(layers, config.collapsed_groups || []);
+			for (var row_index in rows) {
+				var row = rows[row_index];
+				if (row.kind == 'header') {
+					var group_path = this.Helper.escapeHtml(row.group);
+					var group_label = this.Helper.escapeHtml(row.label);
+					var group_visible = row.members.some((member) => member.visible != false);
+					var group_has_active = row.members.some((member) => member.id == config.layer.id);
+					html += '<div class="item group_header' + (group_has_active ? ' has_active' : '') + '" style="margin-left:' + row.depth * 12 + 'px">';
+					html += '	<button class="visibility group_visibility' + (group_visible ? ' visible' : '') + '" data-group="' + group_path + '" title="' + (group_visible ? t('Hide Group') : t('Show Group')) + '"></button>';
+					html += '	<button class="group_toggle" data-group="' + group_path + '" aria-expanded="' + (row.collapsed ? 'false' : 'true') + '" title="' + t('Double click: Group Settings') + '">'
+						+ '<span class="chevron" aria-hidden="true">' + (row.collapsed ? '\u25B8' : '\u25BE') + '</span> ' + group_label + ' <small style="opacity:.65">(' + row.members.length + ')</small>'
+						+ (group_props_of(row.members[0], row.group).mask ? ' <span class="group_mask" title="' + t('Group Mask') + '" aria-label="' + t('Group Mask') + '">\u25D0</span>' : '') + '</button>';
+					html += '	<div class="clear"></div>';
+					html += '</div>';
+					continue;
+				}
+				var i = layers.indexOf(row.layer);
 				var value = layers[i];
 				if (this.layer_filter && String(value.name).toLowerCase().indexOf(this.layer_filter) < 0) {
 					continue;
@@ -405,7 +489,7 @@ class GUI_layers_class {
 					class_extra += ' active';
 				}
 
-				html += '<div class="item ' + class_extra + '">';
+				html += '<div class="item ' + class_extra + '"' + (row.depth > 0 ? ' style="margin-left:' + row.depth * 12 + 'px"' : '') + '>';
 				if (value.visible == true)
 					html += '	<button class="visibility visible trn" id="visibility" data-id="' + value.id + '" title="Hide"></button>';
 				else
@@ -416,18 +500,20 @@ class GUI_layers_class {
 					html += '	<button class="arrow_down" data-id="' + value.id + '" ></button>';
 				}
 
-				var kind = value.type == null ? 'empty' : (is_vector_layer(value) ? 'vector' : 'raster');
-				var kind_title = {empty: t('Empty layer'), vector: t('Vector layer'), raster: t('Raster layer')}[kind];
+				var kind = value.type == null ? 'empty' : (value.type == 'adjustment' ? 'adjustment' : (is_vector_layer(value) ? 'vector' : 'raster'));
+				var kind_title = {empty: t('Empty layer'), vector: t('Vector layer'), raster: t('Raster layer'), adjustment: t('Adjustment layer')}[kind];
 				var kind_shapes = {
 					//the first layer of a new document is empty: the first brush stroke, shape or text makes it vector
 					empty: '<rect x="2.5" y="2.5" width="11" height="11" stroke-dasharray="2 2"/>',
 					vector: '<path d="M3 13C3 7 7 3 13 3"/><rect x="1.5" y="11.5" width="3" height="3" fill="currentColor"/><rect x="11.5" y="1.5" width="3" height="3" fill="currentColor"/>',
 					raster: '<path d="M2.5 2.5h11v11h-11zM2.5 6.2h11M2.5 9.8h11M6.2 2.5v11M9.8 2.5v11"/>',
+					adjustment: '<circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/>',
 				};
 				var kind_icon = '<svg class="layer_kind ' + kind + '" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="' + kind_title + '"><title>' + kind_title + '</title>'
 					+ kind_shapes[kind] + '</svg>';
+				var linked = value.link_id != null;
 				var layer_title = kind_icon + (value.locked === true ? '\uD83D\uDD12 ' : '')
-					+ (value.group ? '<small style="opacity:.65">' + this.Helper.escapeHtml(String(value.group)) + ' \u203A </small>' : '')
+					+ (linked ? '<span class="layer_link" title="' + t('Linked layer') + '" aria-label="' + t('Linked layer') + '">\uD83D\uDD17</span> ' : '')
 					+ this.Helper.escapeHtml(value.name);
 				
 				var label = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].indexOf(value.color_label) >= 0 ? value.color_label : '';
@@ -469,10 +555,12 @@ class GUI_layers_class {
 		if (config.LANG != 'en') {
 			this.Tools_translate.translate(config.LANG, document.getElementById(target_id));
 		}
-		//converting to raster makes sense only for a vector layer
+		//converting to raster makes sense for a vector layer and for the empty first layer (it becomes a transparent picture)
 		var raster_button = document.getElementById('layer_raster');
 		if (raster_button) {
-			raster_button.disabled = is_vector_layer(config.layer) == false;
+			var layer = config.layer;
+			//no layer yet (the start of the program): nothing to convert
+			raster_button.disabled = !layer || layer.type == 'adjustment' || (is_vector_layer(layer) == false && layer.type != null);
 		}
 		if (app.GUI && app.GUI.GUI_tools) {
 			app.GUI.GUI_tools.update_disabled_tools();

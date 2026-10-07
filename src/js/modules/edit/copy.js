@@ -82,6 +82,10 @@ class Copy_class {
 			var canvas = part ? part.canvas : (merged ? this.Edit_selection.get_merged_canvas() : this.Base_layers.convert_layer_to_canvas());
 			var ctx = canvas.getContext("2d");
 
+			//where the copied pixels were, for Paste in Place
+			var source = part || (merged ? {x: 0, y: 0} : config.layer);
+			this.last_copy_rect = {x: Math.round(source.x), y: Math.round(source.y), width: canvas.width, height: canvas.height};
+
 			if (config.TRANSPARENCY == false) {
 				//add white background
 				ctx.globalCompositeOperation = 'destination-over';

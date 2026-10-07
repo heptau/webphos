@@ -2,6 +2,9 @@ import app from './../app.js';
 import config from './../config.js';
 import Base_tools_class from './../core/base-tools.js';
 import Base_layers_class from './../core/base-layers.js';
+import { stabilize } from './../libs/stabilizer.js';
+import { stroke_scale, is_stretched } from './../libs/stroke-scale.js';
+import { symmetry_transforms } from './../libs/symmetry.js';
 
 class Pencil_class extends Base_tools_class {
 
@@ -59,16 +62,19 @@ class Pencil_class extends Base_tools_class {
 		if (mouse.click_valid == false)
 			return;
 
+		//the stabilizer follows the stroke from its first point
+		this.smooth_last = {x: mouse.x, y: mouse.y};
+
 		var params_hash = this.get_params_hash();
 		var opacity = Math.round(config.ALPHA / 255 * 100);
 		
-		if (config.layer.type != this.name || params_hash != this.params_hash) {
-			//register new object - current layer is not ours or params changed
+		if (config.layer.type != this.name || params_hash != this.params_hash || is_stretched(config.layer)) {
+			//register new object - current layer is not ours, params changed or the layer was stretched with the handles
 			this.layer = {
 				type: this.name,
 				data: [],
 				opacity: opacity,
-				params: this.clone(this.getParams()),
+				params: Object.assign(this.clone(this.getParams()), {symmetry_center: [config.WIDTH / 2, config.HEIGHT / 2]}),
 				status: 'draft',
 				render_function: [this.name, 'render'],
 				x: 0,
@@ -118,10 +124,14 @@ class Pencil_class extends Base_tools_class {
 			new_size = size * this.pointer_pressure * 2;
 		}
 
+		//stabilizer: the pencil follows the mouse with a lag
+		var smooth = stabilize(this.smooth_last, mouse, params.stabilizer);
+		this.smooth_last = smooth;
+
 		//more data
 		config.layer.data.push([
-			Math.ceil(mouse.x - config.layer.x),
-			Math.ceil(mouse.y - config.layer.y),
+			Math.ceil(smooth.x - config.layer.x),
+			Math.ceil(smooth.y - config.layer.y),
 			new_size
 		]);
 		this.Base_layers.render();
@@ -143,10 +153,13 @@ class Pencil_class extends Base_tools_class {
 			new_size = size * this.pointer_pressure * 2;
 		}
 
+		var smooth = stabilize(this.smooth_last, mouse, params.stabilizer);
+		this.smooth_last = smooth;
+
 		//more data
 		config.layer.data.push([
-			Math.ceil(mouse.x - config.layer.x),
-			Math.ceil(mouse.y - config.layer.y),
+			Math.ceil(smooth.x - config.layer.x),
+			Math.ceil(smooth.y - config.layer.y),
 			new_size
 		]);
 
@@ -157,7 +170,24 @@ class Pencil_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		this.render_aliased(ctx, layer);
+		//symmetry: the same strokes again, mirrored or turned around the center of the picture
+		var params = layer.params || {};
+		var center = params.symmetry_center || [config.WIDTH / 2, config.HEIGHT / 2];
+		var center_x = center[0] - layer.x;
+		var center_y = center[1] - layer.y;
+		symmetry_transforms(params.symmetry).forEach((transform, index) => {
+			if (index == 0) {
+				this.render_aliased(ctx, layer);
+				return;
+			}
+			ctx.save();
+			ctx.translate(layer.x + center_x, layer.y + center_y);
+			ctx.rotate(transform.angle);
+			ctx.scale(transform.sx, transform.sy);
+			ctx.translate(-layer.x - center_x, -layer.y - center_y);
+			this.render_aliased(ctx, layer);
+			ctx.restore();
+		});
 	}
 	
 	/**
@@ -176,9 +206,13 @@ class Pencil_class extends Base_tools_class {
 		var size = params.size;
 
 		//set styles
+		ctx.save();
 		ctx.fillStyle = layer.color;
 		ctx.strokeStyle = layer.color;
 		ctx.translate(layer.x, layer.y);
+		//the layer was resized with the handles: the strokes are stretched with it
+		var scale = stroke_scale(layer);
+		ctx.scale(scale.x, scale.y);
 
 		//draw
 		ctx.beginPath();
@@ -229,7 +263,7 @@ class Pencil_class extends Base_tools_class {
 			);
 		}
 
-		ctx.translate(-layer.x, -layer.y);
+		ctx.restore();
 	}
 
 	/**
@@ -293,6 +327,9 @@ class Pencil_class extends Base_tools_class {
 				y: config.layer.y + min_y,
 				width: max_x - min_x,
 				height: max_y - min_y,
+				//the size of the strokes: the layer can be stretched with the handles and the strokes with it
+				width_original: max_x - min_x,
+				height_original: max_y - min_y,
 				data
 			}),
 			{

@@ -3,6 +3,7 @@
  * author: Vilius L.
  */
 
+import { is_transformed, screen_to_picture } from './../libs/view-transform.js';
 import config from './../config.js';
 import Base_layers_class from './base-layers.js';
 import Base_gui_class from './base-gui.js';
@@ -184,6 +185,20 @@ class Base_tools_class {
 	get_mouse_coordinates_from_event(event){
 		var mouse_x = event.pageX - this.Base_gui.canvas_offset.x;
 		var mouse_y = event.pageY - this.Base_gui.canvas_offset.y;
+
+		if (is_transformed(config.view)) {
+			//Rotate View / Flip View: the place on the screen is mapped back onto the canvas
+			var canvas = document.getElementById('canvas_minipaint');
+			var rect = canvas.getBoundingClientRect();
+			var local = screen_to_picture(
+				{x: event.clientX, y: event.clientY},
+				{x: rect.left + rect.width / 2, y: rect.top + rect.height / 2},
+				{width: canvas.offsetWidth, height: canvas.offsetHeight},
+				config.view
+			);
+			mouse_x = local.x;
+			mouse_y = local.y;
+		}
 
 		//adapt coords to ZOOM
 		var global_pos = this.Base_layers.get_world_coords(mouse_x, mouse_y);

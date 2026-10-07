@@ -31,21 +31,8 @@ class View_ruler_class {
 			_this.prepare_ruler();
 			_this.render_ruler();
 		}, false);
-		document.addEventListener('keydown', (event) => {
-			var code = event.code;
-			if (this.Helper.is_input(event.target))
-				return;
 
-			if (event.code == "KeyU" && event.ctrlKey != true && event.metaKey != true) {
-				_this.ruler();
-				event.preventDefault();
-			}
-			else if (event.code == "KeyR" && (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey) {
-				//Ctrl/Cmd+R - rulers (as in Photoshop)
-				_this.ruler();
-				event.preventDefault();
-			}
-		}, false);
+		this.set_marker_events();
 
 		//drag from a ruler to create a guide (as in Photoshop)
 		var ruler_top = document.getElementById('ruler_top');
@@ -57,6 +44,64 @@ class View_ruler_class {
 			ruler_left.addEventListener('mousedown', (event) => {
 				this.drag_guide(event, false);
 			});
+		}
+	}
+
+	/**
+	 * A line on each ruler shows where the mouse is (as the rulers of Photoshop do)
+	 */
+	set_marker_events() {
+		var middle_area = document.getElementById('middle_area');
+		if (!middle_area) {
+			return;
+		}
+		var make = (name) => {
+			var marker = document.createElement('div');
+			marker.className = 'ruler_marker ' + name;
+			marker.setAttribute('aria-hidden', 'true');
+			middle_area.appendChild(marker);
+			return marker;
+		};
+		this.marker_x = make('ruler_marker_x');
+		this.marker_y = make('ruler_marker_y');
+
+		document.addEventListener('mousemove', (event) => this.update_markers(event.clientX, event.clientY));
+		document.addEventListener('mouseleave', () => this.hide_markers());
+		window.addEventListener('blur', () => this.hide_markers());
+	}
+
+	hide_markers() {
+		if (this.marker_x) {
+			this.marker_x.style.display = 'none';
+			this.marker_y.style.display = 'none';
+		}
+	}
+
+	/**
+	 * @param {number} client_x position of the mouse in the window
+	 * @param {number} client_y
+	 */
+	update_markers(client_x, client_y) {
+		var ruler_top = document.getElementById('ruler_top');
+		var ruler_left = document.getElementById('ruler_left');
+		var middle_area = document.getElementById('middle_area');
+		if (config.ruler_active == false || !this.marker_x || !ruler_top || !ruler_left || !middle_area) {
+			this.hide_markers();
+			return;
+		}
+		//the rulers start 20 pixels from the corner of the work area, like the picture does (see layout.css)
+		var rect = middle_area.getBoundingClientRect();
+		var x = client_x - rect.left - 20;
+		var y = client_y - rect.top - 20;
+		var inside_x = x >= 0 && x <= ruler_top.width && client_y >= rect.top && client_y <= rect.bottom;
+		var inside_y = y >= 0 && y <= ruler_left.height && client_x >= rect.left && client_x <= rect.right;
+		this.marker_x.style.display = inside_x ? 'block' : 'none';
+		this.marker_y.style.display = inside_y ? 'block' : 'none';
+		if (inside_x) {
+			this.marker_x.style.transform = 'translateX(' + Math.round(20 + x) + 'px)';
+		}
+		if (inside_y) {
+			this.marker_y.style.transform = 'translateY(' + Math.round(20 + y) + 'px)';
 		}
 	}
 
@@ -162,6 +207,7 @@ class View_ruler_class {
 			document.getElementById('middle_area').classList.remove('has-ruler');
 			ruler_left.style.display = 'none';
 			ruler_top.style.display = 'none';
+			this.hide_markers();
 		}
 
 		this.GUI.prepare_canvas();

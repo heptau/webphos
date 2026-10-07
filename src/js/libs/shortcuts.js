@@ -140,3 +140,26 @@ export function is_mac_platform() {
 	var platform = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || '';
 	return /mac/i.test(platform);
 }
+
+const NOT_TEXT_INPUTS = ['checkbox', 'radio', 'range', 'color', 'button', 'submit', 'reset', 'file', 'image'];
+
+/**
+ * Is the user typing here? Then the keys belong to the field. A checkbox, a slider or a button that has the focus
+ * after a click does not take typed keys, so the shortcuts have to work there.
+ *
+ * @param {EventTarget|null} element target of a keyboard event
+ * @returns {boolean}
+ */
+export function is_typing_target(element) {
+	var el = /** @type {any} */ (element);
+	if (!el || typeof el.tagName !== 'string') {
+		return false;
+	}
+	if (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable === true) {
+		return true;
+	}
+	if (el.tagName === 'INPUT') {
+		return NOT_TEXT_INPUTS.indexOf(String(el.type || 'text').toLowerCase()) < 0;
+	}
+	return false;
+}

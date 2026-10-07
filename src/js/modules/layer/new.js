@@ -24,16 +24,6 @@ class Layer_new_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 78 && event.ctrlKey != true && event.metaKey != true) {
-				//N
-				this.new();
-			}
-		}, false);
 	}
 
 	new() {

@@ -66,22 +66,6 @@ class Base_state_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			const key = (event.key || '').toLowerCase();
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (key == "z" && (event.ctrlKey == true || event.metaKey)) {
-				// Undo
-				this.undo();
-				event.preventDefault();
-			}
-			if (key == "y" && (event.ctrlKey == true || event.metaKey)) {
-				// Redo
-				this.redo();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	async do_action(action, options = {}) {

@@ -397,3 +397,143 @@ export function smartBlur(image, params) {
 	}
 	return image;
 }
+
+/**
+ * Convolution of the color channels with a 3x3 kernel (edges are clamped), alpha is preserved.
+ *
+ * @param {Image_data} image
+ * @param {number[]} kernel 9 values, row by row
+ * @param {number} offset added to every result (128 gives the gray base of the emboss)
+ * @returns {Image_data}
+ */
+function convolve3(image, kernel, offset) {
+	var w = image.width;
+	var h = image.height;
+	var src = new Uint8ClampedArray(image.data);
+	var data = image.data;
+	for (var y = 0; y < h; y++) {
+		for (var x = 0; x < w; x++) {
+			for (var c = 0; c < 3; c++) {
+				var sum = 0;
+				for (var ky = -1; ky <= 1; ky++) {
+					var yy = clamp(y + ky, 0, h - 1);
+					for (var kx = -1; kx <= 1; kx++) {
+						sum += kernel[(ky + 1) * 3 + kx + 1] * src[(yy * w + clamp(x + kx, 0, w - 1)) * 4 + c];
+					}
+				}
+				data[(y * w + x) * 4 + c] = clamp(Math.round(sum + offset), 0, 255);
+			}
+		}
+	}
+	return image;
+}
+
+/**
+ * Emboss - the image turns into a gray relief lit from the given direction
+ *
+ * @param {Image_data} image
+ * @param {object} params keys: angle (0-360 degrees, where the light comes from), amount (1-500 %)
+ * @returns {Image_data}
+ */
+export function emboss(image, params) {
+	var angle = (parseFloat(params.angle) || 0) * Math.PI / 180;
+	var amount = clamp(parseFloat(params.amount ?? 100) || 0, 1, 500) / 100;
+	//the gradient along the direction of the light (y goes down)
+	var dx = Math.cos(angle) * amount;
+	var dy = -Math.sin(angle) * amount;
+	var kernel = [
+		-dx - dy, -dy, dx - dy,
+		-dx, 0, dx,
+		-dx + dy, dy, dx + dy,
+	].map(function (value) { return value / 2; });
+	desaturate_in_place(image);
+	return convolve3(image, kernel, 128);
+}
+
+/**
+ * Find Edges - bright lines on a white background where the colors change (Sobel operator)
+ *
+ * @param {Image_data} image
+ * @returns {Image_data}
+ */
+export function findEdges(image) {
+	var w = image.width;
+	var h = image.height;
+	var src = new Uint8ClampedArray(image.data);
+	var data = image.data;
+	for (var y = 0; y < h; y++) {
+		for (var x = 0; x < w; x++) {
+			var index = (y * w + x) * 4;
+			for (var c = 0; c < 3; c++) {
+				var p = function (dx, dy) {
+					return src[(clamp(y + dy, 0, h - 1) * w + clamp(x + dx, 0, w - 1)) * 4 + c];
+				};
+				var gx = -p(-1, -1) - 2 * p(-1, 0) - p(-1, 1) + p(1, -1) + 2 * p(1, 0) + p(1, 1);
+				var gy = -p(-1, -1) - 2 * p(0, -1) - p(1, -1) + p(-1, 1) + 2 * p(0, 1) + p(1, 1);
+				data[index + c] = clamp(Math.round(255 - Math.hypot(gx, gy)), 0, 255);
+			}
+		}
+	}
+	return image;
+}
+
+function desaturate_in_place(image) {
+	var data = image.data;
+	for (var i = 0; i < data.length; i += 4) {
+		var gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+		data[i] = data[i + 1] = data[i + 2] = gray;
+	}
+}
+
+/**
+ * Surface Blur - smooths the flat areas but keeps the edges: a neighbor counts only as much as its color is close
+ * to the color of the pixel (bilateral filter).
+ *
+ * @param {Image_data} image
+ * @param {object} params radius (1-10 pixels), threshold (1-255, how different colors still get mixed)
+ * @returns {Image_data}
+ */
+export function surfaceBlur(image, params) {
+	var radius = clamp(parseInt(params.radius ?? 3) || 3, 1, 10);
+	var threshold = clamp(parseFloat(params.threshold ?? 30) || 30, 1, 255);
+	var w = image.width;
+	var h = image.height;
+	var src = new Uint8ClampedArray(image.data);
+	var data = image.data;
+	//big radii look at every second neighbor, it is enough for a blur
+	var step = radius > 5 ? 2 : 1;
+	var limit = threshold * 3;
+	for (var y = 0; y < h; y++) {
+		for (var x = 0; x < w; x++) {
+			var i = (y * w + x) * 4;
+			var r0 = src[i], g0 = src[i + 1], b0 = src[i + 2];
+			var sum_r = 0, sum_g = 0, sum_b = 0, total = 0;
+			for (var dy = -radius; dy <= radius; dy++) {
+				if (dy % step != 0) {
+					continue;
+				}
+				var yy = clamp(y + dy, 0, h - 1);
+				for (var dx = -radius; dx <= radius; dx++) {
+					if (dx % step != 0) {
+						continue;
+					}
+					var j = (yy * w + clamp(x + dx, 0, w - 1)) * 4;
+					var difference = Math.abs(src[j] - r0) + Math.abs(src[j + 1] - g0) + Math.abs(src[j + 2] - b0);
+					if (difference >= limit) {
+						continue;
+					}
+					var weight = 1 - difference / limit;
+					sum_r += src[j] * weight;
+					sum_g += src[j + 1] * weight;
+					sum_b += src[j + 2] * weight;
+					total += weight;
+				}
+			}
+			//the pixel itself always has weight 1, so total is never 0
+			data[i] = sum_r / total;
+			data[i + 1] = sum_g / total;
+			data[i + 2] = sum_b / total;
+		}
+	}
+	return image;
+}

@@ -1,3 +1,4 @@
+import { warp_settings, warp_text } from './../libs/text-warp.js';
 import app from './../app.js';
 import config from './../config.js';
 import zoomView from './../libs/zoomView.js';
@@ -2644,7 +2645,7 @@ class Text_class extends Base_tools_class {
 		const editor = this.get_editor(layer);
 		editor.selection.set_visible(isActiveLayerAndTextTool);
 		editor.selection.set_cursor_visible(isActiveLayerAndTextTool && (this.selecting || this.focused));
-		editor.render(ctx, layer);
+		this.render_with_warp(ctx, layer, editor);
 		if (layer === config.layer) {
 			this.resize_to_dynamic_bounds(layer, editor);
 		}
@@ -2660,6 +2661,55 @@ class Text_class extends Base_tools_class {
 			this.selection.width = 0;
 			this.selection.height = 0;
 		}
+	}
+
+	/**
+	 * Draws the text; when the layer has Warp Text (Layer > Warp Text) the text is drawn on its own canvas first,
+	 * bent there, and the result goes to the picture (turned with the layer, if it is rotated).
+	 */
+	render_with_warp(ctx, layer, editor) {
+		var warp = warp_settings(layer.params);
+		if (warp.style == 'None' || !(layer.width > 0) || !(layer.height > 0)) {
+			editor.render(ctx, layer);
+			return;
+		}
+		//room around the text for the bent letters
+		var margin = Math.round(Math.max(layer.width, layer.height) * 0.6);
+		var width = Math.round(layer.width) + margin * 2;
+		var height = Math.round(layer.height) + margin * 2;
+		if (width > 4096 || height > 4096) {
+			editor.render(ctx, layer);
+			return;
+		}
+		var canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		var canvas_ctx = canvas.getContext('2d', {willReadFrequently: true});
+		canvas_ctx.translate(margin - layer.x, margin - layer.y);
+
+		//the text is drawn straight, the rotation of the layer is applied to the bent picture
+		var rotate = layer.rotate;
+		layer.rotate = 0;
+		try {
+			editor.render(canvas_ctx, layer);
+		}
+		finally {
+			layer.rotate = rotate;
+		}
+
+		var image = canvas_ctx.getImageData(0, 0, width, height);
+		warp_text(image, warp, {x: margin, y: margin, width: layer.width, height: layer.height});
+		canvas_ctx.setTransform(1, 0, 0, 1, 0, 0);
+		canvas_ctx.putImageData(image, 0, 0);
+
+		ctx.save();
+		if (rotate) {
+			ctx.translate(layer.x + layer.width / 2, layer.y + layer.height / 2);
+			ctx.rotate(rotate * Math.PI / 180);
+			ctx.translate(-layer.x - layer.width / 2, -layer.y - layer.height / 2);
+		}
+		ctx.drawImage(canvas, layer.x - margin, layer.y - margin);
+		ctx.restore();
 	}
 
 	get_editor(layer) {

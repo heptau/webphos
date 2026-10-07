@@ -29,16 +29,6 @@ class Image_information_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.key.toLowerCase();
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == "i" && has_modifier(event) == false) {
-				this.information();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	information() {

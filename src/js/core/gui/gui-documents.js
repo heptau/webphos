@@ -49,8 +49,8 @@ class GUI_documents_class {
 				{name: 'Duplicate Document', target: 'view/documents.duplicate_tab', parameter: index},
 				{divider: true},
 			];
+			items.push({name: 'Close', target: 'view/documents.close_tab', parameter: index});
 			if (many) {
-				items.push({name: 'Close', target: 'view/documents.close_tab', parameter: index});
 				items.push({name: 'Close Others', target: 'view/documents.close_others', parameter: index});
 			}
 			if (index < this.documents.length - 1) {
@@ -188,16 +188,13 @@ class GUI_documents_class {
 		if (!this.bar) {
 			return;
 		}
-		var many = this.documents.length > 1;
 		var html = '';
 		this.documents.forEach((doc, index) => {
 			var active = index == this.active;
-			//the cross is on the left and shows when the pointer is over the tab (always on touch screens);
-			//with a single document it stays (invisible) so the tab keeps its size
+			//the cross is on the left and shows when the pointer is over the tab (always on touch screens)
 			html += '<div class="doc_tab' + (active ? ' active' : '') + '" role="tab" draggable="true" data-index="' + index + '"'
 				+ ' aria-selected="' + active + '" tabindex="' + (active ? '0' : '-1') + '">'
-				+ '<button type="button" class="doc_close' + (many ? '' : ' idle') + '" data-index="' + index + '" aria-label="' + t('Close') + '" tabindex="-1"'
-				+ (many ? '' : ' aria-hidden="true" disabled') + '>&times;</button>'
+				+ '<button type="button" class="doc_close" data-index="' + index + '" aria-label="' + t('Close') + '" tabindex="-1">&times;</button>'
 				+ '<span class="doc_name"></span>'
 				//the dot after the name has its place reserved, so the tab does not change its width
 				+ '<span class="doc_dirty' + (doc.dirty ? ' on' : '') + '"' + (doc.dirty ? ' role="img" title="' + t('Unsaved changes') + '" aria-label="' + t('Unsaved changes') + '"' : ' aria-hidden="true"') + '></span>'
@@ -249,10 +246,8 @@ class GUI_documents_class {
 			});
 		}
 		else if (event.key == 'Delete' || event.key == 'Backspace') {
-			if (this.documents.length > 1) {
-				event.preventDefault();
-				this.close(index);
-			}
+			event.preventDefault();
+			this.close(index);
 		}
 	}
 
@@ -458,14 +453,30 @@ class GUI_documents_class {
 	}
 
 	close(index) {
-		if (this.documents.length < 2 || this.busy) {
+		if (this.busy) {
 			return;
 		}
 		var doc = this.documents[index];
 		if (!doc) {
 			return;
 		}
+		var only_one = this.documents.length < 2;
 		var do_close = async () => {
+			if (only_one) {
+				//the program always has a document: closing the only one gives an empty new one of the same size
+				if (this.documents.length != 1 || this.busy) {
+					return;
+				}
+				await this.new_blank();
+				var fresh = this.documents[this.active];
+				var old = this.documents.indexOf(doc);
+				if (fresh !== doc && old >= 0) {
+					this.documents.splice(old, 1);
+					this.active = this.documents.indexOf(fresh);
+					this.render();
+				}
+				return;
+			}
 			//the list can change while the confirmation is open
 			var current = this.documents.indexOf(doc);
 			if (current < 0 || this.busy || this.documents.length < 2) {

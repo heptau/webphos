@@ -22,8 +22,14 @@ import Tools_translate_class, { t } from './../modules/tools/translate.js';
 import Tools_settings_class from './../modules/tools/settings.js';
 import Helper_class from './../libs/helpers.js';
 import shortcutsDefinition from './../config-shortcuts.js';
-import { find_shortcut } from './../libs/shortcuts.js';
+import menuDefinition from './../config-menu.js';
+import Shortcut_manager_class from './shortcut-manager.js';
+import { is_typing_target } from './../libs/shortcuts.js';
+import { attach_long_press, long_press_allowed } from './../libs/long-press.js';
 import { AUTO, normalize_lang_code, resolve_theme, system_prefers_dark, on_system_theme_change } from './../libs/system-preferences.js';
+import { is_pixel_grid_visible, pixel_grid_positions } from './../libs/pixel-grid.js';
+import { note_target, set_allowed_targets, collect_targets } from './../libs/actions.js';
+import { is_transformed } from './../libs/view-transform.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 
 var instance = null;
@@ -80,6 +86,7 @@ class Base_gui_class {
 			[32, 32, 'Favicon'],
 		];
 
+		this.Shortcuts = new Shortcut_manager_class();
 		this.GUI_tools = new GUI_tools_class(this);
 		this.GUI_preview = new GUI_preview_class(this);
 		this.GUI_colors = new GUI_colors_class(this);
@@ -220,20 +227,33 @@ class Base_gui_class {
 	set_events() {
 		var _this = this;
 
+		//the commands that actions may record and play
+		set_allowed_targets(collect_targets(menuDefinition, shortcutsDefinition));
+
 		//menu events
 		this.GUI_menu.on('select_target', (target, object) => {
 			return this.run_target(target, object.parameter ?? null);
 		});
 
-		//Photoshop-like keyboard shortcuts
+		//keyboard shortcuts (the defaults and the changes of the user are in core/shortcut-manager.js)
 		document.addEventListener('keydown', (event) => {
-			if (this.Helper.is_input(event.target) || document.getElementById('popups').children.length > 0)
+			if (is_typing_target(event.target) || document.getElementById('popups').children.length > 0)
 				return;
 
-			var shortcut = find_shortcut(event, shortcutsDefinition);
-			if (shortcut != null) {
-				event.preventDefault();
-				this.run_target(shortcut.target, shortcut.parameter ?? null);
+			var entry = this.Shortcuts.find(event);
+			if (entry == null) {
+				return;
+			}
+			event.preventDefault();
+			//holding the key repeats the event; most commands switch something, so they run once per press
+			if (event.repeat && !entry.repeat) {
+				return;
+			}
+			if (entry.tool) {
+				this.GUI_tools.activate_tool(entry.tool);
+			}
+			else {
+				this.run_target(entry.target, entry.parameter ?? null);
 			}
 		}, false);
 
@@ -293,7 +313,7 @@ class Base_gui_class {
 			}
 			_this.GUI_context_menu.show(e, CANVAS_MENU, (target, param) => _this.run_target(target, param));
 		}, false);
-		document.getElementById('layers_base').addEventListener('contextmenu', function (e) {
+		var show_layer_menu = function (e) {
 			var button = e.target.closest ? e.target.closest('#layer_name') : null;
 			if (!button || !button.dataset.id) {
 				return;
@@ -307,7 +327,17 @@ class Base_gui_class {
 			else {
 				show();
 			}
-		}, false);
+		};
+		document.getElementById('layers_base').addEventListener('contextmenu', show_layer_menu, false);
+
+		//a touch screen has no right button: holding a finger opens the same menus
+		var touch_event = (press) => ({clientX: press.clientX, clientY: press.clientY, target: press.target, preventDefault: function () {}});
+		attach_long_press(document.getElementById('canvas_minipaint'), (press) => {
+			_this.GUI_context_menu.show(touch_event(press), CANVAS_MENU, (target, param) => _this.run_target(target, param));
+		}, {allowed: () => long_press_allowed(config.TOOL && config.TOOL.name)});
+		attach_long_press(document.getElementById('layers_base'), (press) => {
+			show_layer_menu(touch_event(press));
+		});
 	}
 
 	/**
@@ -317,6 +347,9 @@ class Base_gui_class {
 	 * @param {*} param
 	 */
 	async run_target(target, param = null) {
+		//an action that is being recorded keeps the command (and the settings of its dialog, see libs/popup.js)
+		note_target(target, param);
+
 		//Edit > Repeat Last Command remembers adjustments and effects
 		if (target.indexOf('image/') == 0 || target.indexOf('effects/') == 0) {
 			if (target.indexOf('image/adjustments.repeat_last') < 0 && target.indexOf('image/information') < 0) {
@@ -350,9 +383,17 @@ class Base_gui_class {
 	check_canvas_offset() {
 		//calc canvas position offset
 		var bodyRect = document.body.getBoundingClientRect();
-		var canvas_el = document.getElementById('canvas_minipaint').getBoundingClientRect();
-		this.canvas_offset.x = canvas_el.left - bodyRect.left;
-		this.canvas_offset.y = canvas_el.top - bodyRect.top;
+		var canvas = document.getElementById('canvas_minipaint');
+		var canvas_el = canvas.getBoundingClientRect();
+		var left = canvas_el.left;
+		var top = canvas_el.top;
+		if (is_transformed(config.view)) {
+			//the view is turned or mirrored: the place of the canvas without that
+			left = canvas_el.left + canvas_el.width / 2 - canvas.offsetWidth / 2;
+			top = canvas_el.top + canvas_el.height / 2 - canvas.offsetHeight / 2;
+		}
+		this.canvas_offset.x = left - bodyRect.left;
+		this.canvas_offset.y = top - bodyRect.top;
 	}
 
 	prepare_canvas() {
@@ -465,6 +506,40 @@ class Base_gui_class {
 			target.className = 'transparent-grid ' + config.TRANSPARENCY_TYPE;
 		}
 		target.style.backgroundSize = (gap * 2) + 'px auto';
+	}
+
+	/**
+	 * Lines between the pixels when the image is zoomed in (View > Pixel Grid)
+	 */
+	draw_pixel_grid(ctx) {
+		if (config.pixel_grid === false || is_pixel_grid_visible(config.ZOOM) == false) {
+			return;
+		}
+		//the visible part of the image: corners of the canvas in image coordinates
+		var inverse = ctx.getTransform().inverse();
+		var top_left = inverse.transformPoint(new DOMPoint(0, 0));
+		var bottom_right = inverse.transformPoint(new DOMPoint(ctx.canvas.width, ctx.canvas.height));
+		var xs = pixel_grid_positions(top_left.x, bottom_right.x, config.WIDTH);
+		var ys = pixel_grid_positions(top_left.y, bottom_right.y, config.HEIGHT);
+		var x_from = Math.max(0, top_left.x);
+		var x_to = Math.min(config.WIDTH, bottom_right.x);
+		var y_from = Math.max(0, top_left.y);
+		var y_to = Math.min(config.HEIGHT, bottom_right.y);
+
+		ctx.save();
+		ctx.lineWidth = 1 / config.ZOOM; //one screen pixel
+		ctx.strokeStyle = 'rgba(128, 128, 128, 0.55)';
+		ctx.beginPath();
+		xs.forEach(function (x) {
+			ctx.moveTo(x, y_from);
+			ctx.lineTo(x, y_to);
+		});
+		ys.forEach(function (y) {
+			ctx.moveTo(x_from, y);
+			ctx.lineTo(x_to, y);
+		});
+		ctx.stroke();
+		ctx.restore();
 	}
 
 	draw_grid(ctx) {

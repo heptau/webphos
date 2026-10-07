@@ -24,17 +24,6 @@ class Layer_duplicate_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 68 && has_modifier(event) == false) {
-				//D - duplicate
-				this.duplicate();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	/**
@@ -54,6 +43,7 @@ class Layer_duplicate_class {
 		var params = JSON.parse(JSON.stringify(config.layer));
 		delete params.id;
 		delete params.order;
+		params.link_id = null; //a copy is not linked with the original
 
 		//generate name
 		var name_number = params.name.match(/^(.*) #([0-9]+)$/);

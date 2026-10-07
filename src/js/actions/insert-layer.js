@@ -47,6 +47,18 @@ export class Insert_layer_action extends Base_action {
 			is_vector: false,
 			hide_selection_if_active: false,
 			opacity: 100,
+			fill_opacity: 100,
+			link_id: null,
+			blend_if: null,
+			//the keys below are set by the commands of the Layer menu; they have to be here, otherwise a saved project
+			//would lose them when it is opened ("wrong key")
+			mask: null,
+			mask_enabled: true,
+			locked: false,
+			group: null,
+			group_opacity: 100,
+			group_props: null,
+			color_label: null,
 			order: app.Layers.auto_increment,
 			composition: 'source-over',
 			rotate: 0,
@@ -71,7 +83,7 @@ export class Insert_layer_action extends Base_action {
 		let image_load_promise;
 		if (layer.type == 'image') {
 			
-			if(layer.name.toLowerCase().indexOf('.svg') == layer.name.length - 4){
+			if (String(layer.name).toLowerCase().endsWith('.svg')) {
 				// We have svg
 				layer.is_vector = true;
 			}

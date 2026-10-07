@@ -185,11 +185,20 @@ label {
 
 /* ========== menu bar ====================================================== */
 
+/* The blur is on a layer behind the bar, not on the bar: an element with a backdrop filter is a "backdrop root", so the
+   dropdowns inside of it could only blur the bar and not the picture below them. */
 .main_menu {
+	border-bottom: 0.5px solid var(--separator);
+}
+.main_menu::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
 	background: var(--menu-background-color);
 	-webkit-backdrop-filter: var(--vibrancy);
 	backdrop-filter: var(--vibrancy);
-	border-bottom: 0.5px solid var(--separator);
 }
 .main_menu > ul.menu_bar {
 	height: var(--menubar-height);
@@ -429,10 +438,11 @@ body.no_documents .documents_bar {
 	height: 0;
 	background: none;
 	border: 0;
-	-webkit-backdrop-filter: none;
-	backdrop-filter: none;
 	pointer-events: none;
 	z-index: 300;
+}
+.main_menu.context_host::before {
+	display: none;
 }
 .main_menu.context_host > ul.menu_dropdown {
 	pointer-events: auto;
@@ -633,12 +643,13 @@ body.no_status {
 .layers_list .layer_name[data-label="gray"] { --label-color: #8e8e93; }
 .layer_props {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
+	gap: 6px 8px;
 	margin: 0 0 8px;
 }
 .layer_props select {
-	flex: 1 1 auto;
+	flex: 1 1 100%;
 	min-width: 0;
 }
 .layer_props .layer_opacity {
@@ -724,6 +735,34 @@ body.no_status {
 .layers_list .visibility,
 .layers_list .delete {
 	height: 22px;
+}
+/* a row with the name of a layer group (folds the group) */
+.layers_list .group_toggle {
+	display: block;
+	width: calc(100% - 22px);
+	height: 22px;
+	padding: 1px 8px 0;
+	line-height: 20px;
+	font-size: 12px;
+	font-weight: 600;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	color: var(--text-color);
+	background-color: transparent;
+	border: 0;
+	border-radius: 5px;
+	cursor: pointer;
+}
+.layers_list .group_toggle:hover {
+	background-color: var(--surface-hover);
+}
+.layers_list .group_toggle .chevron {
+	display: inline-block;
+	width: 10px;
+}
+.layers_list .group_header.has_active .group_toggle {
+	color: var(--accent);
 }
 .layer_buttons {
 	display: flex;
@@ -1407,7 +1446,7 @@ body .alertify .ajs-body .ajs-content input.ajs-input {
 /* ========== reduced transparency / mobile ================================= */
 
 @media (prefers-reduced-transparency: reduce) {
-	.main_menu,
+	.main_menu::before,
 	.main_menu > ul.menu_dropdown {
 		-webkit-backdrop-filter: none;
 		backdrop-filter: none;
@@ -1668,4 +1707,284 @@ html.large_ui input[type="number"] {
 }
 .layer_buttons button:disabled:hover {
 	background-color: var(--button-background-color);
+}
+
+/* recently used colors */
+.color_history {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 3px;
+	margin: 0 0 8px;
+}
+.color_history:empty {
+	display: none;
+}
+.color_history_item {
+	width: 16px;
+	height: 16px;
+	padding: 0;
+	border: 1px solid var(--separator);
+	border-radius: 3px;
+	cursor: pointer;
+}
+.color_history_item:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
+}
+
+/* linked layers */
+.layers_list .layer_link {
+	font-size: 10px;
+	opacity: 0.8;
+}
+
+/* recording of an action */
+.action_recorder {
+	position: fixed;
+	top: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	border-radius: 8px;
+	background: var(--surface-elevated, #2c2c2e);
+	color: var(--text-color);
+	border: 0.5px solid var(--separator);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+	font-size: 12px;
+}
+.action_recorder_label {
+	color: #ff453a;
+	font-weight: 600;
+}
+
+/* Rotate View: the rulers do not match the turned picture */
+.middle_area.view_transformed .ruler_left,
+.middle_area.view_transformed .ruler_top {
+	visibility: hidden;
+}
+
+/* Skew / Perspective / Distort with the mouse */
+.distort_bar {
+	position: fixed;
+	top: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 8px;
+	border-radius: 8px;
+	background: var(--surface-elevated, #2c2c2e);
+	color: var(--text-color);
+	border: 0.5px solid var(--separator);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+	font-size: 12px;
+}
+.distort_bar button[aria-pressed="true"],
+.distort_bar button.primary {
+	background: var(--accent);
+	color: var(--accent-text);
+}
+.distort_bar_divider {
+	width: 1px;
+	align-self: stretch;
+	background: var(--separator);
+}
+
+/* holding a finger opens our context menu, not the one of iPadOS (selection handles, copy callout) */
+#canvas_minipaint,
+#layers .layer_name {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* WebPhos > Keyboard Shortcuts */
+#popups .popup.shortcuts_dialog {
+	max-width: 640px;
+}
+#popups .popup.shortcuts_dialog [data-id="popup_cancel"] {
+	display: none;
+}
+.shortcuts_bar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	height: 28px;
+	margin-bottom: 6px;
+}
+.shortcuts_searchbox {
+	position: relative;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.shortcuts_magnifier {
+	position: absolute;
+	left: 9px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	opacity: 0.55;
+	pointer-events: none;
+}
+#popups .popup input.shortcuts_search {
+	box-sizing: border-box;
+	width: 100%;
+	height: 28px;
+	margin: 0;
+	padding: 0 8px 0 29px;
+	line-height: 26px;
+	font-size: 13px;
+	border-radius: 7px;
+	-webkit-appearance: none;
+	appearance: none;
+}
+.shortcuts_hint {
+	margin-bottom: 8px;
+	font-size: 11px;
+	opacity: 0.7;
+}
+.shortcuts_list {
+	max-height: 55vh;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+.shortcuts_group {
+	margin: 12px 0 4px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	opacity: 0.65;
+}
+.shortcuts_row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 2px 0;
+}
+.shortcuts_name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.shortcuts_key {
+	flex: 0 0 150px;
+	min-width: 0;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+.shortcuts_key.unset {
+	opacity: 0.55;
+}
+.shortcuts_key.recording {
+	background: var(--accent);
+	color: var(--accent-text);
+}
+.shortcuts_reset {
+	flex: 0 0 28px;
+	padding: 0;
+}
+
+/* the lines on the rulers that follow the mouse */
+.ruler_marker {
+	display: none;
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 3;
+	pointer-events: none;
+	background: var(--accent, #ff3b30);
+}
+.ruler_marker_x {
+	width: 1px;
+	height: 15px;
+}
+.ruler_marker_y {
+	width: 15px;
+	height: 1px;
+}
+.middle_area.view_transformed .ruler_marker {
+	display: none !important;
+}
+
+.shortcuts_warning {
+	flex: 0 0 auto;
+	color: #ff9f0a;
+	cursor: help;
+}
+
+.shortcuts_icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 32px;
+	height: 28px;
+	margin: 0;
+	padding: 0;
+}
+
+/* Photoshop layout of a dialog with fields: OK, Cancel and Preview in a column on the right */
+#popups .popup.side_buttons {
+	display: grid !important; /* popup.js sets display: flex inline */
+	grid-template-columns: auto auto;
+	grid-template-rows: auto auto auto;
+	max-width: 560px;
+}
+#popups .popup.side_buttons.has_preview {
+	max-width: min(700px, 94vw);
+}
+#popups .popup.side_buttons.has_preview:has(.curve_editor) {
+	max-width: min(860px, 94vw);
+}
+#popups .popup.side_buttons > h2,
+#popups .popup.side_buttons > [data-id="pretitle_area"],
+#popups .popup.side_buttons > .text_muted {
+	grid-column: 1 / -1;
+}
+#popups .popup.side_buttons > h2 {
+	grid-row: 1;
+}
+#popups .popup.side_buttons > [data-id="pretitle_area"],
+#popups .popup.side_buttons > .text_muted {
+	grid-row: 3;
+}
+#popups .popup.side_buttons > .dialog_content {
+	grid-column: 1;
+	grid-row: 2;
+	overflow: auto;
+	padding-bottom: 16px;
+}
+#popups .popup.side_buttons > .buttons {
+	grid-column: 2;
+	grid-row: 2;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
+	gap: 8px;
+	padding: 16px 20px 16px 0;
+}
+#popups .popup.side_buttons .buttons .button {
+	width: 88px;
+	min-width: 88px;
+}
+#popups .popup.side_buttons .buttons .button.default {
+	order: 1;
+}
+#popups .popup.side_buttons .buttons [data-id="popup_cancel"] {
+	order: 2;
+}
+#popups .popup.side_buttons .buttons .preview_toggle {
+	order: 3;
+	margin: 4px 0 0;
+	padding-left: 2px;
 }

@@ -330,7 +330,10 @@ body .sp-preview{
 .sidebar_left .sharpen:after{ background-image: url('images/icons/sharpen.svg'); }
 .sidebar_left .dodge_burn:after{ background-image: url('images/icons/dodge_burn.svg'); }
 .sidebar_left .smudge:after{ background-image: url('images/icons/smudge.svg'); }
-.sidebar_left .desaturate:after{ background-image: url('images/icons/desaturate.svg'); }
+.sidebar_left .pen:after{ background-image: url('images/icons/pen.svg'); }
+.sidebar_left .patch:after{ background-image: url('images/icons/patch.svg'); }
+.sidebar_left .history_brush:after{ background-image: url('images/icons/history_brush.svg'); }
+.sidebar_left .sponge:after{ background-image: url('images/icons/sponge.svg'); }
 .sidebar_left .bulge_pinch:after{ background-image: url('images/icons/bulge_pinch.svg'); }
 .sidebar_left .heal:after{ background-image: url('images/icons/heal.svg'); }
 .sidebar_left .red_eye:after{ background-image: url('images/icons/red_eye.svg'); }

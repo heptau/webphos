@@ -3,6 +3,8 @@
  * author: Vilius L.
  */
 
+import { fit_zoom_percent } from './../../libs/zoom-fit.js';
+import { is_transformed, screen_delta_to_picture } from './../../libs/view-transform.js';
 import config from './../../config.js';
 import Base_layers_class from './../base-layers.js';
 import zoomView from './../../libs/zoomView.js';
@@ -179,6 +181,12 @@ class GUI_preview_class {
 	 * @param {number} dy screen pixels
 	 */
 	pan(dx, dy) {
+		if (is_transformed(config.view)) {
+			//the mouse moves on the screen, the picture is turned: the movement is turned back
+			var moved = screen_delta_to_picture(dx, dy, config.view);
+			dx = moved.x;
+			dy = moved.y;
+		}
 		zoomView.move(dx, dy);
 		config.need_render = true;
 	}
@@ -416,17 +424,14 @@ class GUI_preview_class {
 		var page_w = container.clientWidth;
 		var page_h = container.clientHeight;
 
-		var best_width = page_w / config.WIDTH;
-		var best_height = page_h / config.HEIGHT;
-		var best_zoom = null;
+		//the next smaller whole percent: rather a little smaller than a few pixels too big
+		var percent = fit_zoom_percent(page_w, page_h, config.WIDTH, config.HEIGHT);
 
-		best_zoom = Math.min(best_width, best_height);
-
-		if (only_increase != undefined && best_zoom > 1) {
+		if (only_increase != undefined && percent > 100) {
 			return false;
 		}
 
-		this.zoom(Math.min(best_width, best_height) * 100);
+		this.zoom(percent);
 	}
 
 	set_center_zoom() {

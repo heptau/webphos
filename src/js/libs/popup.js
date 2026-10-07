@@ -44,6 +44,7 @@ import Base_layers_class from './../core/base-layers.js';
 import Base_gui_class from './../core/base-gui.js';
 import Tools_translate_class, { t } from './../modules/tools/translate.js';
 import Helper_class from './../libs/helpers.js';
+import { is_replaying, next_replay_params, note_dialog_done, note_dialog_cancelled } from './../libs/actions.js';
 
 var template = `
 	<button type="button" class="close" data-id="popup_close" title="Close">&times;</button>
@@ -104,6 +105,13 @@ class Dialog_class {
 	 * @param {array} config
 	 */
 	show(config) {
+		if (is_replaying()) {
+			//an action is playing: the dialog is not shown, the settings come from the recording
+			if (typeof config.on_finish == 'function') {
+				config.on_finish(next_replay_params(config.params));
+			}
+			return;
+		}
 		if (this.active == true) {
 			this.hide();
 		}
@@ -211,6 +219,10 @@ class Dialog_class {
 
 		if (success === false && this.oncancel) {
 			this.oncancel(params);
+		}
+		if (success === false) {
+			//an action that is being recorded: this command did nothing
+			note_dialog_cancelled();
 		}
 		var opener = this.opener;
 		this.opener = null;
@@ -350,6 +362,7 @@ class Dialog_class {
 	//OK pressed - prepare data and call handlers
 	save() {
 		var params = this.get_params();
+		note_dialog_done(params);
 
 		if (this.onfinish) {
 			this.onfinish(params);
@@ -476,6 +489,10 @@ class Dialog_class {
 		this.el.style.display = "flex";
 		if (this.className) {
 			this.el.classList.add(this.className);
+		}
+		//dialogs with fields (not alerts, tabs or special windows) have the buttons in a column on the right, like in Photoshop
+		if (!this.className && this.onfinish != false && !this.el.querySelector('.tab_bar') && this.el.querySelector('[data-id="params_content"] table, [data-id="preview_content"] canvas')) {
+			this.el.classList.add('side_buttons');
 		}
 		if (this.preview !== false) {
 			this.el.classList.add('has_preview');

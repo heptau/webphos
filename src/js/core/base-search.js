@@ -30,18 +30,6 @@ class Base_search_class {
 	}
 
 	events() {
-		document.addEventListener('keydown', (event) => {
-			if (this.POP.get_active_instances() > 0) {
-				return;
-			}
-
-			var code = event.key;
-			if (code == "F3" || ( (event.ctrlKey == true || event.metaKey) && !event.shiftKey && !event.altKey && (code == "f" || code == "k"))) {
-				//open
-				this.search();
-				event.preventDefault();
-			}
-		}, false);
 
 		//click on a result runs it
 		document.addEventListener('click', (event) => {

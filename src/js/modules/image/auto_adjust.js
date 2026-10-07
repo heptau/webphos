@@ -25,17 +25,6 @@ class Image_autoAdjust_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 70 && event.ctrlKey != true && event.metaKey != true) {
-				//F - adjust
-				this.auto_adjust();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	auto_adjust() {

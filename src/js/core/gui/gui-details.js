@@ -10,6 +10,7 @@ import Text_class from './../../tools/text.js';
 import Base_layers_class from "../base-layers";
 import Tools_settings_class from './../../modules/tools/settings.js';
 import Helper_class from './../../libs/helpers.js';
+import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Tools_translate_class, { t } from './../../modules/tools/translate.js';
 
 var template = `
@@ -682,6 +683,33 @@ class GUI_details_class {
 
 					config.layer.params[key] = new_value;
 					config.need_render = true;
+				});
+			}
+			else if (typeof item == 'object' && typeof item.value == 'string' && Array.isArray(item.values)) {
+				//list of values
+				let select = document.createElement('select');
+				select.dataset.key = k;
+				let current = config.layer.params[k];
+				current = current && current.value !== undefined ? current.value : current;
+				item.values.forEach(function (option_value) {
+					let option = document.createElement('option');
+					option.value = option_value;
+					option.className = 'trn';
+					option.textContent = option_value;
+					select.appendChild(option);
+				});
+				select.value = current;
+				item_row.appendChild(select);
+
+				select.addEventListener('change', function () {
+					let key = this.dataset.key;
+					let params = JSON.parse(JSON.stringify(config.layer.params));
+					params[key] = Object.assign({}, params[key] && typeof params[key] == 'object' ? params[key] : {values: item.values}, {value: this.value});
+					app.State.do_action(
+						new app.Actions.Update_layer_action(config.layer.id, {
+							params: params
+						})
+					);
 				});
 			}
 			else if (typeof item == 'string' && item[0] == '#') {

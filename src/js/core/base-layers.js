@@ -14,6 +14,11 @@ import Helper_class from "./../libs/helpers.js";
 import { deserialize_layer_mask } from "./../libs/layer-mask.js";
 import alertify from "./../../../node_modules/alertifyjs/build/alertify.min.js";
 import { t } from '../modules/tools/translate.js';
+import { fill_alpha, split_halo_filters } from "./../libs/layer-fill.js";
+import { effective_alpha, plan_groups } from "./../libs/layer-groups.js";
+import { make_identity, stack_signature, split_for_cache, preview_scale } from "./../libs/layer-signature.js";
+import { is_default as blend_if_is_default, apply_blend_if } from "./../libs/blend-if.js";
+import { adjust_image, mix_adjusted } from "./../libs/adjustment-layers.js";
 
 var instance = null;
 
@@ -34,8 +39,10 @@ var instance = null;
  * - is_vector (bool)
  * - hide_selection_if_active (bool)
  * - opacity (0-100)
+ * - fill_opacity (0-100, default 100) opacity of the layer's own pixels, layer styles are not faded
  * - mask (object|null) layer mask, see libs/layer-mask.js
  * - mask_enabled (bool, default true)
+ * - locked (bool), group (string|null), color_label (string|null), link_id (number|null), blend_if (object|null)
  * - order (int)
  * - composition (string)
  * - rotate (int) 0-359
@@ -181,7 +188,7 @@ class Base_layers_class {
 				config.HEIGHT
 			);
 
-			this.render_objects(this.ctx, newCanvas, layers_sorted, ()=>{
+			this.render_objects_cached(this.ctx, newCanvas, layers_sorted, ()=>{
 				this.ctx.save();
 			});
 
@@ -190,6 +197,7 @@ class Base_layers_class {
 
 			//grid
 			this.Base_gui.draw_grid(this.ctx);
+			this.Base_gui.draw_pixel_grid(this.ctx);
 
 			//guides
 			this.Base_gui.draw_guides(this.ctx);
@@ -279,6 +287,10 @@ class Base_layers_class {
 				render_function
 			](this.ctx);
 		}
+		//an overlay of a command that is running (for example the handles of Edit > Distort)
+		if (typeof config.view_overlay == "function") {
+			config.view_overlay(this.ctx);
+		}
 	}
 
 	/**
@@ -329,6 +341,243 @@ class Base_layers_class {
 	 * @param {Function} shouldSkip - An optional boolean function for skipping those layers which are not needed to be rendered
 	 */
 	render_objects(ctx, tempCanvas, layers, prepare, shouldSkip) {
+		//a group with its own opacity or blend mode is drawn on its own first
+		var plan = plan_groups(layers);
+
+		//Adjustment and Blend If layers work on everything below them. Drawing that again for every one of them is slow
+		//(n layers cost n times n), so everything up to the top one of them is drawn once on a canvas of its own, that
+		//already holds what is below the next one; the layers above it are drawn directly.
+		var top = plan.findIndex((entry) => entry.kind !== "group" && this.needs_backdrop(entry));
+		var clipped = plan.some((entry) => entry.composition === "source-atop");
+		if (top < 0 || clipped) {
+			this.render_objects_flat(ctx, tempCanvas, plan, prepare, shouldSkip);
+			return;
+		}
+		var width = Math.max(1, config.WIDTH);
+		var height = Math.max(1, config.HEIGHT);
+		var make = () => {
+			var canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			return canvas;
+		};
+		var accumulated = make();
+		var accumulated_ctx = accumulated.getContext("2d", {willReadFrequently: true});
+		this.render_objects_flat(accumulated_ctx, make(), plan.slice(top), () => {
+			accumulated_ctx.save();
+		}, shouldSkip, true);
+		prepare && prepare();
+		ctx.globalAlpha = 1;
+		ctx.globalCompositeOperation = "source-over";
+		ctx.drawImage(accumulated, 0, 0);
+		accumulated.width = accumulated.height = 1;
+		this.render_objects_flat(ctx, tempCanvas, plan.slice(0, top), null, shouldSkip);
+	}
+
+	/**
+	 * Like render_objects for the picture on the screen: the layers below the active one do not change while the active
+	 * layer is painted on or moved, so they are drawn once and kept (see libs/layer-signature.js). Everything is drawn
+	 * again when one of them changes.
+	 */
+	render_objects_cached(ctx, tempCanvas, layers, prepare, shouldSkip) {
+		this.track_pointer();
+		var split = config.layer ? split_for_cache(layers, config.layer.id, config.ZOOM || 1) : null;
+		var pixels = Math.max(1, config.WIDTH) * Math.max(1, config.HEIGHT);
+		if (split == null || pixels > 100 * 1000 * 1000) {
+			this.free_backdrop_cache();
+			this.render_objects(ctx, tempCanvas, layers, prepare, shouldSkip);
+			return;
+		}
+		var backdrop = this.get_backdrop_cache(split.lower);
+		var plan = plan_groups(split.upper);
+		var width = Math.max(1, config.WIDTH);
+		var height = Math.max(1, config.HEIGHT);
+		var backdrop_dependent = plan.some((entry) => entry.kind !== "group" && this.needs_backdrop(entry));
+		if (backdrop_dependent) {
+			//an adjustment or Blend If layer above the active one works on the cached picture plus the layers above it.
+			//The picture and its small copy in the Navigator are drawn one after the other with the same layers, so
+			//the result is kept for the second one.
+			//While something is dragged the work is done on a smaller copy (like the preview of Photoshop), the full size
+			//follows when the mouse button is up.
+			var scale = this.interactive_scale(width, height);
+			var key = this.backdrop_cache.key + "|" + stack_signature(split.upper, this.layer_identity, "") + "|" + scale;
+			var running = this.running_cache && this.running_cache.key === key ? this.running_cache.canvas : null;
+			if (running == null) {
+				if (this.running_cache) {
+					this.running_cache.canvas.width = this.running_cache.canvas.height = 1;
+				}
+				running = document.createElement("canvas");
+				running.width = Math.max(1, Math.round(width * scale));
+				running.height = Math.max(1, Math.round(height * scale));
+				var running_ctx = running.getContext("2d", {willReadFrequently: true});
+				running_ctx.drawImage(backdrop, 0, 0, running.width, running.height);
+				running_ctx.scale(running.width / width, running.height / height);
+				var scratch = document.createElement("canvas");
+				scratch.width = running.width;
+				scratch.height = running.height;
+				this.render_objects_flat(running_ctx, scratch, plan, () => {
+					running_ctx.save();
+				}, shouldSkip, true);
+				scratch.width = scratch.height = 1;
+				this.running_cache = {key: key, canvas: running};
+				this.low_resolution_shown = scale < 1;
+			}
+			prepare && prepare();
+			ctx.globalAlpha = 1;
+			ctx.globalCompositeOperation = "source-over";
+			ctx.drawImage(running, 0, 0, width, height);
+			return;
+		}
+		this.free_running_cache();
+		prepare && prepare();
+		ctx.globalAlpha = 1;
+		ctx.globalCompositeOperation = "source-over";
+		ctx.drawImage(backdrop, 0, 0);
+		this.render_objects_flat(ctx, tempCanvas, plan, null, shouldSkip);
+	}
+
+	/**
+	 * @param {number} width width of the document
+	 * @param {number} height
+	 * @returns {number} 1, or the share of the size that is used for the preview while the mouse button is down on a
+	 *   document that is big enough to need it
+	 */
+	interactive_scale(width, height) {
+		this.track_pointer();
+		return this.pointer_down ? preview_scale(width, height) : 1;
+	}
+
+	/**
+	 * Remembers if a mouse button (or a finger) is down; when it goes up and a smaller preview was shown, the picture is
+	 * drawn again in full size
+	 */
+	track_pointer() {
+		if (this.pointer_tracked || typeof document === "undefined") {
+			return;
+		}
+		this.pointer_tracked = true;
+		this.pointer_down = false;
+		var down = () => {
+			this.pointer_down = true;
+		};
+		var up = () => {
+			if (!this.pointer_down) {
+				return;
+			}
+			this.pointer_down = false;
+			if (this.low_resolution_shown) {
+				this.low_resolution_shown = false;
+				config.need_render = true;
+			}
+		};
+		document.addEventListener("mousedown", down, true);
+		document.addEventListener("touchstart", down, true);
+		document.addEventListener("mouseup", up, true);
+		document.addEventListener("touchend", up, true);
+		document.addEventListener("touchcancel", up, true);
+		window.addEventListener("blur", up);
+	}
+
+	free_backdrop_cache() {
+		if (this.backdrop_cache) {
+			this.backdrop_cache.canvas.width = this.backdrop_cache.canvas.height = 1;
+			this.backdrop_cache = null;
+		}
+		this.free_running_cache();
+	}
+
+	free_running_cache() {
+		if (this.running_cache) {
+			this.running_cache.canvas.width = this.running_cache.canvas.height = 1;
+			this.running_cache = null;
+		}
+	}
+
+	/**
+	 * The layers below the active one drawn on a canvas of the size of the document (drawn again only when their
+	 * signature changes)
+	 *
+	 * @param {object[]} lower top first
+	 * @returns {HTMLCanvasElement}
+	 */
+	get_backdrop_cache(lower) {
+		if (!this.layer_identity) {
+			this.layer_identity = make_identity();
+		}
+		var fonts = typeof document !== "undefined" && document.fonts ? document.fonts.size : 0;
+		var key = stack_signature(lower, this.layer_identity, [config.WIDTH, config.HEIGHT, this.disabled_filter_id, fonts].join("x"));
+		if (this.backdrop_cache && this.backdrop_cache.key === key) {
+			return this.backdrop_cache.canvas;
+		}
+		if (this.backdrop_cache) {
+			this.backdrop_cache.canvas.width = this.backdrop_cache.canvas.height = 1;
+		}
+		var canvas = document.createElement("canvas");
+		canvas.width = Math.max(1, config.WIDTH);
+		canvas.height = Math.max(1, config.HEIGHT);
+		//a canvas that is read often is drawn by the processor, like the one that render_objects uses for the layers
+		//above, so the colors come out the same (the graphics card rounds blend modes differently)
+		var canvas_ctx = canvas.getContext("2d", {willReadFrequently: true});
+		var scratch = document.createElement("canvas");
+		scratch.width = canvas.width;
+		scratch.height = canvas.height;
+		this.render_objects(canvas_ctx, scratch, lower, () => {
+			canvas_ctx.save();
+		});
+		scratch.width = scratch.height = 1;
+		this.backdrop_cache = {key: key, canvas: canvas};
+		return canvas;
+	}
+
+	/**
+	 * @param {object} layer
+	 * @returns {boolean} the layer is drawn from what is below it (adjustment layer, Blend If)
+	 */
+	needs_backdrop(layer) {
+		return layer.type === "adjustment" || Boolean(layer.blend_if && blend_if_is_default(layer.blend_if) == false);
+	}
+
+	/**
+	 * Draws a group that has its own opacity / blend mode: its layers go to a canvas of their own (the size of the
+	 * document), which is then put on the picture with the opacity and blend mode of the group.
+	 *
+	 * @param {CanvasRenderingContext2D} ctx where the group goes
+	 * @param {{name: string, props: {opacity: number, composition: string, mask: object|null}, entries: object[]}} group
+	 * @param {Function} [shouldSkip]
+	 */
+	render_group(ctx, group, shouldSkip) {
+		var width = Math.max(1, config.WIDTH);
+		var height = Math.max(1, config.HEIGHT);
+		var make = () => {
+			var canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			return canvas;
+		};
+		var own = make();
+		var own_ctx = own.getContext("2d");
+		this.render_objects_flat(own_ctx, make(), group.entries, () => {
+			own_ctx.save();
+		}, shouldSkip, true);
+		//the mask of the group (in the pixels of the document) cuts what the layers made
+		var mask_canvas = group.props.mask ? this.get_mask_canvas({mask: group.props.mask}) : null;
+		if (mask_canvas) {
+			own_ctx.globalCompositeOperation = "destination-in";
+			own_ctx.drawImage(mask_canvas, 0, 0, width, height);
+			own_ctx.globalCompositeOperation = "source-over";
+		}
+		ctx.globalAlpha = group.props.opacity / 100;
+		ctx.globalCompositeOperation = group.props.composition;
+		ctx.drawImage(own, 0, 0);
+		ctx.globalAlpha = 1;
+		ctx.globalCompositeOperation = "source-over";
+		own.width = own.height = 1;
+	}
+
+	/**
+	 * Like render_objects, but the layers are used as they are (groups are already planned or not wanted)
+	 */
+	render_objects_flat(ctx, tempCanvas, layers, prepare, shouldSkip, inline_backdrop) {
 		const tempCtx = tempCanvas.getContext("2d");
 		// Prepare the temporary canvas if needed
 		prepare && prepare();
@@ -340,8 +589,22 @@ class Base_layers_class {
 			// If the previous layer has clip masking effect and the current one is not the other end of the pair,
 			// then render the temporary canvas for clip masking on top of the current.
 			
+			// A group drawn on its own (its layers are skipped inside of it if they are not needed)
+			if (layer.kind === "group") {
+				this.render_group(ctx, layer, shouldSkip);
+				continue;
+			}
+
 			// Skip the layer if not needed to be rendered
 			if (shouldSkip && shouldSkip(layer)) {
+				continue;
+			}
+
+			// An adjustment layer changes the colors of everything below it
+			if (layer.type === "adjustment") {
+				if (layer.visible !== false) {
+					this.render_adjustment(ctx, layer, layers.slice(i + 1), shouldSkip, inline_backdrop === true ? ctx : null);
+				}
 				continue;
 			}
 
@@ -353,14 +616,18 @@ class Base_layers_class {
 				(nextLayer && nextLayer.composition === "source-atop")
 			) {
 				// Apply the effect in a isolated temporary canvas
-				tempCtx.globalAlpha = layer.opacity / 100;
+				tempCtx.globalAlpha = effective_alpha(layer);
 				tempCtx.globalCompositeOperation = layer.composition;
 
 				// If the next layer has the clip masking effect then
 				// isolated the shadow filter from temporary canvas and keep that in the original canvas
 				if (nextLayer?.composition === "source-atop") {
-					// Render the layer
-					this.render_object(ctx, layer);
+					// Render the base layer (a clipped layer in the middle of a stack is drawn only through the temporary canvas)
+					if (layer.composition !== "source-atop") {
+						ctx.globalAlpha = effective_alpha(layer);
+						ctx.globalCompositeOperation = layer.composition;
+						this.render_object(ctx, layer);
+					}
 					// Then remove the shadow (if it exists) from the render process in the temporary canvas
 					const filters = layer.filters.filter((filter) => {
 						return filter.name !== "shadow";
@@ -385,13 +652,137 @@ class Base_layers_class {
 					tempCtx.globalCompositeOperation = null;
 					tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
 				}
+			} else if (layer.blend_if && blend_if_is_default(layer.blend_if) == false) {
+				//Blend If - the layer is limited by its own brightness and by what is below it
+				ctx.globalAlpha = effective_alpha(layer);
+				ctx.globalCompositeOperation = layer.composition;
+				this.render_blend_if(ctx, layer, layers.slice(i + 1), shouldSkip, inline_backdrop === true ? ctx : null);
 			} else {
-				ctx.globalAlpha = layer.opacity / 100;
+				ctx.globalAlpha = effective_alpha(layer);
 				ctx.globalCompositeOperation = layer.composition;
 				this.render_object(ctx, layer);
 			}
 		}
 
+	}
+
+	/**
+	 * Draws an adjustment layer: everything below it is drawn on its own canvas (the size of the document), the colors
+	 * are changed there (only as much as the opacity and the layer mask say) and the result replaces the picture.
+	 *
+	 * @param {CanvasRenderingContext2D} ctx the picture with the layers below already drawn
+	 * @param {object} layer adjustment layer, params = {adjustment: key, settings: {...}}
+	 * @param {object[]} below the layers below this one (top first)
+	 * @param {Function} [shouldSkip]
+	 */
+	render_adjustment(ctx, layer, below, shouldSkip, current) {
+		var params = layer.params || {};
+		//with `current` the work is done at the size of that canvas (it can be a smaller copy of the document while
+		//something is being dragged, then its transform scales the layers to it)
+		var width = current ? current.canvas.width : Math.max(1, config.WIDTH);
+		var height = current ? current.canvas.height : Math.max(1, config.HEIGHT);
+		var make = () => {
+			var canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			return canvas;
+		};
+
+		//`current` is a canvas of the size of the document that already holds everything below the layer
+		var backdrop = current ? null : make();
+		var backdrop_ctx = current || backdrop.getContext("2d", {willReadFrequently: true});
+		if (!current && below.length > 0) {
+			this.render_objects_flat(backdrop_ctx, make(), below, () => {
+				backdrop_ctx.save();
+			}, shouldSkip);
+		}
+		var original = backdrop_ctx.getImageData(0, 0, width, height);
+		var adjusted = adjust_image(original, params.adjustment, params.settings);
+
+		//the layer mask limits the change to a part of the picture
+		var weights = null;
+		var mask_canvas = layer.mask && layer.mask_enabled !== false ? this.get_mask_canvas(layer) : null;
+		if (mask_canvas) {
+			var mask_layer = make();
+			var mask_ctx = mask_layer.getContext("2d", {willReadFrequently: true});
+			if (current) {
+				mask_ctx.setTransform(current.getTransform());
+			}
+			mask_ctx.drawImage(mask_canvas, layer.x, layer.y, layer.width, layer.height);
+			var mask_data = mask_ctx.getImageData(0, 0, width, height).data;
+			weights = new Uint8ClampedArray(width * height);
+			for (var p = 0; p < weights.length; p++) {
+				weights[p] = mask_data[p * 4 + 3];
+			}
+			mask_layer.width = mask_layer.height = 1;
+		}
+		mix_adjusted(original, adjusted, layer.opacity / 100, weights);
+		backdrop_ctx.putImageData(new ImageData(adjusted.data, width, height), 0, 0);
+		if (current) {
+			return; //the adjusted picture is already where it belongs
+		}
+
+		//the adjusted picture takes the place of the one that was drawn
+		ctx.save();
+		ctx.globalAlpha = 1;
+		ctx.globalCompositeOperation = "copy";
+		ctx.drawImage(backdrop, 0, 0);
+		ctx.restore();
+		backdrop.width = backdrop.height = 1;
+	}
+
+	/**
+	 * Draws a layer with Blend If: the layer and everything below it are drawn on their own canvases (the size of the
+	 * document), the layer loses its pixels where the ranges say so and the rest goes to the picture.
+	 *
+	 * @param {CanvasRenderingContext2D} ctx where the layer goes (its alpha and blend mode are already set)
+	 * @param {object} layer
+	 * @param {object[]} below the layers below this one (top first)
+	 * @param {Function} [shouldSkip]
+	 */
+	render_blend_if(ctx, layer, below, shouldSkip, current) {
+		var width = current ? current.canvas.width : Math.max(1, config.WIDTH);
+		var height = current ? current.canvas.height : Math.max(1, config.HEIGHT);
+		var make = () => {
+			var canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			return canvas;
+		};
+
+		//`current` is a canvas of the size of the document that already holds everything below the layer
+		var backdrop = current ? null : make();
+		var backdrop_ctx = current || backdrop.getContext("2d", {willReadFrequently: true});
+		if (!current && below.length > 0) {
+			this.render_objects_flat(backdrop_ctx, make(), below, () => {
+				backdrop_ctx.save();
+			}, shouldSkip);
+		}
+
+		var own = make();
+		var own_ctx = own.getContext("2d", {willReadFrequently: true});
+		if (current) {
+			own_ctx.setTransform(current.getTransform());
+		}
+		this.render_object(own_ctx, layer);
+
+		var image = own_ctx.getImageData(0, 0, width, height);
+		apply_blend_if(image, backdrop_ctx.getImageData(0, 0, width, height), layer.blend_if);
+		own_ctx.putImageData(image, 0, 0);
+
+		if (current) {
+			//the canvas of the work has its own size and transform, `own` is already in its pixels
+			ctx.save();
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.drawImage(own, 0, 0);
+			ctx.restore();
+		} else {
+			ctx.drawImage(own, 0, 0);
+		}
+		if (backdrop) {
+			backdrop.width = backdrop.height = 1;
+		}
+		own.width = own.height = 1;
 	}
 
 	render_preview(layers) {
@@ -404,7 +795,7 @@ class Base_layers_class {
 
 		const newCanvas = this.create_new_canvas(this.ctx_preview);
 		newCanvas.getContext("2d").scale(w / config.WIDTH, h / config.HEIGHT);
-		this.render_objects(this.ctx_preview, newCanvas, layers, () => {
+		this.render_objects_cached(this.ctx_preview, newCanvas, layers, () => {
 			this.ctx_preview.save();
 			//prepare scale
 			this.ctx_preview.scale(w / config.WIDTH, h / config.HEIGHT);
@@ -500,7 +891,15 @@ class Base_layers_class {
 	 * Renders a layer without its layer mask
 	 */
 	render_object_plain(ctx, object, is_preview) {
+		if (fill_alpha(object) < 1 && split_halo_filters(object.filters).halo.length > 0) {
+			this.render_object_with_halo(ctx, object, is_preview);
+			return;
+		}
 		this.pre_render_object(ctx, object);
+
+		//fill opacity fades the pixels of the layer, but not its styles (drawn in the pre/post render)
+		var alpha_before_fill = ctx.globalAlpha;
+		ctx.globalAlpha = alpha_before_fill * fill_alpha(object);
 
 		//example with canvas object - other types should overwrite this method
 		if (object.type == "image") {
@@ -537,7 +936,50 @@ class Base_layers_class {
 			}
 		}
 
+		ctx.globalAlpha = alpha_before_fill;
 		this.after_render_object(ctx, object);
+	}
+
+	/**
+	 * A layer with a fill opacity below 100 and a shadow or glow: the pixels fade, the shadow / glow stays as strong
+	 * as it is. The halo is what the shadow and glow add to the bare pixels, so it is drawn on its own first.
+	 */
+	render_object_with_halo(ctx, object, is_preview) {
+		var parts = split_halo_filters(object.filters);
+		var make = () => {
+			var temp = document.createElement("canvas");
+			temp.width = ctx.canvas.width;
+			temp.height = ctx.canvas.height;
+			var temp_ctx = temp.getContext("2d");
+			temp_ctx.setTransform(ctx.getTransform());
+			return temp;
+		};
+		var full = {fill_opacity: 100};
+
+		//the bare pixels and the pixels with the halos, both at full strength
+		var bare = make();
+		this.render_object_plain(bare.getContext("2d"), Object.assign({}, object, full, {filters: []}), is_preview);
+		var halo = make();
+		this.render_object_plain(halo.getContext("2d"), Object.assign({}, object, full, {filters: parts.halo}), is_preview);
+		var halo_ctx = halo.getContext("2d");
+		halo_ctx.save();
+		halo_ctx.setTransform(1, 0, 0, 1, 0, 0);
+		halo_ctx.globalCompositeOperation = "destination-out";
+		halo_ctx.drawImage(bare, 0, 0);
+		halo_ctx.restore();
+
+		ctx.save();
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.drawImage(halo, 0, 0);
+		ctx.restore();
+
+		//the pixels (and the other styles) with the usual fade
+		this.render_object_plain(ctx, Object.assign({}, object, {filters: parts.rest}), is_preview);
+
+		bare.width = 1;
+		bare.height = 1;
+		halo.width = 1;
+		halo.height = 1;
 	}
 
 	/**

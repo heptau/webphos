@@ -16,7 +16,7 @@
 	--surface-pressed: rgba(255, 255, 255, 0.14);
 	--control-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.45);
 	--panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 0 0.5px rgba(255, 255, 255, 0.18);
-	--vibrancy: saturate(180%) blur(20px);
+	--vibrancy: saturate(180%) blur(13px);
 	--traffic-close: #ff5f57;
 	--dirty-dot: #28c840;
 	--field-background: #1f1f21;
@@ -49,7 +49,7 @@
 	--input-border-color-active: #0a84ff;
 	--input-border-radius: 5px;
 	--input-group-border-color: rgba(255, 255, 255, 0.12);
-	--menu-background-color: rgba(38, 38, 40, 0.78);
+	--menu-background-color: rgba(38, 38, 40, 0.70);
 	--menu-icons-filter: invert(1);
 	--menu-icons-filter-active: invert(1);
 	--menu-text-color: #ececed;
@@ -62,7 +62,7 @@
 	--scrollbar-thumb-color: rgba(255, 255, 255, 0.3);
 	--mobile-menu-toggle-filter: invert(1);
 
-	--menu-dropdown-background-color: rgba(44, 44, 46, 0.86);
+	--menu-dropdown-background-color: rgba(44, 44, 46, 0.74);
 	--menu-dropdown-border-color: rgba(255, 255, 255, 0.16);
 	--menu-dropdown-text-color: #f2f2f3;
 	--menu-dropdown-text-muted-color: #8e8e93;
@@ -109,7 +109,7 @@ body.theme-light{
 	--input-border-color: rgba(0, 0, 0, 0.18);
 	--input-border-color-active: #007aff;
 	--input-group-border-color: rgba(0, 0, 0, 0.12);
-	--menu-background-color: rgba(246, 246, 248, 0.8);
+	--menu-background-color: rgba(246, 246, 248, 0.72);
 	--menu-icons-filter: none;
 	--menu-icons-filter-active: none;
 	--menu-text-color: #1d1d1f;
@@ -120,7 +120,7 @@ body.theme-light{
 	--scrollbar-thumb-color: rgba(0, 0, 0, 0.3);
 	--mobile-menu-toggle-filter: none;
 
-	--menu-dropdown-background-color: rgba(246, 246, 248, 0.88);
+	--menu-dropdown-background-color: rgba(246, 246, 248, 0.76);
 	--menu-dropdown-border-color: rgba(0, 0, 0, 0.16);
 	--menu-dropdown-text-color: #1d1d1f;
 	--menu-dropdown-text-muted-color: #8a8a8e;
@@ -151,13 +151,13 @@ body.theme-green{
 	--input-text-color: #eaf3e9;
 	--input-border-color: rgba(190, 235, 190, 0.18);
 	--input-border-color-active: #30a352;
-	--menu-background-color: rgba(28, 40, 28, 0.8);
+	--menu-background-color: rgba(28, 40, 28, 0.72);
 	--menu-text-color: #dbe8da;
 	--background-color-active: #30a352;
 	--border-color: rgba(190, 235, 190, 0.16);
 	--separator: rgba(190, 235, 190, 0.12);
 
-	--menu-dropdown-background-color: rgba(36, 50, 36, 0.88);
+	--menu-dropdown-background-color: rgba(36, 50, 36, 0.76);
 	--menu-dropdown-border-color: rgba(190, 235, 190, 0.2);
 	--menu-dropdown-hover-background-color: #30a352;
 	--menu-dropdown-divider-color: rgba(190, 235, 190, 0.14);

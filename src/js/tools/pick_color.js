@@ -5,6 +5,9 @@ import Helper_class from './../libs/helpers.js';
 import Base_gui_class from './../core/base-gui.js';
 import { average_color, sample_radius } from './../libs/color-sampling.js';
 
+//painting tools where Alt + click temporarily works as the eyedropper (as in Photoshop and GIMP)
+const ALT_PICK_TOOLS = ['brush', 'pencil', 'fill', 'gradient'];
+
 class Pick_color_class extends Base_tools_class {
 
 	constructor(ctx) {
@@ -32,6 +35,22 @@ class Pick_color_class extends Base_tools_class {
 
 	load() {
 		var _this = this;
+
+		//Alt + click in a painting tool picks the color under the cursor instead of painting
+		document.addEventListener('mousedown', function (event) {
+			if (event.altKey != true || event.button != 0 || ALT_PICK_TOOLS.includes(config.TOOL.name) == false) {
+				return;
+			}
+			//this runs before the main mouse tracking, so the position comes straight from the event
+			if (event.target.id != 'canvas_minipaint' && event.target.id != 'main_wrapper') {
+				return;
+			}
+			var mouse = _this.get_mouse_coordinates_from_event(event);
+			_this.to_background = false; //the foreground color, even when the last pick went to the background
+			_this.pick_color_at(mouse, {global: true, radius: 0});
+			event.stopImmediatePropagation();
+			event.preventDefault();
+		}, true);
 
 		//mouse events
 		document.addEventListener('mousedown', function (event) {
@@ -78,6 +97,18 @@ class Pick_color_class extends Base_tools_class {
 
 	pick_color(mouse) {
 		var params = this.getParams();
+		var sample = params.sample && params.sample.value !== undefined ? params.sample.value : params.sample;
+		this.pick_color_at(mouse, {global: params.global, radius: sample_radius(sample)});
+	}
+
+	/**
+	 * @param {object} mouse position in canvas coordinates
+	 * @param {{global: boolean, radius: number}} options global = all layers, otherwise the active one;
+	 *   radius = half of the sampled square (0 = one pixel)
+	 */
+	pick_color_at(mouse, options) {
+		var params = {global: options.global};
+		var radius = options.radius;
 
 		//get canvas from layer
 		if (params.global == false) {
@@ -94,11 +125,12 @@ class Pick_color_class extends Base_tools_class {
 			this.Base_layers.convert_layers_to_canvas(ctx, null, false);
 		}
 		//find color - a point or the average of a square area (sample size)
-		var sample = params.sample && params.sample.value !== undefined ? params.sample.value : params.sample;
-		var radius = sample_radius(sample);
 		var c;
+		if (Number.isFinite(mouse.x) == false || Number.isFinite(mouse.y) == false) {
+			return;
+		}
 		if (radius == 0) {
-			c = ctx.getImageData(mouse.x, mouse.y, 1, 1).data;
+			c = ctx.getImageData(Math.floor(mouse.x), Math.floor(mouse.y), 1, 1).data;
 		}
 		else {
 			var x0 = Math.max(0, Math.floor(mouse.x) - radius);

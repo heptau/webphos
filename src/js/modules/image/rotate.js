@@ -28,17 +28,6 @@ class Image_rotate_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 76 && has_modifier(event) == false) {
-				//L - rotate left
-				this.left();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	rotate() {

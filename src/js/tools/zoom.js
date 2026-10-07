@@ -29,15 +29,6 @@ class Zoom_class extends Base_tools_class {
 			preview.zoom(event.altKey ? -1 : 1);
 		});
 
-		//Z - select the zoom tool
-		document.addEventListener('keydown', (event) => {
-			if (event.key.toLowerCase() != 'z' || has_modifier(event) || event.shiftKey
-				|| this.Helper.is_input(event.target) || document.getElementById('popups').children.length > 0) {
-				return;
-			}
-			event.preventDefault();
-			document.querySelector('#tools_container .zoom').click();
-		});
 
 		//Alt turns the zoom cursor into zoom out
 		var update_cursor = (event) => {

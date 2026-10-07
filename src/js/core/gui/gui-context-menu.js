@@ -1,6 +1,7 @@
 import config from './../../config.js';
 import Tools_translate_class from './../../modules/tools/translate.js';
 import { format_shortcut_mac, is_mac_platform } from './../../libs/shortcuts.js';
+import Shortcut_manager_class from './../shortcut-manager.js';
 
 function escape_html(text) {
 	return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -50,6 +51,7 @@ class GUI_context_menu_class {
 		this.host = null;
 		this.mac = is_mac_platform();
 		this.Tools_translate = new Tools_translate_class();
+		this.Shortcuts = new Shortcut_manager_class();
 	}
 
 	/**
@@ -69,9 +71,12 @@ class GUI_context_menu_class {
 				html += '<li role="presentation"><hr></li>';
 				return;
 			}
+			//the shortcut that is used now (the user can change it), the written one for commands that have none in the list
+			var current = item.target ? this.Shortcuts.text_for(item.target, item.parameter) : null;
+			var shortcut = current !== null ? current : item.shortcut;
 			html += '<li><a role="menuitem" href="javascript:void(0)" data-index="' + index + '">'
 				+ '<span class="name"><span class="trn">' + escape_html(item.name) + '</span>' + (item.ellipsis ? '…' : '') + '</span>'
-				+ (item.shortcut ? '<span class="shortcut">' + escape_html(this.mac ? format_shortcut_mac(item.shortcut) : item.shortcut) + '</span>' : '')
+				+ (shortcut ? '<span class="shortcut">' + escape_html(this.mac ? format_shortcut_mac(shortcut) : shortcut) + '</span>' : '')
 				+ '</a></li>';
 		});
 		html += '</ul>';
@@ -94,6 +99,7 @@ class GUI_context_menu_class {
 		};
 		this.cleanup = () => {
 			document.removeEventListener('mousedown', close_on, true);
+			document.removeEventListener('touchstart', close_on, true);
 			document.removeEventListener('keydown', on_key, true);
 			window.removeEventListener('blur', this.hide_bound);
 			window.removeEventListener('resize', this.hide_bound);
@@ -116,6 +122,7 @@ class GUI_context_menu_class {
 		};
 		this.hide_bound = () => this.hide();
 		document.addEventListener('mousedown', close_on, true);
+		document.addEventListener('touchstart', close_on, true);
 		document.addEventListener('keydown', on_key, true);
 		window.addEventListener('blur', this.hide_bound);
 		window.addEventListener('resize', this.hide_bound);

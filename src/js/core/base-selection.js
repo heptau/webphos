@@ -3,6 +3,7 @@
  * author: Vilius L.
  */
 
+import { is_ratio_modifier, keeps_ratio, constrain_ratio } from './../libs/resize-ratio.js';
 import { draw_rect_ants, ant_phase } from './../libs/marching-ants.js';
 import config from './../config.js';
 
@@ -144,8 +145,11 @@ class Base_selection_class {
 		return settings.data;
 	}
 
-	find_settings() {
-		var current_key = config.TOOL.name;
+	/**
+	 * @param {string} [tool_name] the tool whose settings are wanted, the active tool by default
+	 */
+	find_settings(tool_name) {
+		var current_key = tool_name || config.TOOL.name;
 		var settings = null;
 
 		for (var i in settings_all) {
@@ -449,10 +453,8 @@ class Base_selection_class {
 
 			mainWrapper.style.cursor = "pointer";
 			
-			var is_ctrl = false;
-			if (e.ctrlKey == true || e.metaKey) {
-				is_ctrl = true;
-			}
+			//Shift, Option or Ctrl / Cmd turn the proportions on or off (see libs/resize-ratio.js)
+			var ratio_modifier = is_ratio_modifier(e);
 
 			const is_drag_type_left = Math.floor(drag_type / DRAG_TYPE_LEFT) % 2 === 1;
 			const is_drag_type_right = Math.floor(drag_type / DRAG_TYPE_RIGHT) % 2 === 1;
@@ -495,18 +497,10 @@ class Base_selection_class {
 					width = this.click_details.width - dx;
 
 				// Keep ratio - (if drag_type power of 2, only dragging on single axis)
-				if (drag_type && (drag_type & (drag_type - 1)) !== 0 && (settings.keep_ratio == true && is_ctrl == false) 
-					|| (settings.keep_ratio !== true && is_ctrl == true)){
-					var ratio = this.click_details.width / this.click_details.height;
-					var width_new = Math.round(height * ratio);
-					var height_new = Math.round(width / ratio);
-
-					if (Math.abs(width * 100 / width_new) > Math.abs(height * 100 / height_new)) {
-						height = height_new;
-					}
-					else {
-						width = width_new;
-					}
+				if (drag_type && (drag_type & (drag_type - 1)) !== 0 && keeps_ratio(settings.keep_ratio === true, ratio_modifier)) {
+					var constrained = constrain_ratio(width, height, this.click_details.width / this.click_details.height);
+					width = constrained.width;
+					height = constrained.height;
 				}
 
 				// Set values

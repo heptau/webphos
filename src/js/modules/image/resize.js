@@ -11,6 +11,7 @@ import Helper_class from './../../libs/helpers.js';
 import Tools_settings_class from './../tools/settings.js';
 import { metaDefaults as textMetaDefaults } from '../../tools/text.js';
 import { t } from '../tools/translate.js';
+import { smoothing_for_mode } from './../../libs/resample.js';
 import { UNIT_NAMES, is_unit, to_pixels, from_pixels, convert_size, dpi_for, clamp_dpi } from './../../libs/units.js';
 
 var instance = null;
@@ -37,17 +38,6 @@ class Image_resize_class {
 	}
 
 	set_events() {
-		document.addEventListener('keydown', (event) => {
-			var code = event.keyCode;
-			if (this.Helper.is_input(event.target))
-				return;
-
-			if (code == 82 && event.ctrlKey != true && event.metaKey != true) {
-				//R - resize
-				this.resize();
-				event.preventDefault();
-			}
-		}, false);
 	}
 
 	resize() {
@@ -71,7 +61,7 @@ class Image_resize_class {
 				{name: "constrain", title: "Constrain proportions:", value: true},
 				{name: "resample", title: "Resample:", value: true},
 				{title: "Pixels:", html: '<span id="resize_pixels">-</span>'},
-				{name: "mode", title: "Mode:", values: ["Lanczos", "Hermite", "Basic"]},
+				{name: "mode", title: "Mode:", values: ["Lanczos", "Hermite", "Bicubic", "Bilinear", "Nearest Neighbor", "Basic"]},
 
 				{name: "sharpen", title: "Sharpen:", value: false},
 				{name: "layers", title: "Layers:", values: ["All", "Active"], value: "All"},
@@ -376,7 +366,11 @@ class Image_resize_class {
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			canvas.width = width;
 			canvas.height = height;
-			
+
+			//Bicubic, Bilinear, Nearest Neighbor or the default of the browser
+			var smoothing = smoothing_for_mode(mode);
+			ctx.imageSmoothingEnabled = smoothing.enabled;
+			ctx.imageSmoothingQuality = smoothing.quality;
 			ctx.drawImage(tmp_data, 0, 0, width, height);
 		}
 

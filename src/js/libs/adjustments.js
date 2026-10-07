@@ -1000,3 +1000,201 @@ export function histograms(image) {
 	}
 	return result;
 }
+
+/**
+ * Vibrance - raises the saturation of dull colors more than that of already vivid ones, so it does not
+ * burn out the colors that are strong. Negative values calm the most vivid colors first.
+ *
+ * @param {Image_data} image
+ * @param {object} params keys: vibrance (-100..100), saturation (-100..100) plain saturation on top of it
+ * @returns {Image_data}
+ */
+export function vibrance(image, params) {
+	var amount = clamp(parseFloat(params.vibrance) || 0, -100, 100) / 100;
+	var saturation = clamp(parseFloat(params.saturation) || 0, -100, 100) / 100;
+	var data = image.data;
+	for (var i = 0; i < data.length; i += 4) {
+		var r = data[i];
+		var g = data[i + 1];
+		var b = data[i + 2];
+		var current = (Math.max(r, g, b) - Math.min(r, g, b)) / 255; //0 = gray, 1 = fully saturated
+		var factor = 1 + (amount >= 0 ? amount * (1 - current) : amount * current);
+		factor *= 1 + saturation;
+		var gray = luminance(r, g, b);
+		data[i] = clamp(Math.round(gray + (r - gray) * factor), 0, 255);
+		data[i + 1] = clamp(Math.round(gray + (g - gray) * factor), 0, 255);
+		data[i + 2] = clamp(Math.round(gray + (b - gray) * factor), 0, 255);
+	}
+	return image;
+}
+
+/**
+ * Replace Color - colors close to the chosen one are shifted in hue, saturation and lightness.
+ * The effect fades out smoothly with the distance, so the edges do not look cut.
+ *
+ * @param {Image_data} image
+ * @param {object} params keys: color (hex), fuzziness (0-200), hue (-180..180), saturation (-100..100),
+ *   lightness (-100..100)
+ * @returns {Image_data}
+ */
+export function replaceColor(image, params) {
+	var target = parseHex(params.color || '#000000');
+	var fuzziness = clamp(parseFloat(params.fuzziness ?? 40) || 0, 0, 200);
+	var hue = clamp(parseFloat(params.hue) || 0, -180, 180) / 360;
+	var saturation = clamp(parseFloat(params.saturation) || 0, -100, 100) / 100;
+	var lightness = clamp(parseFloat(params.lightness) || 0, -100, 100) / 100;
+	var reach = fuzziness / 200 * 441.67; //distance in RGB space (the longest one is about 441.67)
+
+	var data = image.data;
+	for (var i = 0; i < data.length; i += 4) {
+		var distance = Math.hypot(data[i] - target[0], data[i + 1] - target[1], data[i + 2] - target[2]);
+		var weight = reach > 0 ? clamp(1 - distance / reach, 0, 1) : (distance == 0 ? 1 : 0);
+		if (weight == 0) {
+			continue;
+		}
+		var hsl = rgb_to_hsl(data[i], data[i + 1], data[i + 2]);
+		var s = saturation >= 0 ? hsl[1] + (1 - hsl[1]) * saturation : hsl[1] * (1 + saturation);
+		var l = lightness >= 0 ? hsl[2] + (1 - hsl[2]) * lightness : hsl[2] * (1 + lightness);
+		var rgb = hsl_to_rgb((hsl[0] + hue + 1) % 1, clamp(s, 0, 1), clamp(l, 0, 1));
+		for (var c = 0; c < 3; c++) {
+			data[i + c] = Math.round(data[i + c] + (rgb[c] - data[i + c]) * weight);
+		}
+	}
+	return image;
+}
+
+/**
+ * Sponge - adds (saturate) or removes (desaturate) color. Used by the Sponge tool for every brush dab,
+ * so a small flow builds up while painting.
+ *
+ * @param {Image_data} image
+ * @param {object} params mode ('saturate'|'desaturate'), flow (1-100 %)
+ * @returns {Image_data}
+ */
+export function sponge(image, params) {
+	var flow = clamp(parseFloat(params.flow ?? 15) || 0, 0, 100) / 100 * 0.4;
+	var factor = params.mode === 'saturate' ? 1 + flow : 1 - flow;
+	var data = image.data;
+	for (var i = 0; i < data.length; i += 4) {
+		var gray = luminance(data[i], data[i + 1], data[i + 2]);
+		for (var c = 0; c < 3; c++) {
+			data[i + c] = clamp(Math.round(gray + (data[i + c] - gray) * factor), 0, 255);
+		}
+	}
+	return image;
+}
+
+/**
+ * Color to Alpha (GIMP) - makes the chosen color transparent. Pixels that are a mix of the color and something
+ * else keep only the "something else" with the right amount of transparency, so a white background can be removed
+ * without a light halo around the object.
+ *
+ * @param {Image_data} image
+ * @param {object} params keys: color (hex, default white), threshold (0-100 %) - mixes with less than this
+ *   share of other colors become fully transparent
+ * @returns {Image_data}
+ */
+export function colorToAlpha(image, params) {
+	var key = parseHex(params.color || '#ffffff');
+	var threshold = clamp(parseFloat(params.threshold) || 0, 0, 99) / 100;
+	var data = image.data;
+	for (var i = 0; i < data.length; i += 4) {
+		//how far the pixel is from the color, relative to the room there is in that direction
+		var alpha = 0;
+		for (var c = 0; c < 3; c++) {
+			var d = data[i + c] - key[c];
+			var room = d > 0 ? 255 - key[c] : key[c];
+			if (d != 0 && room > 0) {
+				alpha = Math.max(alpha, Math.abs(d) / room);
+			}
+		}
+		alpha = clamp((alpha - threshold) / (1 - threshold), 0, 1);
+		if (alpha == 0) {
+			data[i + 3] = 0;
+			continue;
+		}
+		for (var k = 0; k < 3; k++) {
+			data[i + k] = clamp(Math.round(key[k] + (data[i + k] - key[k]) / alpha), 0, 255);
+		}
+		data[i + 3] = Math.round(data[i + 3] * alpha);
+	}
+	return image;
+}
+
+//hue (in degrees) of the six colors of the Black & White sliders
+const BW_COLORS = ['reds', 'yellows', 'greens', 'cyans', 'blues', 'magentas'];
+
+/**
+ * Black & White - gray picture where every color gets its own brightness (like a color filter on a black and white
+ * film). The sliders say how light each color becomes: 0 = black, 100 = as light as the brightest channel.
+ *
+ * @param {Image_data} image
+ * @param {object} params keys: reds, yellows, greens, cyans, blues, magentas (-200..300 %, defaults 40, 60, 40, 60, 20, 80),
+ *   tint (bool) with tint_color (hex) colors the result
+ * @returns {Image_data}
+ */
+export function blackWhite(image, params) {
+	var defaults = {reds: 40, yellows: 60, greens: 40, cyans: 60, blues: 20, magentas: 80};
+	var weights = BW_COLORS.map(function (name) {
+		var value = parseFloat(params[name]);
+		return clamp(isNaN(value) ? defaults[name] : value, -200, 300) / 100;
+	});
+	var tint = params.tint === true || params.tint === 'true';
+	var tint_rgb = tint ? parseHex(params.tint_color || '#e1c08c') : null;
+	var tint_luminance = tint ? Math.max(1, luminance(tint_rgb[0], tint_rgb[1], tint_rgb[2])) : 1;
+
+	var data = image.data;
+	for (var i = 0; i < data.length; i += 4) {
+		var r = data[i];
+		var g = data[i + 1];
+		var b = data[i + 2];
+		var max = Math.max(r, g, b);
+		var min = Math.min(r, g, b);
+		var gray = min;
+		if (max > min) {
+			//the hue as a position between the six colors: 0 red, 1 yellow, 2 green, 3 cyan, 4 blue, 5 magenta
+			var h;
+			if (max == r) {
+				h = ((g - b) / (max - min) + 6) % 6;
+			} else if (max == g) {
+				h = (b - r) / (max - min) + 2;
+			} else {
+				h = (r - g) / (max - min) + 4;
+			}
+			var lower = Math.floor(h) % 6;
+			var share = h - Math.floor(h);
+			var weight = weights[lower] + (weights[(lower + 1) % 6] - weights[lower]) * share;
+			gray = min + (max - min) * weight;
+		}
+		gray = clamp(Math.round(gray), 0, 255);
+		if (tint) {
+			var k = gray / tint_luminance;
+			data[i] = clamp(Math.round(tint_rgb[0] * k), 0, 255);
+			data[i + 1] = clamp(Math.round(tint_rgb[1] * k), 0, 255);
+			data[i + 2] = clamp(Math.round(tint_rgb[2] * k), 0, 255);
+		} else {
+			data[i] = data[i + 1] = data[i + 2] = gray;
+		}
+	}
+	return image;
+}
+
+/**
+ * Solarize - the channels brighter than the threshold are inverted, like a photo exposed to light during developing
+ *
+ * @param {Image_data} image
+ * @param {number|string} threshold 0-255, default 128
+ * @returns {Image_data}
+ */
+export function solarize(image, threshold) {
+	var limit = clamp(parseFloat(threshold ?? 128), 0, 255);
+	var data = image.data;
+	for (var i = 0; i < data.length; i += 4) {
+		for (var c = 0; c < 3; c++) {
+			if (data[i + c] >= limit) {
+				data[i + c] = 255 - data[i + c];
+			}
+		}
+	}
+	return image;
+}
