@@ -6,7 +6,6 @@
 import config from './../../config.js';
 import Helper_class from './../../libs/helpers.js';
 import Tools_translate_class, { t } from './../../modules/tools/translate.js';
-import { has_modifier } from './../../libs/shortcuts.js';
 import { push_color, parse_history } from './../../libs/color-history.js';
 
 const Helper = new Helper_class();
@@ -190,7 +189,7 @@ class GUI_colors_class {
 			this.el = document.getElementById('dialog_color_picker');
 			this.el.innerHTML = dialogTemplate;
 		} else {
-			var saved_color = this.Helper.getCookie('color');
+			const saved_color = this.Helper.getCookie('color');
 			if (saved_color != null) {
 				config.COLOR = saved_color;
 				//tools that follow the foreground color (text) are set up before the saved color is restored
@@ -276,7 +275,7 @@ class GUI_colors_class {
 					this.sections.swatchesPlaceholder.parentNode.removeChild(this.sections.swatchesPlaceholder);
 				} else {
 					this.sections.swatches[0].parentNode.insertBefore(this.sections.swatchesPlaceholder, this.sections.swatches[0].nextSibling);
-					this.sections.swatches[0].parentNode.removeChild(this.sections.swatches[0]);	
+					this.sections.swatches[0].parentNode.removeChild(this.sections.swatches[0]);
 				}
 				Helper.setCookie('toggle_color_swatches', isPressed ? 1 : 0);
 			});
@@ -296,11 +295,11 @@ class GUI_colors_class {
 					this.sections.pickerPlaceholder.parentNode.removeChild(this.sections.pickerPlaceholder);
 				} else {
 					this.sections.picker[0].parentNode.insertBefore(this.sections.pickerPlaceholder, this.sections.picker[0].nextSibling);
-					this.sections.picker[0].parentNode.removeChild(this.sections.picker[0]);	
+					this.sections.picker[0].parentNode.removeChild(this.sections.picker[0]);
 				}
 				Helper.setCookie('toggle_color_picker', isPressed ? 1 : 0);
 			});
-		this.inputs.sample.on('click', (event) => {
+		this.inputs.sample.on('click', () => {
 			this.buttons.toggleColorPicker.click();
 		});
 
@@ -320,7 +319,7 @@ class GUI_colors_class {
 					this.sections.channelsPlaceholder.parentNode.removeChild(this.sections.channelsPlaceholder);
 				} else {
 					this.sections.channels[0].parentNode.insertBefore(this.sections.channelsPlaceholder, this.sections.channels[0].nextSibling);
-					this.sections.channels[0].parentNode.removeChild(this.sections.channels[0]);	
+					this.sections.channels[0].parentNode.removeChild(this.sections.channels[0]);
 				}
 				Helper.setCookie('toggle_color_channels', isPressed ? 1 : 0);
 			});
@@ -356,23 +355,23 @@ class GUI_colors_class {
 
 		// Initialize hex entry
 		this.inputs.hex
-			.on('input', (event) => {
+			.on('input', () => {
 				const value = this.inputs.hex.val();
 				const trimmedValue = value.trim();
 				if (value !== trimmedValue) {
 					this.inputs.hex.val(trimmedValue);
 				}
-				this.inputs.hex[0].setCustomValidity(/^\#[0-9A-F]{6}$/gi.test(trimmedValue) ? '' : 'Invalid Hex Code');
+				this.inputs.hex[0].setCustomValidity(/^#[0-9A-F]{6}$/gi.test(trimmedValue) ? '' : 'Invalid Hex Code');
 				this.set_color({ hex: this.inputs.hex.val() });
 			})
 			.on('blur', () => {
 				const value = this.inputs.hex.val();
-				if (!/^\#[0-9A-F]{6}$/gi.test(value)) {
+				if (!/^#[0-9A-F]{6}$/gi.test(value)) {
 					this.inputs.hex.val(this.uiType === 'dialog' ? this.COLOR : config.COLOR);
 					this.inputs.hex[0].setCustomValidity('');
 				}
 			});
-		
+
 		// Initialize the color sliders
 		const sliderInputs = [
 			...Object.entries(this.inputs.rgb),
@@ -468,7 +467,7 @@ class GUI_colors_class {
 		const make_button = (cls, text, title) => {
 			const button = document.createElement('button');
 			button.type = 'button';
-			button.className = 'fgbg_button ' + cls;
+			button.className = `fgbg_button ${  cls}`;
 			button.textContent = text;
 			button.title = t(title);
 			button.setAttribute('aria-label', title);
@@ -516,9 +515,9 @@ class GUI_colors_class {
 		let hsv = null;
 		// Set new color by hex code
 		if ('hex' in definition) {
-			const hex = '#' + definition.hex.replace(/[^0-9A-F]*/gi, '');
-			if (/^\#[0-9A-F]{6}$/gi.test(hex)) {
-				newColor = '#' + definition.hex.trim().replace(/^\#/, '');
+			const hex = `#${  definition.hex.replace(/[^0-9A-F]*/gi, '')}`;
+			if (/^#[0-9A-F]{6}$/gi.test(hex)) {
+				newColor = `#${  definition.hex.trim().replace(/^#/, '')}`;
 			}
 		}
 		// Set new color by rgb
@@ -605,7 +604,7 @@ class GUI_colors_class {
 
 		const rgb = Helper.hexToRgb(COLOR);
 		delete rgb.a;
-		for (let rgbKey in rgb) {
+		for (const rgbKey in rgb) {
 			this.inputs.rgb[rgbKey].range.uiRange('set_value', rgb[rgbKey]);
 			this.inputs.rgb[rgbKey].number.uiNumberInput('set_value', rgb[rgbKey]);
 		}
@@ -615,7 +614,7 @@ class GUI_colors_class {
 		const hsv = options.hsv || Helper.rgbToHsv(rgb.r, rgb.g, rgb.b);
 
 		const hsl = options.hsl || Helper.rgbToHsl(rgb.r, rgb.g, rgb.b);
-		for (let hslKey in hsl) {
+		for (const hslKey in hsl) {
 			const hslValue = Math.round(hsl[hslKey] * (hslKey === 'h' ? 360 : 100));
 			this.inputs.hsl[hslKey].range.uiRange('set_value', hslValue);
 			this.inputs.hsl[hslKey].number.uiNumberInput('set_value', hslValue);
@@ -638,18 +637,18 @@ class GUI_colors_class {
 		// RGB
 		const rgb = Helper.hexToRgb(COLOR);
 		delete rgb.a;
-		for (let rgbKey in rgb) {
+		for (const rgbKey in rgb) {
 			const rangeMin = JSON.parse(JSON.stringify(rgb));
 			const rangeMax = JSON.parse(JSON.stringify(rgb));
 			rangeMin[rgbKey] = 0;
 			rangeMax[rgbKey] = 255;
 			this.inputs.rgb[rgbKey].range.uiRange('set_background',
-				`linear-gradient(to right, ${ Helper.rgbToHex(rangeMin.r, rangeMin.g, rangeMin.b) }, ${ Helper.rgbToHex(rangeMax.r, rangeMax.g, rangeMax.b) })`
+				`linear-gradient(to right, ${Helper.rgbToHex(rangeMin.r, rangeMin.g, rangeMin.b)}, ${Helper.rgbToHex(rangeMax.r, rangeMax.g, rangeMax.b)})`
 			);
 		}
 		// A
 		this.inputs.rgb.a.range.uiRange('set_background',
-			`linear-gradient(to right, transparent, ${ COLOR })`
+			`linear-gradient(to right, transparent, ${COLOR})`
 		);
 		// HSV
 		const hsv = options.hsv || Helper.rgbToHsv(rgb.r, rgb.g, rgb.b);
@@ -675,18 +674,18 @@ class GUI_colors_class {
 			} 100%)`
 		);
 		// HSL - S
-		let rangeMin = JSON.parse(JSON.stringify(hsl));
-		let rangeMax = JSON.parse(JSON.stringify(hsl));
+		const rangeMin = JSON.parse(JSON.stringify(hsl));
+		const rangeMax = JSON.parse(JSON.stringify(hsl));
 		rangeMin.s = 0;
 		rangeMax.s = 1;
 		this.inputs.hsl.s.range.uiRange('set_background',
-			`linear-gradient(to right, ${ Helper.hslToHex(rangeMin.h, rangeMin.s, rangeMin.l) }, ${ Helper.hslToHex(rangeMax.h, rangeMax.s, rangeMax.l) })`
+			`linear-gradient(to right, ${Helper.hslToHex(rangeMin.h, rangeMin.s, rangeMin.l)}, ${Helper.hslToHex(rangeMax.h, rangeMax.s, rangeMax.l)})`
 		);
 		// HSL - L
-		let rangeMid = JSON.parse(JSON.stringify(hsl));
+		const rangeMid = JSON.parse(JSON.stringify(hsl));
 		rangeMid.l = 0.5;
 		this.inputs.hsl.l.range.uiRange('set_background',
-			`linear-gradient(to right, #000000 0%, ${ Helper.hslToHex(rangeMid.h, rangeMid.s, rangeMid.l) } 50%, #ffffff 100%)`
+			`linear-gradient(to right, #000000 0%, ${Helper.hslToHex(rangeMid.h, rangeMid.s, rangeMid.l)} 50%, #ffffff 100%)`
 		);
 
 		// Store swatch values

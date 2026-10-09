@@ -4,11 +4,10 @@ import Base_gui_class from './../../core/base-gui.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
-import { has_modifier } from './../../libs/shortcuts.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 class Image_trim_class {
 
@@ -23,7 +22,7 @@ class Image_trim_class {
 		this.Base_gui = new Base_gui_class();
 		this.Helper = new Helper_class();
 		this.Dialog = new Dialog_class();
-				
+
 		this.set_events();
 	}
 
@@ -31,12 +30,11 @@ class Image_trim_class {
 	}
 
 	trim() {
-		var _this = this;
-		var removeWhiteColor = false;
+		let removeWhiteColor = false;
 		if(config.TRANSPARENCY == false)
 			removeWhiteColor = true;
 
-		var settings = {
+		const settings = {
 			title: 'Trim',
 			params: [
 				{name: "trim_layer", title: "Trim layer:", value: true},
@@ -56,7 +54,7 @@ class Image_trim_class {
 				if (params.trim_all == true) {
 					//second trim
 					let actions = [];
-					actions = actions.concat(_this.trim_all(params.remove_white, params.power));
+					actions = actions.concat(this.trim_all(params.remove_white, params.power));
 					app.State.do_action(
 						new app.Actions.Bundle_action('trim_layers', 'Trim Layers', actions)
 					);
@@ -70,12 +68,12 @@ class Image_trim_class {
 	 * Layer > Trim to Content - crops the active layer to its non transparent pixels (no dialog)
 	 */
 	trim_to_content() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
-		var info = this.get_trim_info(layer.id, false, 0).relative;
+		const info = this.get_trim_info(layer.id, false, 0).relative;
 		if (!info || !(info.width > 0) || !(info.height > 0)) {
 			alertify.error(t('Layer is empty.'));
 			return;
@@ -83,7 +81,7 @@ class Image_trim_class {
 		if (info.left == 0 && info.top == 0 && info.width >= layer.width && info.height >= layer.height) {
 			return; //nothing to trim
 		}
-		var actions = this.trim_layer(layer.id, false, 0);
+		const actions = this.trim_layer(layer.id, false, 0);
 		if (actions === false) {
 			return;
 		}
@@ -101,23 +99,23 @@ class Image_trim_class {
 	 * @param {int} power
 	 */
 	trim_layer(layer_id, removeWhiteColor = false, power = 0) {
-		var layer = this.Base_layers.get_layer(layer_id);
-		
+		const layer = this.Base_layers.get_layer(layer_id);
+
 		if (layer.type != 'image') {
 			alertify.error(t('Skip - layer must be image.'));
 			return false;
 		}
-		
-		var trim = this.get_trim_info(layer_id, removeWhiteColor, power);
+
+		let trim = this.get_trim_info(layer_id, removeWhiteColor, power);
 		trim = trim.relative;
-	
+
 		//if image was stretched
-		var width_ratio = (layer.width / layer.width_original);
-		var height_ratio = (layer.height / layer.height_original);
+		const width_ratio = (layer.width / layer.width_original);
+		const height_ratio = (layer.height / layer.height_original);
 
 		//create smaller canvas
-		var canvas = document.createElement('canvas');
-		var ctx = canvas.getContext("2d");
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext("2d");
 		canvas.width = trim.width / width_ratio;
 		canvas.height = trim.height / height_ratio;
 
@@ -147,12 +145,12 @@ class Image_trim_class {
 	 * @param {int} power
 	 */
 	trim_all(removeWhiteColor = false, power = 0) {
-		let actions = [];
+		const actions = [];
 
-		var all_top = config.HEIGHT;
-		var all_left = config.WIDTH;
-		var all_bottom = config.HEIGHT;
-		var all_right = config.WIDTH;
+		let all_top = config.HEIGHT;
+		let all_left = config.WIDTH;
+		let all_bottom = config.HEIGHT;
+		let all_right = config.WIDTH;
 
 		if (removeWhiteColor == undefined) {
 			removeWhiteColor = false;
@@ -163,8 +161,8 @@ class Image_trim_class {
 
 		//collect info
 		for (let i = 0; i < config.layers.length; i++) {
-			let layer = config.layers[i];
-			
+			const layer = config.layers[i];
+
 			if (layer.width == null || layer.height == null || layer.x == null || layer.y == null) {
 				//layer without dimensions
 				const trim_info = this.get_trim_info(layer.id, removeWhiteColor, power);
@@ -184,10 +182,10 @@ class Image_trim_class {
 
 		//move every layer
 		for (let i = 0; i < config.layers.length; i++) {
-			let layer = config.layers[i];
+			const layer = config.layers[i];
 			if (layer.x == null || layer.y == null || layer.type == null)
 				continue;
-			
+
 			actions.push(
 				new app.Actions.Update_layer_action(layer.id, {
 					x: layer.x - all_left,
@@ -207,16 +205,17 @@ class Image_trim_class {
 		);
 		return actions;
 	}
-	
+
 	/**
 	 * get painted area coords
-	 * 
+	 *
 	 * @param {int} layer_id
 	 * @param {boolean} trim_white
 	 * @param {int} power
 	 * @returns {object} keys: top, left, bottom, right, width, height, relative
 	 */
 	get_trim_info(layer_id, trim_white, power) {
+		let y, x, k;
 		if (trim_white == undefined) {
 			trim_white = false;
 			if (config.TRANSPARENCY == false) {
@@ -226,25 +225,25 @@ class Image_trim_class {
 		if (power == undefined) {
 			power = 0;
 		}
-		var layer = this.Base_layers.get_layer(layer_id);
+		const layer = this.Base_layers.get_layer(layer_id);
 
-		var canvas = this.Base_layers.convert_layer_to_canvas(layer_id, null, false);
-		var ctx = canvas.getContext("2d");
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var imgData = img.data;
+		const canvas = this.Base_layers.convert_layer_to_canvas(layer_id, null, false);
+		const ctx = canvas.getContext("2d");
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const imgData = img.data;
 
-		var top = 0;
-		var left = 0;
-		var bottom = 0;
-		var right = 0;
+		let top = 0;
+		let left = 0;
+		let bottom = 0;
+		let right = 0;
 
 		//check top
 		main1:
-			for (var y = 0; y < img.height; y++) {
-			for (var x = 0; x < img.width; x++) {
-				var k = ((y * (img.width * 4)) + (x * 4));
+			for (y = 0; y < img.height; y++) {
+			for (x = 0; x < img.width; x++) {
+				k = (y * (img.width * 4)) + (x * 4);
 				if (imgData[k + 3] <= power)
-					continue; //transparent 
+					continue; //transparent
 				if (trim_white == true && imgData[k] >= 255 - power && imgData[k + 1] >= 255 - power
 					&& imgData[k + 2] >= 255 - power)
 					continue; //white
@@ -254,11 +253,11 @@ class Image_trim_class {
 		}
 		//check left
 		main2:
-			for (var x = 0; x < img.width; x++) {
-			for (var y = 0; y < img.height; y++) {
-				var k = ((y * (img.width * 4)) + (x * 4));
+			for (x = 0; x < img.width; x++) {
+			for (y = 0; y < img.height; y++) {
+				k = ((y * (img.width * 4)) + (x * 4));
 				if (imgData[k + 3] <= power)
-					continue; //transparent 
+					continue; //transparent
 				if (trim_white == true && imgData[k] >= 255 - power && imgData[k + 1] >= 255 - power
 					&& imgData[k + 2] >= 255 - power)
 					continue; //white
@@ -268,11 +267,11 @@ class Image_trim_class {
 		}
 		//check bottom
 		main3:
-			for (var y = img.height - 1; y >= 0; y--) {
-			for (var x = img.width - 1; x >= 0; x--) {
-				var k = ((y * (img.width * 4)) + (x * 4));
+			for (y = img.height - 1; y >= 0; y--) {
+			for (x = img.width - 1; x >= 0; x--) {
+				k = ((y * (img.width * 4)) + (x * 4));
 				if (imgData[k + 3] <= power)
-					continue; //transparent 
+					continue; //transparent
 				if (trim_white == true && imgData[k] >= 255 - power && imgData[k + 1] >= 255 - power
 					&& imgData[k + 2] >= 255 - power)
 					continue; //white
@@ -282,11 +281,11 @@ class Image_trim_class {
 		}
 		//check right
 		main4:
-			for (var x = img.width - 1; x >= 0; x--) {
-			for (var y = img.height - 1; y >= 0; y--) {
-				var k = ((y * (img.width * 4)) + (x * 4));
+			for (x = img.width - 1; x >= 0; x--) {
+			for (y = img.height - 1; y >= 0; y--) {
+				k = ((y * (img.width * 4)) + (x * 4));
 				if (imgData[k + 3] <= power)
-					continue; //transparent 
+					continue; //transparent
 				if (trim_white == true && imgData[k] >= 255 - power && imgData[k + 1] >= 255 - power
 					&& imgData[k + 2] >= 255 - power)
 					continue; //white
@@ -294,17 +293,17 @@ class Image_trim_class {
 			}
 			right++;
 		}
-		
-		var top_rel = top - layer.y;
-		var left_rel = left - layer.x;
-		var bottom_rel = bottom - (config.HEIGHT - layer.y - layer.height);
-		var right_rel = right - (config.WIDTH - layer.x - layer.width);
+
+		const top_rel = top - layer.y;
+		const left_rel = left - layer.x;
+		const bottom_rel = bottom - (config.HEIGHT - layer.y - layer.height);
+		const right_rel = right - (config.WIDTH - layer.x - layer.width);
 
 		return {
-			top: top,
-			left: left,
-			bottom: bottom,
-			right: right,
+			top,
+			left,
+			bottom,
+			right,
 			width: canvas.width - left - right,
 			height: canvas.height - top - bottom,
 			relative: {

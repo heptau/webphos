@@ -11,8 +11,8 @@
  * @returns {number} a link id nobody uses yet
  */
 export function next_link_id(layers) {
-	var max = 0;
-	layers.forEach(function (layer) {
+	let max = 0;
+	layers.forEach((layer) => {
 		if (layer.link_id > max) {
 			max = layer.link_id;
 		}
@@ -29,7 +29,7 @@ export function linked_with(layers, layer) {
 	if (!layer || layer.link_id == null) {
 		return [];
 	}
-	return layers.filter(function (other) {
+	return layers.filter((other) => {
 		return other.id != layer.id && other.link_id === layer.link_id;
 	});
 }
@@ -42,23 +42,23 @@ export function linked_with(layers, layer) {
  * @returns {Link_change[]}
  */
 function diff_links(layers, wanted) {
-	var next = {};
-	layers.forEach(function (layer) {
+	const next = {};
+	layers.forEach((layer) => {
 		next[layer.id] = wanted[layer.id] !== undefined ? wanted[layer.id] : (layer.link_id == null ? null : layer.link_id);
 	});
-	var counts = {};
-	Object.keys(next).forEach(function (id) {
+	const counts = {};
+	Object.keys(next).forEach((id) => {
 		if (next[id] != null) {
 			counts[next[id]] = (counts[next[id]] || 0) + 1;
 		}
 	});
-	var changes = [];
-	layers.forEach(function (layer) {
-		var value = next[layer.id];
+	const changes = [];
+	layers.forEach((layer) => {
+		let value = next[layer.id];
 		if (value != null && counts[value] < 2) {
 			value = null;
 		}
-		var before = layer.link_id == null ? null : layer.link_id;
+		const before = layer.link_id == null ? null : layer.link_id;
 		if (value !== before) {
 			changes.push({id: layer.id, link_id: value});
 		}
@@ -75,15 +75,15 @@ function diff_links(layers, wanted) {
  * @returns {Link_change[]}
  */
 export function link_changes(layers, active, chosen) {
-	var group = active.link_id == null ? next_link_id(layers) : active.link_id;
-	var wanted = {};
-	layers.forEach(function (layer) {
+	const group = active.link_id == null ? next_link_id(layers) : active.link_id;
+	const wanted = {};
+	layers.forEach((layer) => {
 		if (layer.link_id === group && layer.id != active.id) {
 			wanted[layer.id] = null;
 		}
 	});
 	wanted[active.id] = group;
-	chosen.forEach(function (id) {
+	chosen.forEach((id) => {
 		wanted[id] = group;
 	});
 	return diff_links(layers, wanted);
@@ -101,12 +101,12 @@ export function toggle_link_changes(layers, active, target_id) {
 	if (active.id == target_id) {
 		return [];
 	}
-	var target = layers.find(function (layer) { return layer.id == target_id; });
+	const target = layers.find((layer) => { return layer.id == target_id; });
 	if (!target) {
 		return [];
 	}
-	var chosen = linked_with(layers, active).map(function (layer) { return layer.id; });
-	var index = chosen.indexOf(target_id);
+	const chosen = linked_with(layers, active).map((layer) => { return layer.id; });
+	const index = chosen.indexOf(target_id);
 	if (index >= 0) {
 		chosen.splice(index, 1);
 	}
@@ -122,7 +122,7 @@ export function toggle_link_changes(layers, active, target_id) {
  * @returns {Link_change[]} the layer leaves its group
  */
 export function unlink_changes(layers, layer) {
-	var wanted = {};
+	const wanted = {};
 	wanted[layer.id] = null;
 	return diff_links(layers, wanted);
 }
@@ -142,28 +142,28 @@ export function unlink_changes(layers, layer) {
  * @returns {{x: number, y: number, width: number, height: number, rotate: number}} the linked layer after
  */
 export function follow_transform(from, to, follower) {
-	var before = from.rotate || 0;
-	var after = to.rotate || 0;
-	var scale_x = from.width > 0 && to.width > 0 ? to.width / from.width : 1;
-	var scale_y = from.height > 0 && to.height > 0 ? to.height / from.height : 1;
+	const before = from.rotate || 0;
+	const after = to.rotate || 0;
+	const scale_x = from.width > 0 && to.width > 0 ? to.width / from.width : 1;
+	const scale_y = from.height > 0 && to.height > 0 ? to.height / from.height : 1;
 
-	var turn = function (x, y, degrees) {
-		var radians = degrees * Math.PI / 180;
+	const turn = function (x, y, degrees) {
+		const radians = degrees * Math.PI / 180;
 		return {x: x * Math.cos(radians) - y * Math.sin(radians), y: x * Math.sin(radians) + y * Math.cos(radians)};
 	};
 
 	//the center of the linked layer in the frame of the active layer, scaled, and back to the picture
-	var from_center = {x: from.x + from.width / 2, y: from.y + from.height / 2};
-	var to_center = {x: to.x + to.width / 2, y: to.y + to.height / 2};
-	var local = turn(follower.x + follower.width / 2 - from_center.x, follower.y + follower.height / 2 - from_center.y, -before);
-	var moved = turn(local.x * scale_x, local.y * scale_y, after);
-	var center = {x: to_center.x + moved.x, y: to_center.y + moved.y};
+	const from_center = {x: from.x + from.width / 2, y: from.y + from.height / 2};
+	const to_center = {x: to.x + to.width / 2, y: to.y + to.height / 2};
+	const local = turn(follower.x + follower.width / 2 - from_center.x, follower.y + follower.height / 2 - from_center.y, -before);
+	const moved = turn(local.x * scale_x, local.y * scale_y, after);
+	const center = {x: to_center.x + moved.x, y: to_center.y + moved.y};
 
 	//size: along the axes of the active layer when the layer is turned the same way (or a quarter turn away), else evenly
-	var own = follower.rotate || 0;
-	var difference = (((own - before) % 180) + 180) % 180;
-	var width = follower.width;
-	var height = follower.height;
+	const own = follower.rotate || 0;
+	const difference = (((own - before) % 180) + 180) % 180;
+	let width = follower.width;
+	let height = follower.height;
 	if (difference < 1 || difference > 179) {
 		width *= scale_x;
 		height *= scale_y;
@@ -173,7 +173,7 @@ export function follow_transform(from, to, follower) {
 		height *= scale_x;
 	}
 	else {
-		var even = Math.sqrt(scale_x * scale_y);
+		const even = Math.sqrt(scale_x * scale_y);
 		width *= even;
 		height *= even;
 	}
@@ -183,8 +183,8 @@ export function follow_transform(from, to, follower) {
 	return {
 		x: Math.round(center.x - width / 2),
 		y: Math.round(center.y - height / 2),
-		width: width,
-		height: height,
+		width,
+		height,
 		rotate: ((Math.round(own + after - before) % 360) + 360) % 360,
 	};
 }

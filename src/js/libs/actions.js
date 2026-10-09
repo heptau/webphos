@@ -8,7 +8,7 @@
  * @typedef {{id: string, name: string, steps: Action_step[]}} Action
  */
 
-export const STORAGE_KEY = 'webphos_actions';
+export const STORAGE_KEY = 'lumifex_actions';
 export const MAX_ACTIONS = 50;
 export const MAX_STEPS = 200;
 export const MAX_DIALOGS = 10;
@@ -31,9 +31,9 @@ const EXCLUDED_PREFIXES = [
  * @returns {Set<string>} all the targets the program has
  */
 export function collect_targets(menu, shortcuts) {
-	var found = new Set();
-	var walk = function (items) {
-		(items || []).forEach(function (item) {
+	const found = new Set();
+	const walk = function (items) {
+		(items || []).forEach((item) => {
 			if (item && typeof item.target == 'string') {
 				found.add(item.target);
 			}
@@ -56,7 +56,7 @@ export function can_record(target, allowed) {
 	if (typeof target != 'string' || !TARGET_PATTERN.test(target)) {
 		return false;
 	}
-	if (EXCLUDED_PREFIXES.some(function (prefix) { return target.indexOf(prefix) == 0; })) {
+	if (EXCLUDED_PREFIXES.some((prefix) => { return target.indexOf(prefix) == 0; })) {
 		return false;
 	}
 	return !allowed || allowed.has(target);
@@ -73,9 +73,9 @@ function is_plain_value(value) {
  * @returns {object}
  */
 export function clean_params(params) {
-	var result = {};
-	Object.keys(params || {}).slice(0, 80).forEach(function (key) {
-		var value = params[key];
+	const result = {};
+	Object.keys(params || {}).slice(0, 80).forEach((key) => {
+		const value = params[key];
 		if (/^[\w\-. ]{1,60}$/.test(key) && is_plain_value(value)) {
 			result[key] = typeof value == 'string' ? value.slice(0, 500) : value;
 		}
@@ -94,27 +94,27 @@ export function sanitize_action(data, allowed) {
 	if (!data || typeof data != 'object' || !Array.isArray(data.steps)) {
 		return null;
 	}
-	var steps = [];
-	data.steps.slice(0, MAX_STEPS).forEach(function (step) {
+	const steps = [];
+	data.steps.slice(0, MAX_STEPS).forEach((step) => {
 		if (!step || !can_record(step.target, allowed)) {
 			return;
 		}
-		var dialogs = Array.isArray(step.dialogs) ? step.dialogs.slice(0, MAX_DIALOGS).map(clean_params) : [];
-		steps.push({target: step.target, parameter: is_plain_value(step.parameter) && step.parameter !== undefined ? step.parameter : null, dialogs: dialogs});
+		const dialogs = Array.isArray(step.dialogs) ? step.dialogs.slice(0, MAX_DIALOGS).map(clean_params) : [];
+		steps.push({target: step.target, parameter: is_plain_value(step.parameter) && step.parameter !== undefined ? step.parameter : null, dialogs});
 	});
 	if (steps.length == 0) {
 		return null;
 	}
-	var name = String(data.name == null ? '' : data.name).replace(/[<>]/g, '').trim().slice(0, MAX_NAME);
-	var id = typeof data.id == 'string' && /^[\w\-]{1,40}$/.test(data.id) ? data.id : null;
-	return {id: id || make_id(), name: name || 'Action', steps: steps};
+	const name = String(data.name == null ? '' : data.name).replace(/[<>]/g, '').trim().slice(0, MAX_NAME);
+	const id = typeof data.id == 'string' && /^[\w-]{1,40}$/.test(data.id) ? data.id : null;
+	return {id: id || make_id(), name: name || 'Action', steps};
 }
 
 /**
  * @returns {string}
  */
 export function make_id() {
-	return Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e6).toString(36);
+	return `${Date.now().toString(36)  }-${  Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
 /**
@@ -124,13 +124,13 @@ export function make_id() {
  */
 export function load_actions(storage, allowed) {
 	try {
-		var parsed = JSON.parse(storage.getItem(STORAGE_KEY) || '[]');
+		const parsed = JSON.parse(storage.getItem(STORAGE_KEY) || '[]');
 		if (!Array.isArray(parsed)) {
 			return [];
 		}
-		return parsed.slice(0, MAX_ACTIONS).map(function (item) { return sanitize_action(item, allowed); }).filter(Boolean);
+		return parsed.slice(0, MAX_ACTIONS).map((item) => { return sanitize_action(item, allowed); }).filter(Boolean);
 	}
-	catch (error) {
+	catch {
 		return [];
 	}
 }
@@ -145,7 +145,7 @@ export function save_actions(storage, actions) {
 		storage.setItem(STORAGE_KEY, JSON.stringify(actions.slice(0, MAX_ACTIONS)));
 		return true;
 	}
-	catch (error) {
+	catch {
 		return false;
 	}
 }
@@ -155,8 +155,8 @@ export function save_actions(storage, actions) {
  * @returns {string} short text for the list of the steps (the name of the command)
  */
 export function describe_step(step) {
-	var name = step.target.split('.').pop().replace(/_/g, ' ');
-	return name.charAt(0).toUpperCase() + name.slice(1) + (step.parameter !== null && step.parameter !== undefined ? ' (' + step.parameter + ')' : '');
+	const name = step.target.split('.').pop().replace(/_/g, ' ');
+	return name.charAt(0).toUpperCase() + name.slice(1) + (step.parameter !== null && step.parameter !== undefined ? ` (${step.parameter})` : '');
 }
 
 /**
@@ -166,7 +166,7 @@ export function describe_step(step) {
  * @returns {string}
  */
 export function export_action(action) {
-	return JSON.stringify({format: 'webphos-action', version: 1, name: action.name, steps: action.steps}, null, 2);
+	return JSON.stringify({format: 'lumifex-action', version: 1, name: action.name, steps: action.steps}, null, 2);
 }
 
 /**
@@ -176,23 +176,23 @@ export function export_action(action) {
  */
 export function import_action(text, allowed) {
 	try {
-		var data = JSON.parse(text);
-		if (!data || data.format != 'webphos-action') {
+		const data = JSON.parse(text);
+		if (!data || data.format != 'lumifex-action') {
 			return null;
 		}
 		return sanitize_action({name: data.name, steps: data.steps}, allowed);
 	}
-	catch (error) {
+	catch {
 		return null;
 	}
 }
 
 //the state of the recorder and of the player
-var recording = null; //{name, steps}
-var replay = null; //{dialogs: [...]}
-var allowed_targets = null;
-var listeners = [];
-var open_dialog_step = null; //the step whose dialog is open now
+let recording = null; //{name, steps}
+let replay = null; //{dialogs: [...]}
+let allowed_targets = null;
+const listeners = [];
+let open_dialog_step = null; //the step whose dialog is open now
 
 /**
  * @param {Set<string>|null} targets the commands that exist; nothing else is recorded
@@ -209,7 +209,7 @@ export function on_recording_change(listener) {
 }
 
 function notify() {
-	listeners.forEach(function (listener) { listener(recording); });
+	listeners.forEach((listener) => { listener(recording); });
 }
 
 export function is_recording() {
@@ -233,7 +233,7 @@ export function start_recording(name) {
  * @returns {Action|null} the recorded action (null when nothing was recorded)
  */
 export function stop_recording() {
-	var done = recording;
+	const done = recording;
 	recording = null;
 	open_dialog_step = null;
 	notify();
@@ -257,7 +257,7 @@ export function note_target(target, parameter) {
 	if (!is_recording() || !can_record(target, allowed_targets) || recording.steps.length >= MAX_STEPS) {
 		return;
 	}
-	recording.steps.push({target: target, parameter: is_plain_value(parameter) && parameter !== undefined ? parameter : null, dialogs: [], pending: true});
+	recording.steps.push({target, parameter: is_plain_value(parameter) && parameter !== undefined ? parameter : null, dialogs: [], pending: true});
 	open_dialog_step = recording.steps[recording.steps.length - 1];
 	notify();
 }
@@ -284,7 +284,7 @@ export function note_dialog_cancelled() {
 		return;
 	}
 	if (open_dialog_step.dialogs.length == 0) {
-		var index = recording.steps.indexOf(open_dialog_step);
+		const index = recording.steps.indexOf(open_dialog_step);
 		if (index >= 0) {
 			recording.steps.splice(index, 1);
 		}
@@ -297,7 +297,7 @@ export function note_dialog_cancelled() {
  * @param {Action_step} step
  */
 export function begin_replay(step) {
-	replay = {dialogs: step.dialogs.map(function (params) { return Object.assign({}, params); })};
+	replay = {dialogs: step.dialogs.map((params) => { return Object.assign({}, params); })};
 }
 
 export function end_replay() {
@@ -311,12 +311,12 @@ export function end_replay() {
  * @returns {object}
  */
 export function next_replay_params(definition) {
-	var params = {};
-	(definition || []).forEach(function (item) {
+	const params = {};
+	(definition || []).forEach((item) => {
 		if (item && item.name) {
 			params[item.name] = item.value !== undefined ? item.value : (Array.isArray(item.values) ? item.values[0] : null);
 		}
 	});
-	var recorded = replay && replay.dialogs.length > 0 ? replay.dialogs.shift() : {};
+	const recorded = replay && replay.dialogs.length > 0 ? replay.dialogs.shift() : {};
 	return Object.assign(params, recorded);
 }

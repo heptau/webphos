@@ -3,7 +3,7 @@
  */
 
 function hex2(value) {
-	return ('0' + Math.max(0, Math.min(255, value)).toString(16)).slice(-2);
+	return (`0${  Math.max(0, Math.min(255, value)).toString(16)}`).slice(-2);
 }
 
 /**
@@ -11,15 +11,15 @@ function hex2(value) {
  * @returns {string[]|null} colors as "#rrggbb" or null when this is not a palette file
  */
 export function parse_gpl(text) {
-	var lines = String(text).split(/\r?\n/);
+	const lines = String(text).split(/\r?\n/);
 	if (!lines.length || lines[0].trim() != 'GIMP Palette') {
 		return null;
 	}
-	var colors = [];
-	for (var i = 1; i < lines.length; i++) {
-		var match = /^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})(?:\s|$)/.exec(lines[i]);
+	const colors = [];
+	for (let i = 1; i < lines.length; i++) {
+		const match = /^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})(?:\s|$)/.exec(lines[i]);
 		if (match) {
-			colors.push('#' + hex2(parseInt(match[1], 10)) + hex2(parseInt(match[2], 10)) + hex2(parseInt(match[3], 10)));
+			colors.push(`#${hex2(parseInt(match[1], 10))}${hex2(parseInt(match[2], 10))  }${hex2(parseInt(match[3], 10))}`);
 		}
 	}
 	return colors.length > 0 ? colors : null;
@@ -31,17 +31,17 @@ export function parse_gpl(text) {
  * @returns {string} content of a .gpl file
  */
 export function build_gpl(name, colors) {
-	var lines = ['GIMP Palette', 'Name: ' + String(name).replace(/[\r\n]/g, ' '), 'Columns: 7', '#'];
-	colors.forEach(function (color, index) {
-		var match = /^#?([0-9a-f]{6})$/i.exec(color);
+	const lines = ['GIMP Palette', `Name: ${  String(name).replace(/[\r\n]/g, ' ')}`, 'Columns: 7', '#'];
+	colors.forEach((color, index) => {
+		const match = /^#?([0-9a-f]{6})$/i.exec(color);
 		if (!match) {
 			return;
 		}
-		var n = parseInt(match[1], 16);
-		var pad = function (value) {
-			return ('   ' + value).slice(-3);
+		const n = parseInt(match[1], 16);
+		const pad = function (value) {
+			return (`   ${  value}`).slice(-3);
 		};
-		lines.push(pad((n >> 16) & 255) + ' ' + pad((n >> 8) & 255) + ' ' + pad(n & 255) + ' Color ' + (index + 1));
+		lines.push(`${pad((n >> 16) & 255)  } ${pad((n >> 8) & 255)} ${pad(n & 255)} Color ${  index + 1}`);
 	});
-	return lines.join('\n') + '\n';
+	return `${lines.join('\n')  }\n`;
 }

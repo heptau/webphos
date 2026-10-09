@@ -35,7 +35,7 @@ export class Set_selection_action extends Base_action {
 			this.settings_reference.data.height = this.height;
 
 		//a custom (soft, inverted...) mask belongs to the old rectangle - it is brought back by undo
-		var mask_state = new Selection_mask_class();
+		const mask_state = new Selection_mask_class();
 		this.old_custom_mask = mask_state.get_custom_state();
 		mask_state.set_custom_state(null);
 		this.memory_estimate = this.old_custom_mask ? this.old_custom_mask.mask.data.length : 0;
@@ -46,12 +46,12 @@ export class Set_selection_action extends Base_action {
 	async undo() {
 		super.undo()
 		if (this.old_settings_override) {
-			for (let prop in this.old_settings_override) {
-				this.settings_reference.data[prop] = this.old_settings_override[prop];   
+			for (const prop in this.old_settings_override) {
+				this.settings_reference.data[prop] = this.old_settings_override[prop];
 			}
 		} else {
-			for (let prop in this.old_settings_data) {
-				this.settings_reference.data[prop] = this.old_settings_data[prop];   
+			for (const prop in this.old_settings_data) {
+				this.settings_reference.data[prop] = this.old_settings_data[prop];
 			}
 		}
 		new Selection_mask_class().set_custom_state(this.old_custom_mask);

@@ -7,7 +7,7 @@
  * @returns {string} safe part of a file name
  */
 export function safe_layer_name(name) {
-	var clean = String(name == null ? '' : name)
+	const clean = String(name == null ? '' : name)
 		.replace(/\.[a-z0-9]{2,4}$/i, '') //"photo.jpg" -> "photo"
 		.replace(/[^\p{L}\p{N}\-_. ]+/gu, '')
 		.trim()
@@ -24,8 +24,8 @@ export function safe_layer_name(name) {
  * @returns {string[]} like "01-background.png"
  */
 export function layer_file_names(layers) {
-	var width = String(layers.length).length;
-	return layers.map(function (layer, index) {
-		return String(index + 1).padStart(Math.max(2, width), '0') + '-' + safe_layer_name(layer.name) + '.png';
+	const width = String(layers.length).length;
+	return layers.map((layer, index) => {
+		return `${String(index + 1).padStart(Math.max(2, width), '0')  }-${safe_layer_name(layer.name)}.png`;
 	});
 }

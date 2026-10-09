@@ -1,4 +1,3 @@
-import config from './../../config.js';
 import Image_adjustments_class from './adjustments.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import * as Effects2 from './../../libs/effects2.js';
@@ -54,8 +53,8 @@ class Image_photo_effects_class {
 
 	film_grain() {
 		//the same grain is used in the preview and in the result, so the preview is what you get
-		var seed = 12345;
-		var random = () => {
+		let seed = 12345;
+		const random = () => {
 			seed = (seed * 16807) % 2147483647;
 			return seed / 2147483647;
 		};
@@ -135,7 +134,7 @@ class Image_photo_effects_class {
 		this.Adjustments.show_dialog('White Balance', [
 			{name: "neutral", title: "Gray point:", value: "#c8c8c8", type: 'color'},
 			{name: "strength", title: "Strength:", value: 100, range: [0, 100]},
-			{html: '<span class="field_comment">' + t('Pick a color that should be gray (for example a white wall).').replace(/</g, '&lt;') + '</span>'},
+			{html: `<span class="field_comment">${t('Pick a color that should be gray (for example a white wall).').replace(/</g, '&lt;')}</span>`},
 		], (img, p) => Effects4.white_balance(img, p.neutral, p.strength));
 	}
 
@@ -161,7 +160,7 @@ class Image_photo_effects_class {
 	}
 
 	duotone() {
-		var presets = {
+		const presets = {
 			'Blue and Orange': ['#0b1d51', '#ffb347'],
 			'Black and Gold': ['#000000', '#f5c542'],
 			'Purple and Pink': ['#2d1b69', '#ff8fb1'],
@@ -171,7 +170,7 @@ class Image_photo_effects_class {
 		this.Adjustments.show_dialog('Duotone', [
 			{name: "preset", title: "Colors:", type: 'select', values: Object.keys(presets), value: 'Blue and Orange'},
 		], (img, p) => {
-			var pair = presets[p.preset] || presets['Blue and Orange'];
+			const pair = presets[p.preset] || presets['Blue and Orange'];
 			return Adjustments.gradientMap(img, {shadows: pair[0], highlights: pair[1]});
 		});
 	}
@@ -180,13 +179,13 @@ class Image_photo_effects_class {
 	 * Image > Adjustments > Save Last Adjustment as LUT - turns the last color adjustment into a .cube file
 	 */
 	save_adjustment_lut() {
-		var last = this.Adjustments.last_change;
+		const last = this.Adjustments.last_change;
 		if (!last) {
 			alertify.warning(t('There is no adjustment to save.'));
 			return;
 		}
-		var text = Effects4.adjustment_to_cube(last, 33, 'WebPhos look');
-		save_blob(new Blob([text], {type: 'text/plain'}), 'WebPhos-look.cube', false);
+		const text = Effects4.adjustment_to_cube(last, 33, 'Lumifex look');
+		save_blob(new Blob([text], {type: 'text/plain'}), 'Lumifex-look.cube', false);
 		alertify.message(t('Only color adjustments can be saved as a LUT (not blur or sharpening).'), 5);
 	}
 
@@ -194,18 +193,18 @@ class Image_photo_effects_class {
 	 * Image > Adjustments > Color Lookup - applies a .cube file
 	 */
 	color_lookup() {
-		var lut = null;
+		let lut = null;
 		this.Adjustments.show_dialog('Color Lookup', [
-			{html: '<input type="file" id="lut_file" accept=".cube,text/plain" aria-label="' + t('Choose a .cube file') + '" />'},
+			{html: `<input type="file" id="lut_file" accept=".cube,text/plain" aria-label="${t('Choose a .cube file')}" />`},
 			{name: "strength", title: "Strength:", value: 100, range: [0, 100]},
 		], (img, p) => (lut ? apply_lut(img, lut, p.strength) : img));
 
-		var input = document.getElementById('lut_file');
+		const input = document.getElementById('lut_file');
 		if (!input) {
 			return;
 		}
 		input.addEventListener('change', () => {
-			var file = input.files && input.files[0];
+			const file = input.files && input.files[0];
 			if (!file) {
 				return;
 			}
@@ -213,9 +212,9 @@ class Image_photo_effects_class {
 				alertify.error(t('The file is too large.'));
 				return;
 			}
-			var reader = new FileReader();
+			const reader = new FileReader();
 			reader.onload = () => {
-				var parsed = parse_cube(String(reader.result));
+				const parsed = parse_cube(String(reader.result));
 				if (!parsed) {
 					alertify.error(t('This is not a valid 3D .cube file.'));
 					lut = null;

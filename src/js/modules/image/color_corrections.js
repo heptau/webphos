@@ -17,27 +17,26 @@ class Image_colorCorrections_class {
 	}
 
 	color_corrections() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Color Corrections',
 			preview: true,
-			on_change: function (params, canvas_preview, w, h, canvas) {
+			on_change: (params, canvas_preview, w, h, canvas) => {
 				//destructive effects
-				var img = this.layer_active_small_ctx.getImageData(0, 0, w, h);
-				var data = _this.do_corrections(img, params, false);
+				const img = this.POP.layer_active_small_ctx.getImageData(0, 0, w, h);
+				const data = this.do_corrections(img, params, false);
 				canvas_preview.putImageData(data, 0, 0);
 
 				//non-destructive
-				canvas_preview.filter = "brightness(" + (1 + (params.param_b / 100)) + ")";
-				canvas_preview.filter += " contrast(" + (1 + (params.param_c / 100)) + ")";
-				canvas_preview.filter += " saturate(" + (1 + (params.param_s / 100)) + ")";
-				canvas_preview.filter += " hue-rotate(" + params.param_h + "deg)";
+				canvas_preview.filter = `brightness(${1 + (params.param_b / 100)})`;
+				canvas_preview.filter += ` contrast(${1 + (params.param_c / 100)})`;
+				canvas_preview.filter += ` saturate(${1 + (params.param_s / 100)})`;
+				canvas_preview.filter += ` hue-rotate(${params.param_h}deg)`;
 
 				canvas_preview.drawImage(canvas, 0, 0);
 			},
@@ -53,8 +52,8 @@ class Image_colorCorrections_class {
 				{name: "param_green", title: "Green channel:", value: "0", range: [-255, 255]},
 				{name: "param_blue", title: "Blue channel:", value: "0", range: [-255, 255]},
 			],
-			on_finish: function (params) {
-				_this.save_changes(params);
+			on_finish: (params) => {
+				this.save_changes(params);
 			},
 		};
 		this.POP.show(settings);
@@ -63,12 +62,13 @@ class Image_colorCorrections_class {
 	save_changes(params) {
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		let parameters, filter_id;
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = this.do_corrections(img, params);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const data = this.do_corrections(img, params);
 		ctx.putImageData(data, 0, 0);
 
 		//save
@@ -79,29 +79,29 @@ class Image_colorCorrections_class {
 		//non-destructive filters
 		//multiple do_action() + do_corrections() does not work together yet.
 		if(params.param_b != 0) {
-			var parameters = {value: params.param_b};
-			var filter_id = null;
+			parameters = {value: params.param_b};
+			filter_id = null;
 			app.State.do_action(
 				new app.Actions.Add_layer_filter_action(null, 'brightness', parameters, filter_id)
 			);
 		}
 		if(params.param_c != 0) {
-			var parameters = {value: params.param_c};
-			var filter_id = null;
+			parameters = {value: params.param_c};
+			filter_id = null;
 			app.State.do_action(
 				new app.Actions.Add_layer_filter_action(null, 'contrast', parameters, filter_id)
 			);
 		}
 		if(params.param_s != 0) {
-			var parameters = {value: params.param_s};
-			var filter_id = null;
+			parameters = {value: params.param_s};
+			filter_id = null;
 			app.State.do_action(
 				new app.Actions.Add_layer_filter_action(null, 'saturate', parameters, filter_id)
 			);
 		}
 		if(params.param_h != 0) {
-			var parameters = {value: params.param_h};
-			var filter_id = null;
+			parameters = {value: params.param_h};
+			filter_id = null;
 			app.State.do_action(
 				new app.Actions.Add_layer_filter_action(null, 'hue-rotate', parameters, filter_id)
 			);
@@ -118,12 +118,12 @@ class Image_colorCorrections_class {
 	do_corrections(data, params) {
 		//luminance
 		if(params.param_l != 0) {
-			var data = this.ImageFilters.HSLAdjustment(data, 0, 0, params.param_l);
+			data = this.ImageFilters.HSLAdjustment(data, 0, 0, params.param_l);
 		}
 
 		//RGB corrections
 		if(params.param_red != 0 || params.param_green != 0 || params.param_blue != 0) {
-			var data = this.ImageFilters.ColorTransformFilter(data, 1, 1, 1, 1,
+			data = this.ImageFilters.ColorTransformFilter(data, 1, 1, 1, 1,
 				params.param_red, params.param_green, params.param_blue, 1);
 		}
 

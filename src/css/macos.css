@@ -439,7 +439,7 @@ body.no_documents .documents_bar {
 	background: none;
 	border: 0;
 	pointer-events: none;
-	z-index: 300;
+	z-index: 1100;
 }
 .main_menu.context_host::before {
 	display: none;
@@ -1804,7 +1804,7 @@ html.large_ui input[type="number"] {
 	user-select: none;
 }
 
-/* WebPhos > Keyboard Shortcuts */
+/* Lumifex > Keyboard Shortcuts */
 #popups .popup.shortcuts_dialog {
 	max-width: 640px;
 }

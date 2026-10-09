@@ -7,7 +7,7 @@ import { apply_meta, read_meta, toggle_flag, change_case, replace_text, is_empty
 import Layer_raster_class from './../layer/raster.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * The Type menu: style of the text of the active text layer (Character, Paragraph, Style, Case), Lorem Ipsum and
@@ -27,7 +27,7 @@ class Type_character_class {
 	 * @returns {object|null} the active layer when it is a text layer, otherwise a message is shown
 	 */
 	text_layer() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'text' || !Array.isArray(layer.data)) {
 			alertify.error(t('This command works only on a text layer.'));
 			return null;
@@ -47,25 +47,25 @@ class Type_character_class {
 			if (!config.TOOL || config.TOOL.name != 'text') {
 				return null;
 			}
-			var tool = app.GUI.GUI_tools.tools_modules.text.object;
-			var editor = tool.get_editor(layer);
-			var selection = editor && editor.selection;
+			const tool = app.GUI.GUI_tools.tools_modules.text.object;
+			const editor = tool.get_editor(layer);
+			const selection = editor && editor.selection;
 			if (!selection || !selection.start || !selection.end) {
 				return null;
 			}
-			var range = {
+			const range = {
 				start: {line: selection.start.line, character: selection.start.character},
 				end: {line: selection.end.line, character: selection.end.character},
 			};
 			return is_empty_range(range) ? null : range;
 		}
-		catch (error) {
+		catch {
 			return null;
 		}
 	}
 
 	change_data(layer, name, data, params) {
-		var changes = {data: data};
+		const changes = {data};
 		if (params) {
 			changes.params = params;
 		}
@@ -75,13 +75,13 @@ class Type_character_class {
 	}
 
 	character() {
-		var layer = this.text_layer();
+		const layer = this.text_layer();
 		if (layer == null) {
 			return;
 		}
-		var range = this.selection_range(layer);
-		var meta = read_meta(layer.data, metaDefaults, range);
-		var fonts = Array.from(new Set([metaDefaults.family, meta.family, ...config.FONTS, ...Object.keys(config.user_fonts || {})])).sort();
+		const range = this.selection_range(layer);
+		const meta = read_meta(layer.data, metaDefaults, range);
+		const fonts = Array.from(new Set([metaDefaults.family, meta.family, ...config.FONTS, ...Object.keys(config.user_fonts || {})])).sort();
 		new Dialog_class().show({
 			title: 'Character',
 			params: [
@@ -98,11 +98,11 @@ class Type_character_class {
 				{name: "stroke_size", title: "Stroke size:", value: meta.stroke_size, min: 0, max: 100},
 			],
 			on_finish: (params) => {
-				var number = (value, fallback) => {
-					var parsed = parseFloat(value);
+				const number = (value, fallback) => {
+					const parsed = parseFloat(value);
 					return isNaN(parsed) ? fallback : parsed;
 				};
-				var changes = {
+				const changes = {
 					family: String(params.family || metaDefaults.family),
 					size: Math.max(1, number(params.size, metaDefaults.size)),
 					fill_color: params.fill_color,
@@ -121,19 +121,19 @@ class Type_character_class {
 	}
 
 	paragraph() {
-		var layer = this.text_layer();
+		const layer = this.text_layer();
 		if (layer == null) {
 			return;
 		}
-		var current = layer.params && layer.params.halign ? layer.params.halign : 'left';
-		var labels = {left: 'Align Left', center: 'Align Horizontal Center', right: 'Align Right'};
+		const current = layer.params && layer.params.halign ? layer.params.halign : 'left';
+		const labels = {left: 'Align Left', center: 'Align Horizontal Center', right: 'Align Right'};
 		new Dialog_class().show({
 			title: 'Paragraph',
 			params: [
 				{name: "align", title: "Alignment:", values: Object.values(labels), value: labels[current] || labels.left},
 			],
 			on_finish: (params) => {
-				var align = Object.keys(labels).find((key) => labels[key] === params.align) || 'left';
+				const align = Object.keys(labels).find((key) => labels[key] === params.align) || 'left';
 				return this.change_data(layer, 'Paragraph', layer.data, Object.assign({}, layer.params, {halign: align}));
 			},
 		});
@@ -143,7 +143,7 @@ class Type_character_class {
 	 * @param {string} key bold, italic, underline or strikethrough
 	 */
 	toggle_style(key) {
-		var layer = this.text_layer();
+		const layer = this.text_layer();
 		if (layer == null || ['bold', 'italic', 'underline', 'strikethrough'].indexOf(key) < 0) {
 			return;
 		}
@@ -154,7 +154,7 @@ class Type_character_class {
 	 * @param {string} mode upper, lower or title
 	 */
 	change_case(mode) {
-		var layer = this.text_layer();
+		const layer = this.text_layer();
 		if (layer == null || ['upper', 'lower', 'title'].indexOf(mode) < 0) {
 			return;
 		}
@@ -162,7 +162,7 @@ class Type_character_class {
 	}
 
 	lorem() {
-		var layer = this.text_layer();
+		const layer = this.text_layer();
 		if (layer == null) {
 			return;
 		}

@@ -10,9 +10,9 @@ import Base_layers_class from './../base-layers.js';
 import zoomView from './../../libs/zoomView.js';
 import Helper_class from './../../libs/helpers.js';
 
-var instance = null;
+let instance = null;
 
-var template = `
+const template = `
 	<div class="canvas_preview_wrapper">
 		<div class="transparent-grid" id="canvas_preview_background"></div>
 		<canvas width="176" height="100" class="transparent" id="canvas_preview"></canvas>
@@ -72,105 +72,104 @@ class GUI_preview_class {
 	}
 
 	set_events() {
-		var _this = this;
-		var is_touch = false;
+		let is_touch = false;
 
-		document.addEventListener('mousedown', function (e) {
-			_this.mouse_pressed = true;
+		document.addEventListener('mousedown', () => {
+			this.mouse_pressed = true;
 		}, false);
-		document.addEventListener('mouseup', function (e) {
-			_this.mouse_pressed = false;
+		document.addEventListener('mouseup', () => {
+			this.mouse_pressed = false;
 		}, false);
-		document.addEventListener('touchstart', function (e) {
-			_this.mouse_pressed = true;
+		document.addEventListener('touchstart', () => {
+			this.mouse_pressed = true;
 		}, false);
-		document.addEventListener('touchend', function (e) {
-			_this.mouse_pressed = false;
+		document.addEventListener('touchend', () => {
+			this.mouse_pressed = false;
 		}, false);
-		document.getElementById('zoom_range').addEventListener('input', function (e) {
-			_this.set_center_zoom();
-			_this.zoom(this.value);
+		document.getElementById('zoom_range').addEventListener('input', (event) => {
+			this.set_center_zoom();
+			this.zoom(event.currentTarget.value);
 		}, false);
-		document.getElementById('zoom_range').addEventListener('change', function (e) {
+		document.getElementById('zoom_range').addEventListener('change', (event) => {
 			//IE11
-			if (this.value != config.ZOOM * 100) {
-				_this.set_center_zoom();
-				_this.zoom(this.value);
+			if (event.currentTarget.value != config.ZOOM * 100) {
+				this.set_center_zoom();
+				this.zoom(event.currentTarget.value);
 			}
 		}, false);
-		document.getElementById('zoom_less').addEventListener('click', function (e) {
-			_this.set_center_zoom();
-			_this.zoom(-1);
+		document.getElementById('zoom_less').addEventListener('click', () => {
+			this.set_center_zoom();
+			this.zoom(-1);
 		}, false);
-		document.getElementById('zoom_100').addEventListener('click', function (e) {
-			_this.zoom(100);
+		document.getElementById('zoom_100').addEventListener('click', () => {
+			this.zoom(100);
 		}, false);
-		document.getElementById('zoom_more').addEventListener('click', function (e) {
-			_this.set_center_zoom();
-			_this.zoom(+1);
+		document.getElementById('zoom_more').addEventListener('click', () => {
+			this.set_center_zoom();
+			this.zoom(+1);
 		}, false);
-		document.getElementById('zoom_fit').addEventListener('click', function (e) {
-			_this.zoom_auto();
+		document.getElementById('zoom_fit').addEventListener('click', () => {
+			this.zoom_auto();
 		}, false);
-		document.getElementById('main_wrapper').addEventListener('wheel', function (e) {
+		document.getElementById('main_wrapper').addEventListener('wheel', (e) => {
 			e.preventDefault();
 			if (e.ctrlKey || e.metaKey || e.altKey) {
 				//Ctrl/Cmd/Alt + scroll (or trackpad pinch) - zoom, as in Photoshop
-				_this.zoom_data.x = e.offsetX;
-				_this.zoom_data.y = e.offsetY;
-				var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail || -e.deltaY)));
+				this.zoom_data.x = e.offsetX;
+				this.zoom_data.y = e.offsetY;
+				const delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail || -e.deltaY)));
 				if (delta > 0)
-					_this.zoom(+1, e);
+					this.zoom(+1, e);
 				else
-					_this.zoom(-1, e);
+					this.zoom(-1, e);
 			}
 			else {
 				//plain scroll - move the image (line / page delta modes are converted to pixels)
-				var unit = e.deltaMode == 1 ? 16 : (e.deltaMode == 2 ? config.visible_height || 600 : 1);
-				var dx = e.deltaX * unit;
-				var dy = e.deltaY * unit;
+				const unit = e.deltaMode == 1 ? 16 : (e.deltaMode == 2 ? config.visible_height || 600 : 1);
+				let dx = e.deltaX * unit;
+				let dy = e.deltaY * unit;
 				if (e.shiftKey && dx == 0) {
 					dx = dy;
 					dy = 0;
 				}
-				_this.pan(-dx, -dy);
+				this.pan(-dx, -dy);
 			}
 		}, {passive: false});
 		this.set_hand_events();
-		window.addEventListener('resize', function (e) {
+		window.addEventListener('resize', () => {
 			//resize
 			config.need_render = true;
 		}, false);
-		document.getElementById("canvas_preview").addEventListener('mousedown', function (e) {
+		document.getElementById("canvas_preview").addEventListener('mousedown', (e) => {
 			if(is_touch)
 				return;
-			_this.set_zoom_position(e);
+			this.set_zoom_position(e);
 		}, false);
-		document.getElementById("canvas_preview").addEventListener('mousemove', function (e) {
+		document.getElementById("canvas_preview").addEventListener('mousemove', (e) => {
 			if(is_touch)
 				return;
-			if (_this.mouse_pressed == false)
+			if (this.mouse_pressed == false)
 				return;
-			_this.set_zoom_position(e);
+			this.set_zoom_position(e);
 		}, false);
 
-		document.getElementById("canvas_preview").addEventListener('touchstart', function (e) {
+		document.getElementById("canvas_preview").addEventListener('touchstart', (e) => {
 			is_touch = true;
 
 			//calc canvas position offset
-			var bodyRect = document.body.getBoundingClientRect();
-			var canvas_el = document.getElementById("canvas_preview").getBoundingClientRect();
-			_this.canvas_offset.x = canvas_el.left - bodyRect.left;
-			_this.canvas_offset.y = canvas_el.top - bodyRect.top;
+			const bodyRect = document.body.getBoundingClientRect();
+			const canvas_el = document.getElementById("canvas_preview").getBoundingClientRect();
+			this.canvas_offset.x = canvas_el.left - bodyRect.left;
+			this.canvas_offset.y = canvas_el.top - bodyRect.top;
 
 			//change zoom offset
-			_this.set_zoom_position(e);
+			this.set_zoom_position(e);
 		});
-		document.getElementById("canvas_preview").addEventListener('touchmove', function (e) {
+		document.getElementById("canvas_preview").addEventListener('touchmove', (e) => {
 			//change zoom offset
-			if (_this.mouse_pressed == false)
+			if (this.mouse_pressed == false)
 				return;
-			_this.set_zoom_position(e);
+			this.set_zoom_position(e);
 		});
 	}
 
@@ -183,7 +182,7 @@ class GUI_preview_class {
 	pan(dx, dy) {
 		if (is_transformed(config.view)) {
 			//the mouse moves on the screen, the picture is turned: the movement is turned back
-			var moved = screen_delta_to_picture(dx, dy, config.view);
+			const moved = screen_delta_to_picture(dx, dy, config.view);
 			dx = moved.x;
 			dy = moved.y;
 		}
@@ -195,22 +194,21 @@ class GUI_preview_class {
 	 * hold Space and drag to move the image (hand tool, as in Photoshop)
 	 */
 	set_hand_events() {
-		var _this = this;
-		var helper = new Helper_class();
-		var wrapper = document.getElementById('main_wrapper');
-		var space = false;
-		var dragging = null;
+		const helper = new Helper_class();
+		const wrapper = document.getElementById('main_wrapper');
+		let space = false;
+		let dragging = null;
 
-		document.addEventListener('keydown', function (e) {
+		document.addEventListener('keydown', (e) => {
 			if (e.code != 'Space' || e.repeat && space) {
 				if (e.code == 'Space' && space) {
 					e.preventDefault();
 				}
 				return;
 			}
-			var target = e.target;
-			var on_canvas_area = target === document.body || (target.closest && target.closest('#main_wrapper'));
-			var interactive = target.closest && target.closest('button, a, select, [role="button"], [role="tab"], [role="menuitem"], [contenteditable="true"]');
+			const target = e.target;
+			const on_canvas_area = target === document.body || (target.closest && target.closest('#main_wrapper'));
+			const interactive = target.closest && target.closest('button, a, select, [role="button"], [role="tab"], [role="menuitem"], [contenteditable="true"]');
 			if (!on_canvas_area || interactive || helper.is_input(target) || e.ctrlKey || e.metaKey || e.altKey
 				|| document.getElementById('popups').children.length > 0) {
 				return;
@@ -219,19 +217,19 @@ class GUI_preview_class {
 			wrapper.classList.add('hand_mode');
 			e.preventDefault();
 		}, false);
-		document.addEventListener('keyup', function (e) {
+		document.addEventListener('keyup', (e) => {
 			if (e.code == 'Space') {
 				space = false;
 				wrapper.classList.remove('hand_mode');
 			}
 		}, false);
-		window.addEventListener('blur', function () {
+		window.addEventListener('blur', () => {
 			space = false;
 			dragging = null;
 			wrapper.classList.remove('hand_mode', 'hand_dragging');
 		}, false);
 
-		wrapper.addEventListener('mousedown', function (e) {
+		wrapper.addEventListener('mousedown', (e) => {
 			if (space == false || e.button !== 0) {
 				return;
 			}
@@ -241,15 +239,15 @@ class GUI_preview_class {
 			dragging = {x: e.clientX, y: e.clientY};
 			wrapper.classList.add('hand_dragging');
 		}, true);
-		document.addEventListener('mousemove', function (e) {
+		document.addEventListener('mousemove', (e) => {
 			if (dragging == null) {
 				return;
 			}
-			_this.pan(e.clientX - dragging.x, e.clientY - dragging.y);
+			this.pan(e.clientX - dragging.x, e.clientY - dragging.y);
 			dragging.x = e.clientX;
 			dragging.y = e.clientY;
 		}, false);
-		document.addEventListener('mouseup', function () {
+		document.addEventListener('mouseup', () => {
 			dragging = null;
 			wrapper.classList.remove('hand_dragging');
 		}, false);
@@ -263,24 +261,24 @@ class GUI_preview_class {
 			return false;
 		}
 		this.size_for = [config.WIDTH, config.HEIGHT];
-		var scale = Math.min(this.PREVIEW_BOX.w / config.WIDTH, this.PREVIEW_BOX.h / config.HEIGHT);
-		var w = Math.max(1, Math.round(config.WIDTH * scale));
-		var h = Math.max(1, Math.round(config.HEIGHT * scale));
-		this.PREVIEW_SIZE = {w: w, h: h};
+		const scale = Math.min(this.PREVIEW_BOX.w / config.WIDTH, this.PREVIEW_BOX.h / config.HEIGHT);
+		const w = Math.max(1, Math.round(config.WIDTH * scale));
+		const h = Math.max(1, Math.round(config.HEIGHT * scale));
+		this.PREVIEW_SIZE = {w, h};
 
-		var canvas = document.getElementById('canvas_preview');
-		var background = document.getElementById('canvas_preview_background');
+		const canvas = document.getElementById('canvas_preview');
+		const background = document.getElementById('canvas_preview_background');
 		if (canvas) {
 			canvas.width = w;
 			canvas.height = h;
 			canvas.style.display = 'block';
-			canvas.style.margin = Math.round((this.PREVIEW_BOX.h - h) / 2) + 'px auto 0';
+			canvas.style.margin = `${Math.round((this.PREVIEW_BOX.h - h) / 2)  }px auto 0`;
 		}
 		if (background) {
-			background.style.width = w + 'px';
-			background.style.height = h + 'px';
+			background.style.width = `${w  }px`;
+			background.style.height = `${h  }px`;
 			background.style.left = '50%';
-			background.style.top = Math.round((this.PREVIEW_BOX.h - h) / 2) + 'px';
+			background.style.top = `${Math.round((this.PREVIEW_BOX.h - h) / 2)  }px`;
 			background.style.transform = 'translateX(-50%)';
 		}
 		config.need_render = true;
@@ -301,15 +299,15 @@ class GUI_preview_class {
 		}
 
 		//active zone
-		var visible_w = config.visible_width / config.ZOOM;
-		var visible_h = config.visible_height / config.ZOOM;
+		const visible_w = config.visible_width / config.ZOOM;
+		const visible_h = config.visible_height / config.ZOOM;
 
-		var mini_rect_w = this.PREVIEW_SIZE.w * visible_w / config.WIDTH;
-		var mini_rect_h = this.PREVIEW_SIZE.h * visible_h / config.HEIGHT;
+		let mini_rect_w = this.PREVIEW_SIZE.w * visible_w / config.WIDTH;
+		let mini_rect_h = this.PREVIEW_SIZE.h * visible_h / config.HEIGHT;
 
-		var start_pos = this.Base_layers.get_world_coords(0, 0);
-		var mini_rect_x = start_pos.x / config.WIDTH * this.PREVIEW_SIZE.w;
-		var mini_rect_y = start_pos.y / config.HEIGHT * this.PREVIEW_SIZE.h;
+		const start_pos = this.Base_layers.get_world_coords(0, 0);
+		let mini_rect_x = start_pos.x / config.WIDTH * this.PREVIEW_SIZE.w;
+		let mini_rect_y = start_pos.y / config.HEIGHT * this.PREVIEW_SIZE.h;
 
 		//validate
 		mini_rect_x = Math.max(0, mini_rect_x);
@@ -403,9 +401,9 @@ class GUI_preview_class {
 			config.ZOOM = Math.min(config.ZOOM, 500);
 		}
 
-		document.getElementById("zoom_100").innerHTML = Math.round(config.ZOOM * 100) + '%';
+		document.getElementById("zoom_100").innerHTML = `${Math.round(config.ZOOM * 100)  }%`;
 		document.getElementById("zoom_range").value = (config.ZOOM * 100);
-		var status_zoom = document.getElementById('status_zoom');
+		const status_zoom = document.getElementById('status_zoom');
 		if (status_zoom && document.activeElement !== status_zoom) {
 			status_zoom.value = Math.round(config.ZOOM * 100);
 		}
@@ -420,12 +418,12 @@ class GUI_preview_class {
 	}
 
 	zoom_auto(only_increase) {
-		var container = document.getElementById('main_wrapper');
-		var page_w = container.clientWidth;
-		var page_h = container.clientHeight;
+		const container = document.getElementById('main_wrapper');
+		const page_w = container.clientWidth;
+		const page_h = container.clientHeight;
 
 		//the next smaller whole percent: rather a little smaller than a few pixels too big
-		var percent = fit_zoom_percent(page_w, page_h, config.WIDTH, config.HEIGHT);
+		const percent = fit_zoom_percent(page_w, page_h, config.WIDTH, config.HEIGHT);
 
 		if (only_increase != undefined && percent > 100) {
 			return false;
@@ -440,8 +438,8 @@ class GUI_preview_class {
 	}
 
 	set_zoom_position(event) {
-		var mouse_x = event.offsetX;
-		var mouse_y = event.offsetY;
+		let mouse_x = event.offsetX;
+		let mouse_y = event.offsetY;
 		if (event.changedTouches) {
 			//touch events
 			event = event.changedTouches[0];
@@ -450,37 +448,37 @@ class GUI_preview_class {
 			mouse_y = event.pageY - this.canvas_offset.y;
 		}
 
-		var visible_w = config.visible_width / config.ZOOM;
-		var visible_h = config.visible_height / config.ZOOM;
-		var mini_w = this.PREVIEW_SIZE.w * visible_w / config.WIDTH;
-		var mini_h = this.PREVIEW_SIZE.h * visible_h / config.HEIGHT;
+		const visible_w = config.visible_width / config.ZOOM;
+		const visible_h = config.visible_height / config.ZOOM;
+		const mini_w = this.PREVIEW_SIZE.w * visible_w / config.WIDTH;
+		const mini_h = this.PREVIEW_SIZE.h * visible_h / config.HEIGHT;
 
-		var change_x = (mouse_x - mini_w / 2) / this.PREVIEW_SIZE.w * config.WIDTH;
-		var change_y = (mouse_y - mini_h / 2) / this.PREVIEW_SIZE.h * config.HEIGHT;
+		const change_x = (mouse_x - mini_w / 2) / this.PREVIEW_SIZE.w * config.WIDTH;
+		const change_y = (mouse_y - mini_h / 2) / this.PREVIEW_SIZE.h * config.HEIGHT;
 
-		var zoom_data = this.zoom_data;
+		const zoom_data = this.zoom_data;
 		zoom_data.move_pos = {};
 		zoom_data.move_pos.x = change_x;
 		zoom_data.move_pos.y = change_y;
 
 		config.need_render = true;
 	}
-	
+
 	/**
 	 * moves visible area to new position.
-	 * 
+	 *
 	 * @param {int} x global offset
 	 * @param {int} y global offset
 	 */
 	zoom_to_position(x, y) {
-		var zoom_data = this.zoom_data;		
+		const zoom_data = this.zoom_data;
 		zoom_data.move_pos = {};
 		zoom_data.move_pos.x = parseInt(x);
 		zoom_data.move_pos.y = parseInt(y);
-		
+
 		config.need_render = true;
 	}
-	
+
 }
 
 export default GUI_preview_class;

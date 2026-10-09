@@ -15,7 +15,7 @@ export const MAX_TIP_SIZE = 128;
  */
 export function fit_tip_size(width, height, max) {
 	max = max || MAX_TIP_SIZE;
-	var scale = Math.min(1, max / Math.max(width, height, 1));
+	const scale = Math.min(1, max / Math.max(width, height, 1));
 	return {
 		width: Math.max(1, Math.round(width * scale)),
 		height: Math.max(1, Math.round(height * scale)),
@@ -30,10 +30,10 @@ export function fit_tip_size(width, height, max) {
  * @returns {Image_data} new image of the same size
  */
 export function tip_mask(image) {
-	var result = new Uint8ClampedArray(image.data.length);
-	for (var i = 0; i < image.data.length; i += 4) {
-		var lum = 0.299 * image.data[i] + 0.587 * image.data[i + 1] + 0.114 * image.data[i + 2];
-		var alpha = (1 - lum / 255) * (image.data[i + 3] / 255);
+	const result = new Uint8ClampedArray(image.data.length);
+	for (let i = 0; i < image.data.length; i += 4) {
+		const lum = 0.299 * image.data[i] + 0.587 * image.data[i + 1] + 0.114 * image.data[i + 2];
+		const alpha = (1 - lum / 255) * (image.data[i + 3] / 255);
 		result[i] = result[i + 1] = result[i + 2] = 255;
 		result[i + 3] = Math.round(Math.min(1, Math.max(0, alpha)) * 255);
 	}
@@ -45,7 +45,7 @@ export function tip_mask(image) {
  * @returns {boolean} the tip paints something
  */
 export function tip_has_paint(mask) {
-	for (var i = 3; i < mask.data.length; i += 4) {
+	for (let i = 3; i < mask.data.length; i += 4) {
 		if (mask.data[i] > 8) {
 			return true;
 		}
@@ -62,11 +62,11 @@ export function tip_has_paint(mask) {
  */
 export function stamps_along(points, spacing) {
 	spacing = Math.max(1, spacing);
-	var stamps = [];
-	var previous = null;
-	var carry = 0; //distance walked since the last stamp
-	for (var i = 0; i < points.length; i++) {
-		var point = points[i];
+	const stamps = [];
+	let previous = null;
+	let carry = 0; //distance walked since the last stamp
+	for (let i = 0; i < points.length; i++) {
+		const point = points[i];
 		if (point == null) {
 			previous = null;
 			continue;
@@ -77,12 +77,12 @@ export function stamps_along(points, spacing) {
 			carry = 0;
 			continue;
 		}
-		var dx = point[0] - previous[0];
-		var dy = point[1] - previous[1];
-		var length = Math.hypot(dx, dy);
-		var walked = spacing - carry; //where the next stamp is on this segment
+		const dx = point[0] - previous[0];
+		const dy = point[1] - previous[1];
+		const length = Math.hypot(dx, dy);
+		let walked = spacing - carry; //where the next stamp is on this segment
 		while (walked <= length && length > 0) {
-			var k = walked / length;
+			const k = walked / length;
 			stamps.push({x: previous[0] + dx * k, y: previous[1] + dy * k, size: previous[2] + (point[2] - previous[2]) * k});
 			walked += spacing;
 		}
@@ -92,7 +92,7 @@ export function stamps_along(points, spacing) {
 	return stamps;
 }
 
-const TIP_STORAGE_KEY = 'webphos_brush_tip';
+const TIP_STORAGE_KEY = 'lumifex_brush_tip';
 const MAX_STORED_TIP = 200000;
 
 /**
@@ -105,12 +105,12 @@ export function clean_stored_tip(value) {
 	if (value == null || typeof value != 'object') {
 		return null;
 	}
-	var id = typeof value.id == 'string' ? value.id : '';
-	var data = typeof value.data == 'string' ? value.data : '';
+	const id = typeof value.id == 'string' ? value.id : '';
+	const data = typeof value.data == 'string' ? value.data : '';
 	if (/^[\w.-]{1,40}$/.test(id) == false || data.length > MAX_STORED_TIP || /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data) == false) {
 		return null;
 	}
-	return {id: id, data: data};
+	return {id, data};
 }
 
 /**
@@ -121,11 +121,11 @@ export function clean_stored_tip(value) {
  */
 export function load_stored_tip(storage) {
 	try {
-		var store = storage || localStorage;
-		var raw = store.getItem(TIP_STORAGE_KEY);
+		const store = storage || localStorage;
+		const raw = store.getItem(TIP_STORAGE_KEY);
 		return raw ? clean_stored_tip(JSON.parse(raw)) : null;
 	}
-	catch (error) {
+	catch {
 		return null;
 	}
 }
@@ -137,14 +137,14 @@ export function load_stored_tip(storage) {
  */
 export function save_stored_tip(tip, storage) {
 	try {
-		var clean = clean_stored_tip(tip);
+		const clean = clean_stored_tip(tip);
 		if (clean == null) {
 			return false;
 		}
 		(storage || localStorage).setItem(TIP_STORAGE_KEY, JSON.stringify(clean));
 		return true;
 	}
-	catch (error) {
+	catch {
 		return false;
 	}
 }

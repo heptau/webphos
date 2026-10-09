@@ -1,12 +1,9 @@
-import app from './../app.js';
-import config from './../config.js';
 import Base_tools_class from './../core/base-tools.js';
 import Base_layers_class from './../core/base-layers.js';
 import Dialog_class from './../libs/popup.js';
 import GUI_tools_class from './../core/gui/gui-tools.js';
-import { has_modifier } from './../libs/shortcuts.js';
 
-var instance = null;
+let instance = null;
 
 class Shape_class extends Base_tools_class {
 
@@ -43,38 +40,36 @@ class Shape_class extends Base_tools_class {
 	}
 
 	async show_shapes(){
-		var _this = this;
-		var html = '';
+		let i;
+		let html = '';
 
-		var data = this.get_shapes();
+		const data = this.get_shapes();
 
-		for (var i in data) {
+		for (i in data) {
 			html += '<div class="item">';
-			html += '	<canvas id="c_' + data[i].key + '" width="' + this.preview_width + '" height="'
-				+ this.preview_height + '" class="effectsPreview" data-key="'
-				+ data[i].key + '"></canvas>';
-			html += '<div class="preview-item-title">' + data[i].title + '</div>';
+			html += `	<canvas id="c_${data[i].key}" width="${this.preview_width}" height="${this.preview_height}" class="effectsPreview" data-key="${data[i].key}"></canvas>`;
+			html += `<div class="preview-item-title">${data[i].title}</div>`;
 			html += '</div>';
 		}
-		for (var i = 0; i < 4; i++) {
+		for (i = 0; i < 4; i++) {
 			html += '<div class="item"></div>';
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Shapes',
 			className: 'wide',
-			on_load: function (params, popup) {
-				var node = document.createElement("div");
+			on_load: (params, popup) => {
+				const node = document.createElement("div");
 				node.classList.add('flex-container');
 				node.innerHTML = html;
 				popup.el.querySelector('.dialog_content').appendChild(node);
 				//events
-				var targets = popup.el.querySelectorAll('.item canvas');
-				for (var i = 0; i < targets.length; i++) {
-					targets[i].addEventListener('click', function (event) {
+				const targets = popup.el.querySelectorAll('.item canvas');
+				for (let i = 0; i < targets.length; i++) {
+					targets[i].addEventListener('click', (event) => {
 						//we have click
-						_this.GUI_tools.activate_tool(this.dataset.key);
-						_this.POP.hide();
+						this.GUI_tools.activate_tool(event.currentTarget.dataset.key);
+						this.POP.hide();
 					});
 				}
 			},
@@ -85,10 +80,10 @@ class Shape_class extends Base_tools_class {
 		await new Promise(r => setTimeout(r, 10));
 
 		//draw demo thumbs
-		for (var i in data) {
-			var function_name = 'demo';
-			var canvas = document.getElementById('c_'+data[i].key);
-			var ctx = canvas.getContext("2d");
+		for (i in data) {
+			const function_name = 'demo';
+			const canvas = document.getElementById(`c_${data[i].key}`);
+			const ctx = canvas.getContext("2d");
 
 			if(typeof data[i].object[function_name] == "undefined")
 				continue;
@@ -97,24 +92,24 @@ class Shape_class extends Base_tools_class {
 		}
 	}
 
-	render(ctx, layer) {
+	render() {
 
 	}
 
 	get_shapes(){
-		var list = [];
+		const list = [];
 
-		for (var i in this.Base_gui.GUI_tools.tools_modules) {
-			var object = this.Base_gui.GUI_tools.tools_modules[i];
+		for (const i in this.Base_gui.GUI_tools.tools_modules) {
+			const object = this.Base_gui.GUI_tools.tools_modules[i];
 			if (object.full_key.indexOf("shapes/") == -1 )
 				continue;
 
 			list.push(object);
 		}
 
-		list.sort(function(a, b) {
-			var nameA = a.title.toUpperCase();
-			var nameB = b.title.toUpperCase();
+		list.sort((a, b) => {
+			const nameA = a.title.toUpperCase();
+			const nameB = b.title.toUpperCase();
 			if (nameA < nameB) return -1;
 			if (nameA > nameB) return 1;
 			return 0;

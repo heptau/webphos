@@ -16,9 +16,9 @@ class Effects_bevel_class extends Effects_layer_style_class {
 			return;
 		}
 
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'bevel');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'bevel');
 
-		var params = [
+		const params = [
 			{name: "size", title: "Size:", value: filter.size ??= 4, range: [1, 30]},
 			{name: "soften", title: "Soften:", value: filter.soften ??= 2, range: [0, 20]},
 			{name: "angle", title: "Light angle:", value: filter.angle ??= 135, range: [0, 360]},
@@ -34,26 +34,26 @@ class Effects_bevel_class extends Effects_layer_style_class {
 	 * Rim of the picture on one side: a color fill minus the picture moved by (dx, dy), blurred and clipped to the picture.
 	 */
 	build_rim(source, width, height, dx, dy, soften, color, opacity) {
-		var pad = soften * 3 + Math.ceil(Math.max(Math.abs(dx), Math.abs(dy))) + 1;
-		var work = document.createElement('canvas');
+		const pad = soften * 3 + Math.ceil(Math.max(Math.abs(dx), Math.abs(dy))) + 1;
+		const work = document.createElement('canvas');
 		work.width = width + pad * 2;
 		work.height = height + pad * 2;
-		var ctx = work.getContext('2d');
+		const ctx = work.getContext('2d');
 		ctx.fillStyle = safe_color(color);
 		ctx.fillRect(0, 0, work.width, work.height);
 
 		ctx.globalCompositeOperation = 'destination-out';
-		ctx.filter = soften > 0 ? 'blur(' + soften + 'px)' : 'none';
+		ctx.filter = soften > 0 ? `blur(${soften}px)` : 'none';
 		ctx.drawImage(source, pad + dx, pad + dy, width, height);
 		ctx.filter = 'none';
 
 		ctx.globalCompositeOperation = 'destination-in';
 		ctx.drawImage(source, pad, pad, width, height);
 
-		var rim = document.createElement('canvas');
+		const rim = document.createElement('canvas');
 		rim.width = width;
 		rim.height = height;
-		var rim_ctx = rim.getContext('2d');
+		const rim_ctx = rim.getContext('2d');
 		rim_ctx.globalAlpha = opacity / 100;
 		rim_ctx.drawImage(work, -pad, -pad);
 		return rim;
@@ -71,17 +71,17 @@ class Effects_bevel_class extends Effects_layer_style_class {
 	build_bevel(source, width, height, params) {
 		width = Math.max(1, Math.round(width));
 		height = Math.max(1, Math.round(height));
-		var size = clamp_int(params.size, 1, 100, 4);
-		var soften = clamp_int(params.soften, 0, 50, 2);
-		var angle = clamp_int(params.angle, 0, 360, 135) * Math.PI / 180;
+		const size = clamp_int(params.size, 1, 100, 4);
+		const soften = clamp_int(params.soften, 0, 50, 2);
+		const angle = clamp_int(params.angle, 0, 360, 135) * Math.PI / 180;
 		//direction to the light; the picture moved away from it leaves a rim on the lit side
-		var lx = Math.cos(angle);
-		var ly = -Math.sin(angle);
+		const lx = Math.cos(angle);
+		const ly = -Math.sin(angle);
 
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = width;
 		canvas.height = height;
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		ctx.drawImage(this.build_rim(source, width, height, -lx * size, -ly * size, soften, params.highlight,
 			clamp_int(params.highlight_opacity, 0, 100, 75)), 0, 0);
 		ctx.drawImage(this.build_rim(source, width, height, lx * size, ly * size, soften, params.shadow,
@@ -90,7 +90,7 @@ class Effects_bevel_class extends Effects_layer_style_class {
 	}
 
 	draw_preview(ctx, source, x, y, width, height, params, ratio) {
-		var scaled = Object.assign({}, params, {
+		const scaled = Object.assign({}, params, {
 			size: Math.max(1, Math.round(params.size * ratio)),
 			soften: Math.round(params.soften * ratio),
 		});
@@ -99,10 +99,10 @@ class Effects_bevel_class extends Effects_layer_style_class {
 	}
 
 	demo(canvas_id, canvas_thumb) {
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
-		var width = this.Effects_browser.preview_width - 20;
-		var height = this.Effects_browser.preview_height - 20;
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
+		const width = this.Effects_browser.preview_width - 20;
+		const height = this.Effects_browser.preview_height - 20;
 
 		ctx.drawImage(canvas_thumb, 10, 10, width, height);
 		ctx.drawImage(this.build_bevel(canvas_thumb, width, height, {
@@ -114,11 +114,11 @@ class Effects_bevel_class extends Effects_layer_style_class {
 		if (!layer || layer.type != 'image') {
 			return;
 		}
-		var p = data.params;
-		var key = [p.size, p.soften, p.angle, safe_color(p.highlight), p.highlight_opacity, safe_color(p.shadow), p.shadow_opacity].join('|');
-		var rim = this.cached(layer, key, (source) => this.build_bevel(source, layer.width, layer.height, p));
+		const p = data.params;
+		const key = [p.size, p.soften, p.angle, safe_color(p.highlight), p.highlight_opacity, safe_color(p.shadow), p.shadow_opacity].join('|');
+		const rim = this.cached(layer, key, (source) => this.build_bevel(source, layer.width, layer.height, p));
 
-		var previous_filter = ctx.filter;
+		const previous_filter = ctx.filter;
 		ctx.filter = 'none';
 		ctx.save();
 		this.transform_to_layer(ctx, layer);

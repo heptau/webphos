@@ -27,8 +27,8 @@ class Erase_class extends Base_tools_class {
 		this.mousemove(event, is_touch);
 
 		//mouse cursor
-		var mouse = this.get_mouse_info(event);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(event);
+		const params = this.getParams();
 		if (params.circle == true)
 			this.show_mouse_cursor(mouse.x, mouse.y, params.size, 'circle');
 		else
@@ -36,8 +36,8 @@ class Erase_class extends Base_tools_class {
 	}
 
 	on_params_update() {
-		var params = this.getParams();
-		var strict_element = document.querySelector('.attributes #strict');
+		const params = this.getParams();
+		const strict_element = document.querySelector('.attributes #strict');
 
 		if (params.circle == false) {
 			//hide strict controls
@@ -51,8 +51,8 @@ class Erase_class extends Base_tools_class {
 
 	mousedown(e) {
 		this.started = false;
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -91,8 +91,8 @@ class Erase_class extends Base_tools_class {
 	}
 
 	mousemove(e, is_touch) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.is_drag == false)
 			return;
 		if (mouse.click_valid == false) {
@@ -113,7 +113,7 @@ class Erase_class extends Base_tools_class {
 		config.need_render = true;
 	}
 
-	mouseup(e) {
+	mouseup() {
 		if (this.started == false) {
 			return;
 		}
@@ -133,24 +133,24 @@ class Erase_class extends Base_tools_class {
 	}
 
 	erase_general(ctx, type, mouse, size, strict, is_circle, is_touch) {
-		var mouse_x = Math.round(mouse.x) - config.layer.x;
-		var mouse_y = Math.round(mouse.y) - config.layer.y;
-		var alpha = config.ALPHA;
-		var mouse_last_x = parseInt(mouse.last_x) - config.layer.x;
-		var mouse_last_y = parseInt(mouse.last_y) - config.layer.y;
+		let mouse_x = Math.round(mouse.x) - config.layer.x;
+		let mouse_y = Math.round(mouse.y) - config.layer.y;
+		const alpha = config.ALPHA;
+		const mouse_last_x = parseInt(mouse.last_x) - config.layer.x;
+		const mouse_last_y = parseInt(mouse.last_y) - config.layer.y;
 
 		ctx.beginPath();
 		ctx.lineWidth = size;
 		ctx.lineCap = 'round';
 		ctx.lineJoin = 'round';
 		if (alpha < 255)
-			ctx.strokeStyle = "rgba(255, 255, 255, " + alpha / 255 / 10 + ")";
+			ctx.strokeStyle = `rgba(255, 255, 255, ${alpha / 255 / 10})`;
 		else
 			ctx.strokeStyle = "rgba(255, 255, 255, 1)";
 
 		if (is_circle == false) {
 			//rectangle
-			var size_half = Math.ceil(size / 2);
+			let size_half = Math.ceil(size / 2);
 			if (size == 1) {
 				//single cell mode
 				mouse_x = Math.floor(mouse.x) - config.layer.x;
@@ -159,29 +159,30 @@ class Erase_class extends Base_tools_class {
 			}
 			ctx.save();
 			ctx.globalCompositeOperation = 'destination-out';
-			ctx.fillStyle = "rgba(255, 255, 255, " + alpha / 255 + ")";
+			ctx.fillStyle = `rgba(255, 255, 255, ${alpha / 255})`;
 			ctx.fillRect(mouse_x - size_half, mouse_y - size_half, size, size);
 			ctx.restore();
 		}
 		else {
 			//circle
+			let radgrad;
 			ctx.save();
 
 			if (strict == false) {
-				var radgrad = ctx.createRadialGradient(
+				radgrad = ctx.createRadialGradient(
 					mouse_x, mouse_y, size / 8,
 					mouse_x, mouse_y, size / 2);
 				if (type == 'click')
-					radgrad.addColorStop(0, "rgba(255, 255, 255, " + alpha / 255 + ")");
+					radgrad.addColorStop(0, `rgba(255, 255, 255, ${alpha / 255})`);
 				else if (type == 'move')
-					radgrad.addColorStop(0, "rgba(255, 255, 255, " + alpha / 255 / 2 + ")");
+					radgrad.addColorStop(0, `rgba(255, 255, 255, ${alpha / 255 / 2})`);
 				radgrad.addColorStop(1, "rgba(255, 255, 255, 0)");
 			}
 
 			//set Composite
 			ctx.globalCompositeOperation = 'destination-out';
 			if (strict == true)
-				ctx.fillStyle = "rgba(255, 255, 255, " + alpha / 255 + ")";
+				ctx.fillStyle = `rgba(255, 255, 255, ${alpha / 255})`;
 			else
 				ctx.fillStyle = radgrad;
 			ctx.beginPath();

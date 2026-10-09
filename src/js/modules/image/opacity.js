@@ -9,22 +9,21 @@ class Image_opacity_class {
 	}
 
 	opacity() {
-		var _this = this;
-		var initial_opacity = config.layer.opacity;
+		const initial_opacity = config.layer.opacity;
 
-		var settings = {
+		const settings = {
 			title: 'Opacity',
 			params: [
 				{name: "opacity", title: "Alpha:", value: config.layer.opacity, range: [0, 100]},
 			],
-			on_change: function (params, canvas_preview, w, h) {
-				_this.opacity_handler(params, false);
+			on_change: (params) => {
+				this.opacity_handler(params, false);
 			},
-			on_finish: function (params) {
+			on_finish: (params) => {
 				config.layer.opacity = initial_opacity;
-				_this.opacity_handler(params);
+				this.opacity_handler(params);
 			},
-			on_cancel: function (params) {
+			on_cancel () {
 				config.layer.opacity = initial_opacity;
 				config.need_render = true;
 			},
@@ -33,7 +32,7 @@ class Image_opacity_class {
 	}
 
 	opacity_handler(data, is_final = true) {
-		var value = parseInt(data.opacity);
+		let value = parseInt(data.opacity);
 		if (value < 0)
 			value = 0;
 		if (value > 100)

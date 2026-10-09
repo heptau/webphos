@@ -19,11 +19,11 @@ class Liquify_class extends Base_pixel_tool_class {
 	}
 
 	stamp(ctx, position, size, params) {
-		var previous = this.previous || position;
-		var dx = position.x - previous.x;
-		var dy = position.y - previous.y;
+		const previous = this.previous || position;
+		const dx = position.x - previous.x;
+		const dy = position.y - previous.y;
 		this.previous = {x: position.x, y: position.y};
-		var radius = Math.max(3, size / 2);
+		const radius = Math.max(3, size / 2);
 		this.with_region(ctx, position, radius + 1, (image, x, y) => {
 			push_pixels(image, x, y, radius, dx, dy, params.strength);
 		});

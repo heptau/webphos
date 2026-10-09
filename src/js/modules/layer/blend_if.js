@@ -13,7 +13,7 @@ import { t } from '../tools/translate.js';
 class Layer_blend_if_class {
 
 	blend_if() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type == null) {
 			alertify.error(t('Layer is empty.'));
 			return;
@@ -21,16 +21,16 @@ class Layer_blend_if_class {
 		if (config.layers.length < 2) {
 			alertify.warning(t('There is no layer below.'));
 		}
-		var original = layer.blend_if;
-		var current = {
+		const original = layer.blend_if;
+		const current = {
 			this: settings_from_range(original ? original.this : null),
 			below: settings_from_range(original ? original.below : null),
 		};
-		var restore = () => {
+		const restore = () => {
 			layer.blend_if = original;
 			config.need_render = true;
 		};
-		var build = (params) => ({
+		const build = (params) => ({
 			this: range_from_settings(params.this_dark, params.this_dark_soft, params.this_light, params.this_light_soft),
 			below: range_from_settings(params.below_dark, params.below_dark_soft, params.below_light, params.below_light_soft),
 		});
@@ -55,7 +55,7 @@ class Layer_blend_if_class {
 			},
 			on_finish: (params) => {
 				restore();
-				var next = build(params);
+				const next = build(params);
 				return app.State.do_action(
 					new app.Actions.Bundle_action('blend_if', 'Blend If', [
 						new app.Actions.Update_layer_action(layer.id, {blend_if: is_default(next) ? null : next}),

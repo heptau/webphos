@@ -22,10 +22,10 @@ export function is_pixel_grid_visible(zoom) {
  * @returns {number[]} integer positions 1..size-1
  */
 export function pixel_grid_positions(from, to, size) {
-	var start = Math.max(1, Math.floor(from));
-	var end = Math.min(size - 1, Math.ceil(to));
-	var result = [];
-	for (var i = start; i <= end; i++) {
+	const start = Math.max(1, Math.floor(from));
+	const end = Math.min(size - 1, Math.ceil(to));
+	const result = [];
+	for (let i = start; i <= end; i++) {
 		result.push(i);
 	}
 	return result;

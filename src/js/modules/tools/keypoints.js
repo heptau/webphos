@@ -8,7 +8,7 @@ import { t } from './translate.js';
 
 /**
  * SIFT: scale-invariant-feature-transform, keypoints
- * 
+ *
  * @author ViliusL
  */
 class Tools_keypoints_class {
@@ -30,72 +30,73 @@ class Tools_keypoints_class {
 	//generate key points for image
 	keypoints(return_data) {
 
+		let i, j;
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var W = config.layer.width;
-		var H = config.layer.height;
+		const W = config.layer.width;
+		const H = config.layer.height;
 
 		//get canvas from layer
-		var clone = this.Base_layers.convert_layer_to_canvas();
-		var ctx = clone.getContext("2d");
+		const clone = this.Base_layers.convert_layer_to_canvas();
+		const ctx = clone.getContext("2d");
 
 		//greyscale
-		var imageData = ctx.getImageData(0, 0, W, H);
-		var data = this.convert_to_grayscale(imageData);
+		let imageData = ctx.getImageData(0, 0, W, H);
+		const data = this.convert_to_grayscale(imageData);
 		ctx.putImageData(data, 0, 0);
 
 		//make few copies and blur each
-		var n = 5;
-		var copies = [];
-		for (var i = 0; i < n; i++) {
-			var tmp_canvas = document.createElement('canvas');
+		const n = 5;
+		const copies = [];
+		for (i = 0; i < n; i++) {
+			const tmp_canvas = document.createElement('canvas');
 			tmp_canvas.width = W;
 			tmp_canvas.height = H;
-			var ctx_i = tmp_canvas.getContext("2d");
+			const ctx_i = tmp_canvas.getContext("2d");
 			ctx_i.drawImage(clone, 0, 0);
 
 			//Gausian blur
-			var imageData = ctx_i.getImageData(0, 0, W, H);
-			var filtered = this.ImageFilters.GaussianBlur(imageData, i + 0.5); //add effect
+			imageData = ctx_i.getImageData(0, 0, W, H);
+			const filtered = this.ImageFilters.GaussianBlur(imageData, i + 0.5); //add effect
 			ctx_i.putImageData(filtered, 0, 0);
 
 			copies.push(tmp_canvas);
 		}
 
 		//find extreme points
-		var points = [];
-		var n0 = this.avg_step * 2 + 1;
-		for (var c = 1; c < copies.length - 1; c++) {
-			var imageData = copies[c].getContext("2d").getImageData(0, 0, W, H).data;
-			var imageData0 = copies[c - 1].getContext("2d").getImageData(0, 0, W, H).data;
-			var imageData2 = copies[c + 1].getContext("2d").getImageData(0, 0, W, H).data;
-			for (var j = this.avg_step; j < H - this.avg_step; j++) {
-				for (var i = this.avg_step; i < W - this.avg_step; i++) {
-					var x = (i + j * W) * 4;
+		const points = [];
+		const n0 = this.avg_step * 2 + 1;
+		for (let c = 1; c < copies.length - 1; c++) {
+			imageData = copies[c].getContext("2d").getImageData(0, 0, W, H).data;
+			const imageData0 = copies[c - 1].getContext("2d").getImageData(0, 0, W, H).data;
+			const imageData2 = copies[c + 1].getContext("2d").getImageData(0, 0, W, H).data;
+			for (j = this.avg_step; j < H - this.avg_step; j++) {
+				for (i = this.avg_step; i < W - this.avg_step; i++) {
+					const x = (i + j * W) * 4;
 					if (imageData[x + 3] == 0)
 						continue; //transparent
 					if (imageData[x] < imageData[x - 4] || imageData[x] < imageData[x + 4] || imageData[x] > imageData[x - 4] || imageData[x] > imageData[x + 4]) {
-						var x_pre = (i + (j - 1) * W) * 4;
-						var x_post = (i + (j + 1) * W) * 4;
+						const x_pre = (i + (j - 1) * W) * 4;
+						const x_post = (i + (j + 1) * W) * 4;
 						//calc average
-						var area_average = 0;
-						for (var l = -this.avg_step; l <= this.avg_step; l++) {
-							var avgi = (i + (j - l) * W) * 4;
-							for (var a = -this.avg_step; a <= this.avg_step; a++) {
+						let area_average = 0;
+						for (let l = -this.avg_step; l <= this.avg_step; l++) {
+							const avgi = (i + (j - l) * W) * 4;
+							for (let a = -this.avg_step; a <= this.avg_step; a++) {
 								area_average += imageData[avgi + 4 * a];
 							}
 						}
 						area_average = area_average / (n0 * n0);
 						//max
 						if (imageData[x] + this.avg_offset < area_average) {
-							var min = Math.min(imageData[x_pre - 4], imageData[x_pre], imageData[x_pre + 4], imageData[x - 4], imageData[x + 4], imageData[x_post - 4], imageData[x_post], imageData[x_post + 4]);
+							const min = Math.min(imageData[x_pre - 4], imageData[x_pre], imageData[x_pre + 4], imageData[x - 4], imageData[x + 4], imageData[x_post - 4], imageData[x_post], imageData[x_post + 4]);
 							if (imageData[x] <= min) {
-								var min0 = Math.min(imageData0[x_pre - 4], imageData0[x_pre], imageData0[x_pre + 4], imageData0[x - 4], imageData0[x + 4], imageData0[x_post - 4], imageData0[x_post], imageData0[x_post + 4]);
+								const min0 = Math.min(imageData0[x_pre - 4], imageData0[x_pre], imageData0[x_pre + 4], imageData0[x - 4], imageData0[x + 4], imageData0[x_post - 4], imageData0[x_post], imageData0[x_post + 4]);
 								if (imageData[x] <= min0) {
-									var min2 = Math.min(imageData2[x_pre - 4], imageData2[x_pre], imageData2[x_pre + 4], imageData2[x - 4], imageData2[x + 4], imageData2[x_post - 4], imageData2[x_post], imageData2[x_post + 4]);
+									const min2 = Math.min(imageData2[x_pre - 4], imageData2[x_pre], imageData2[x_pre + 4], imageData2[x - 4], imageData2[x + 4], imageData2[x_post - 4], imageData2[x_post], imageData2[x_post + 4]);
 									if (imageData[x] <= min2)
 										points.push({
 											x: i,
@@ -108,11 +109,11 @@ class Tools_keypoints_class {
 						}
 						//min
 						if (imageData[x] - this.avg_offset > area_average) {
-							var max = Math.max(imageData[x_pre - 4], imageData[x_pre], imageData[x_pre + 4], imageData[x - 4], imageData[x + 4], imageData[x_post - 4], imageData[x_post], imageData[x_post + 4]);
+							const max = Math.max(imageData[x_pre - 4], imageData[x_pre], imageData[x_pre + 4], imageData[x - 4], imageData[x + 4], imageData[x_post - 4], imageData[x_post], imageData[x_post + 4]);
 							if (imageData[x] >= max) {
-								var max0 = Math.max(imageData0[x_pre - 4], imageData0[x_pre], imageData0[x_pre + 4], imageData0[x - 4], imageData0[x + 4], imageData0[x_post - 4], imageData0[x_post], imageData0[x_post + 4]);
+								const max0 = Math.max(imageData0[x_pre - 4], imageData0[x_pre], imageData0[x_pre + 4], imageData0[x - 4], imageData0[x + 4], imageData0[x_post - 4], imageData0[x_post], imageData0[x_post + 4]);
 								if (imageData[x] >= max0) {
-									var max2 = Math.max(imageData2[x_pre - 4], imageData2[x_pre], imageData2[x_pre + 4], imageData2[x - 4], imageData2[x + 4], imageData2[x_post - 4], imageData2[x_post], imageData2[x_post + 4]);
+									const max2 = Math.max(imageData2[x_pre - 4], imageData2[x_pre], imageData2[x_pre + 4], imageData2[x - 4], imageData2[x + 4], imageData2[x_post - 4], imageData2[x_post], imageData2[x_post + 4]);
 									if (imageData[x] >= max2) {
 										points.push({
 											x: i,
@@ -128,8 +129,8 @@ class Tools_keypoints_class {
 			}
 		}
 		//make unique
-		for (var i = 0; i < points.length; i++) {
-			for (var j = 0; j < points.length; j++) {
+		for (i = 0; i < points.length; i++) {
+			for (j = 0; j < points.length; j++) {
 				if (i != j && points[i].x == points[j].x && points[i].y == points[j].y) {
 					points.splice(i, 1);
 					i--;
@@ -142,20 +143,20 @@ class Tools_keypoints_class {
 		if (return_data === undefined || return_data !== true) {
 			alertify.success(t('key points: ') + points.length);
 
-			var size = 3;
+			const size = 3;
 			ctx.clearRect(0, 0, clone.width, clone.height);
 			ctx.fillStyle = "#ff0000";
-			for (var i in points) {
-				var point = points[i];
+			for (i in points) {
+				const point = points[i];
 				ctx.beginPath();
 				ctx.rect(point.x - Math.floor(size / 2) + 1, point.y - Math.floor(size / 2) + 1, size, size);
 				ctx.fill();
 			}
 
 			//show
-			var params = [];
+			const params = [];
 			params.type = 'image';
-			params.name = config.layer.name + ' + key points';
+			params.name = `${config.layer.name  } + key points`;
 			params.data = clone.toDataURL("image/png");
 			params.x = parseInt(clone.dataset.x);
 			params.y = parseInt(clone.dataset.y);
@@ -171,8 +172,8 @@ class Tools_keypoints_class {
 			clone.height = 1;
 		}
 		else {
-			//sort by weights 
-			points.sort(function (a, b) {
+			//sort by weights
+			points.sort((a, b) => {
 				return parseFloat(b.w) - parseFloat(a.w);
 			});
 
@@ -180,7 +181,7 @@ class Tools_keypoints_class {
 			clone.height = 1;
 
 			return {
-				points: points,
+				points,
 			};
 		}
 	}
@@ -188,17 +189,17 @@ class Tools_keypoints_class {
 	//returns average value of requested area from greyscale image
 	//area = {x, y, w, h}
 	get_area_average(area, imageData, i, j, size) {
-		var imgData = imageData.data;
-		var sum = 0;
-		var n = 0;
+		const imgData = imageData.data;
+		let sum = 0;
+		let n = 0;
 		size = size / 100; //prepare to use 1-100% values
-		var stop_x = i + Math.round(size * area.x) + Math.round(size * area.w);
-		var stop_y = j + Math.round(size * area.y) + Math.round(size * area.h);
-		var img_width4 = imageData.width * 4;
-		var k0, k;
-		for (var y = j + Math.round(size * area.y); y < stop_y; y++) {
+		const stop_x = i + Math.round(size * area.x) + Math.round(size * area.w);
+		const stop_y = j + Math.round(size * area.y) + Math.round(size * area.h);
+		const img_width4 = imageData.width * 4;
+		let k0, k;
+		for (let y = j + Math.round(size * area.y); y < stop_y; y++) {
 			k0 = y * img_width4;
-			for (var x = i + Math.round(size * area.x); x < stop_x; x++) {
+			for (let x = i + Math.round(size * area.x); x < stop_x; x++) {
 				k = k0 + (x * 4);
 				sum = sum + imgData[k];
 				n++;
@@ -208,10 +209,10 @@ class Tools_keypoints_class {
 	}
 
 	convert_to_grayscale(data) {
-		var imgData = data.data;
-		var grey;
+		const imgData = data.data;
+		let grey;
 
-		for (var i = 0; i < imgData.length; i += 4) {
+		for (let i = 0; i < imgData.length; i += 4) {
 			if (imgData[i + 3] == 0)
 				continue;	//transparent
 			grey = Math.round(0.2126 * imgData[i] + 0.7152 * imgData[i + 1] + 0.0722 * imgData[i + 2]);

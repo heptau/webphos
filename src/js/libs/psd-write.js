@@ -43,7 +43,7 @@ class Writer {
 	}
 
 	text(value) {
-		for (var i = 0; i < value.length; i++) {
+		for (let i = 0; i < value.length; i++) {
 			this.bytes.push(value.charCodeAt(i) & 255);
 		}
 	}
@@ -52,7 +52,7 @@ class Writer {
 	 * @param {Uint8Array|number[]} values
 	 */
 	append(values) {
-		for (var i = 0; i < values.length; i++) {
+		for (let i = 0; i < values.length; i++) {
 			this.bytes.push(values[i]);
 		}
 	}
@@ -66,8 +66,8 @@ class Writer {
  * @returns {Uint8Array}
  */
 function plane(data, channel) {
-	var out = new Uint8Array(data.length / 4);
-	for (var i = 0; i < out.length; i++) {
+	const out = new Uint8Array(data.length / 4);
+	for (let i = 0; i < out.length; i++) {
 		out[i] = data[i * 4 + channel];
 	}
 	return out;
@@ -78,9 +78,9 @@ function plane(data, channel) {
  * @returns {number[]} the name as a Pascal string (ASCII, at most 255 letters) padded to a multiple of 4 bytes
  */
 function pascal_name(name) {
-	var ascii = Array.from(name).map(function (c) { return c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127 ? c : '_'; }).join('').slice(0, 255);
-	var bytes = [ascii.length];
-	for (var i = 0; i < ascii.length; i++) {
+	const ascii = Array.from(name).map((c) => { return c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127 ? c : '_'; }).join('').slice(0, 255);
+	const bytes = [ascii.length];
+	for (let i = 0; i < ascii.length; i++) {
 		bytes.push(ascii.charCodeAt(i));
 	}
 	while (bytes.length % 4 != 0) {
@@ -96,16 +96,16 @@ function pascal_name(name) {
  * @returns {number[]}
  */
 function unicode_name_block(name) {
-	var text = name.slice(0, 250);
-	var data = [(text.length >>> 24) & 255, (text.length >>> 16) & 255, (text.length >>> 8) & 255, text.length & 255];
-	for (var i = 0; i < text.length; i++) {
-		var code = text.charCodeAt(i);
+	const text = name.slice(0, 250);
+	const data = [(text.length >>> 24) & 255, (text.length >>> 16) & 255, (text.length >>> 8) & 255, text.length & 255];
+	for (let i = 0; i < text.length; i++) {
+		const code = text.charCodeAt(i);
 		data.push((code >> 8) & 255, code & 255);
 	}
 	while (data.length % 4 != 0) {
 		data.push(0);
 	}
-	var block = [0x38, 0x42, 0x49, 0x4d, 0x6c, 0x75, 0x6e, 0x69];
+	const block = [0x38, 0x42, 0x49, 0x4d, 0x6c, 0x75, 0x6e, 0x69];
 	block.push((data.length >>> 24) & 255, (data.length >>> 16) & 255, (data.length >>> 8) & 255, data.length & 255);
 	return block.concat(data);
 }
@@ -118,7 +118,7 @@ function unicode_name_block(name) {
  * @returns {Uint8Array} the file
  */
 export function build_psd(width, height, layers, composite) {
-	var w = new Writer();
+	const w = new Writer();
 	w.text('8BPS');
 	w.u16(1);
 	w.append([0, 0, 0, 0, 0, 0]);
@@ -131,44 +131,44 @@ export function build_psd(width, height, layers, composite) {
 	w.u32(0); //image resources
 
 	//layer records, then the pixels of every channel
-	var info = new Writer();
+	const info = new Writer();
 	info.u16(layers.length);
-	var channel_ids = [-1, 0, 1, 2];
-	var empty_plane = new Uint8Array(0);
-	var planes = layers.map(function (layer) {
+	const channel_ids = [-1, 0, 1, 2];
+	const empty_plane = new Uint8Array(0);
+	const planes = layers.map((layer) => {
 		if (layer.section) {
 			return [empty_plane, empty_plane, empty_plane, empty_plane];
 		}
 		return [plane(layer.data, 3), plane(layer.data, 0), plane(layer.data, 1), plane(layer.data, 2)];
 	});
-	layers.forEach(function (layer, index) {
-		var marker = layer.section ? layer : null;
-		var box = marker ? {x: 0, y: 0, width: 0, height: 0} : layer;
+	layers.forEach((layer, index) => {
+		const marker = layer.section ? layer : null;
+		const box = marker ? {x: 0, y: 0, width: 0, height: 0} : layer;
 		info.u32(box.y);
 		info.u32(box.x);
 		info.u32(box.y + box.height);
 		info.u32(box.x + box.width);
 		info.u16(4);
-		channel_ids.forEach(function (id) {
+		channel_ids.forEach((id) => {
 			info.u16(id & 0xffff);
 			info.u32(2 + planes[index][0].length);
 		});
 		info.text('8BIM');
 		info.text(marker && marker.section == 'start' ? (marker.pass ? 'pass' : blend_key(marker.composition)) : blend_key(marker ? 'source-over' : layer.composition));
-		var opacity = marker && marker.section == 'end' ? 100 : layer.opacity;
+		const opacity = marker && marker.section == 'end' ? 100 : layer.opacity;
 		info.u8(Math.round(Math.min(100, Math.max(0, opacity)) / 100 * 255));
 		info.u8(0);
 		info.u8(layer.visible === false ? 2 : 0);
 		info.u8(0);
-		var layer_name = marker && marker.section == 'end' ? '</Layer group>' : layer.name;
-		var name = pascal_name(layer_name);
-		var unicode = unicode_name_block(layer_name);
-		var section = [];
+		const layer_name = marker && marker.section == 'end' ? '</Layer group>' : layer.name;
+		const name = pascal_name(layer_name);
+		const unicode = unicode_name_block(layer_name);
+		let section = [];
 		if (marker) {
 			//the type of the section: 1 an open folder (the record that closes the group), 3 the divider that starts it
-			var kind = marker.section == 'start' ? 1 : 3;
+			const kind = marker.section == 'start' ? 1 : 3;
 			section = [0x38, 0x42, 0x49, 0x4d, 0x6c, 0x73, 0x63, 0x74, 0, 0, 0, 12, 0, 0, 0, kind, 0x38, 0x42, 0x49, 0x4d];
-			var key = marker.section == 'start' ? (marker.pass ? 'pass' : blend_key(marker.composition)) : 'norm';
+			const key = marker.section == 'start' ? (marker.pass ? 'pass' : blend_key(marker.composition)) : 'norm';
 			section.push(key.charCodeAt(0), key.charCodeAt(1), key.charCodeAt(2), key.charCodeAt(3));
 		}
 		info.u32(4 + 4 + name.length + unicode.length + section.length);
@@ -178,8 +178,8 @@ export function build_psd(width, height, layers, composite) {
 		info.append(unicode);
 		info.append(section);
 	});
-	planes.forEach(function (list) {
-		list.forEach(function (channel) {
+	planes.forEach((list) => {
+		list.forEach((channel) => {
 			info.u16(0); //raw
 			info.append(channel);
 		});
@@ -194,11 +194,11 @@ export function build_psd(width, height, layers, composite) {
 
 	//the flattened picture, over white
 	w.u16(0);
-	var count = width * height;
-	for (var c = 0; c < 3; c++) {
-		var out = new Uint8Array(count);
-		for (var i = 0; i < count; i++) {
-			var alpha = composite[i * 4 + 3] / 255;
+	const count = width * height;
+	for (let c = 0; c < 3; c++) {
+		const out = new Uint8Array(count);
+		for (let i = 0; i < count; i++) {
+			const alpha = composite[i * 4 + 3] / 255;
 			out[i] = Math.round(composite[i * 4 + c] * alpha + 255 * (1 - alpha));
 		}
 		w.append(out);
@@ -215,9 +215,9 @@ export function build_psd(width, height, layers, composite) {
  * @returns {{x: number, y: number, width: number, height: number}|null} null for an empty picture
  */
 export function content_bounds(data, width, height) {
-	var min_x = width, min_y = height, max_x = -1, max_y = -1;
-	for (var y = 0; y < height; y++) {
-		for (var x = 0; x < width; x++) {
+	let min_x = width, min_y = height, max_x = -1, max_y = -1;
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
 			if (data[(y * width + x) * 4 + 3] != 0) {
 				if (x < min_x) { min_x = x; }
 				if (x > max_x) { max_x = x; }

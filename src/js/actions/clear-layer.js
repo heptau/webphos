@@ -1,5 +1,4 @@
 import app from './../app.js';
-import config from './../config.js';
 import { Base_action } from './base.js';
 
 export class Clear_layer_action extends Base_action {
@@ -17,11 +16,11 @@ export class Clear_layer_action extends Base_action {
 
 	async do() {
 		super.do();
-		let layer = app.Layers.get_layer(this.layer_id);
+		const layer = app.Layers.get_layer(this.layer_id);
 		if (!layer) {
 			throw new Error('Aborted - layer with specified id doesn\'t exist');
 		}
-		let new_settings = {
+		const new_settings = {
 			x: 0,
 			y: 0,
 			width: 0,
@@ -42,8 +41,8 @@ export class Clear_layer_action extends Base_action {
 		}
 		this.update_layer_action = new app.Actions.Update_layer_action(this.layer_id, new_settings);
 		await this.update_layer_action.do();
-		let delete_setting_names = [];
-		for (let prop_name in layer) {
+		const delete_setting_names = [];
+		for (const prop_name in layer) {
 			//remove private attributes
 			if (prop_name[0] == '_') {
 				delete_setting_names.push(prop_name);

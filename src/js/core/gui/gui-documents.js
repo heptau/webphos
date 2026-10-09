@@ -31,20 +31,20 @@ class GUI_documents_class {
 		}
 		this.bar.addEventListener('click', (event) => this.on_click(event));
 		this.bar.addEventListener('dblclick', (event) => {
-			var tab = event.target.closest('.doc_tab');
+			const tab = event.target.closest('.doc_tab');
 			if (tab) {
 				this.rename(parseInt(tab.dataset.index, 10));
 			}
 		});
 		this.bar.addEventListener('keydown', (event) => this.on_key(event));
 		this.bar.addEventListener('contextmenu', (event) => {
-			var tab = event.target.closest ? event.target.closest('.doc_tab') : null;
+			const tab = event.target.closest ? event.target.closest('.doc_tab') : null;
 			if (!tab) {
 				return;
 			}
-			var index = parseInt(tab.dataset.index, 10);
-			var many = this.documents.length > 1;
-			var items = [
+			const index = parseInt(tab.dataset.index, 10);
+			const many = this.documents.length > 1;
+			const items = [
 				{name: 'Rename', target: 'view/documents.rename_tab', parameter: index},
 				{name: 'Duplicate Document', target: 'view/documents.duplicate_tab', parameter: index},
 				{divider: true},
@@ -68,9 +68,9 @@ class GUI_documents_class {
 
 	//drag a tab to change the order of documents
 	set_drag_events() {
-		var from = null;
+		let from = null;
 		this.bar.addEventListener('dragstart', (event) => {
-			var tab = event.target.closest ? event.target.closest('.doc_tab') : null;
+			const tab = event.target.closest ? event.target.closest('.doc_tab') : null;
 			if (!tab) {
 				return;
 			}
@@ -88,8 +88,8 @@ class GUI_documents_class {
 				return;
 			}
 			event.preventDefault();
-			var tab = event.target.closest('.doc_tab');
-			var to = tab ? parseInt(tab.dataset.index, 10) : this.documents.length - 1;
+			const tab = event.target.closest('.doc_tab');
+			const to = tab ? parseInt(tab.dataset.index, 10) : this.documents.length - 1;
 			if (to != from) {
 				this.active = move_active_index(this.active, from, to);
 				this.documents.splice(to, 0, this.documents.splice(from, 1)[0]);
@@ -113,7 +113,7 @@ class GUI_documents_class {
 	}
 
 	on_history_change() {
-		var doc = this.documents[this.active];
+		const doc = this.documents[this.active];
 		if (app.State.action_history_index > 0 && doc.dirty !== true) {
 			doc.dirty = true;
 			this.render();
@@ -133,7 +133,7 @@ class GUI_documents_class {
 		}
 		try {
 			this.documents[this.active].json = export_as_json();
-			var size = this.documents.reduce((sum, doc) => sum + (doc.json ? doc.json.length : 0), 0);
+			const size = this.documents.reduce((sum, doc) => sum + (doc.json ? doc.json.length : 0), 0);
 			if (size > 300 * 1024 * 1024) {
 				return;
 			}
@@ -144,13 +144,13 @@ class GUI_documents_class {
 			});
 			document.dispatchEvent(new CustomEvent('minipaint:autosaved', {detail: Date.now()}));
 		}
-		catch (error) {
+		catch {
 			//autosave is a convenience, it must never break the editor
 		}
 	}
 
 	async offer_restore() {
-		var session = await load_session();
+		const session = await load_session();
 		if (!session || this.has_content()) {
 			return;
 		}
@@ -159,13 +159,13 @@ class GUI_documents_class {
 			async () => {
 				this.busy = true;
 				try {
-					var restored = session.documents.map((doc) => ({name: doc.name, json: doc.json, dirty: true}));
+					const restored = session.documents.map((doc) => ({name: doc.name, json: doc.json, dirty: true}));
 					await this.load(restored[session.active].json);
 					this.documents = restored;
 					this.active = session.active;
 					this.render();
 				}
-				catch (error) {
+				catch {
 					alertify.error(t('Document could not be opened.'));
 				}
 				finally {
@@ -180,7 +180,7 @@ class GUI_documents_class {
 	 * opens a new empty document tab in the size of the current one (used when a file is opened)
 	 */
 	async new_blank() {
-		var File_new_class = (await import('./../../modules/file/new.js')).default;
+		const File_new_class = (await import('./../../modules/file/new.js')).default;
 		await new File_new_class().create_document(config.WIDTH, config.HEIGHT, config.TRANSPARENCY, {dpi: config.RESOLUTION, units: config.UNITS});
 	}
 
@@ -188,29 +188,29 @@ class GUI_documents_class {
 		if (!this.bar) {
 			return;
 		}
-		var html = '';
+		let html = '';
 		this.documents.forEach((doc, index) => {
-			var active = index == this.active;
+			const active = index == this.active;
 			//the cross is on the left and shows when the pointer is over the tab (always on touch screens)
-			html += '<div class="doc_tab' + (active ? ' active' : '') + '" role="tab" draggable="true" data-index="' + index + '"'
-				+ ' aria-selected="' + active + '" tabindex="' + (active ? '0' : '-1') + '">'
-				+ '<button type="button" class="doc_close" data-index="' + index + '" aria-label="' + t('Close') + '" tabindex="-1">&times;</button>'
-				+ '<span class="doc_name"></span>'
+			html += `<div class="doc_tab${active ? ' active' : ''}" role="tab" draggable="true" data-index="${index}"`
+				+ ` aria-selected="${active}" tabindex="${active ? '0' : '-1'}">`
+				+ `<button type="button" class="doc_close" data-index="${index}" aria-label="${t('Close')}" tabindex="-1">&times;</button>`
+				+ `<span class="doc_name"></span>`
 				//the dot after the name has its place reserved, so the tab does not change its width
-				+ '<span class="doc_dirty' + (doc.dirty ? ' on' : '') + '"' + (doc.dirty ? ' role="img" title="' + t('Unsaved changes') + '" aria-label="' + t('Unsaved changes') + '"' : ' aria-hidden="true"') + '></span>'
-				+ '</div>';
+				+ `<span class="doc_dirty${doc.dirty ? ' on' : ''}"${  doc.dirty ? ` role="img" title="${t('Unsaved changes')}" aria-label="${t('Unsaved changes')}"` : ' aria-hidden="true"'  }></span>`
+				+ `</div>`;
 		});
-		html += '<button type="button" class="doc_new" aria-label="' + t('New file') + '" title="' + t('New file') + '">+</button>';
+		html += `<button type="button" class="doc_new" aria-label="${t('New file')}" title="${t('New file')}">+</button>`;
 		this.bar.innerHTML = html;
 		//names are set as text, they can contain anything
 		this.bar.querySelectorAll('.doc_tab').forEach((tab) => {
-			var doc = this.documents[parseInt(tab.dataset.index, 10)];
+			const doc = this.documents[parseInt(tab.dataset.index, 10)];
 			tab.querySelector('.doc_name').textContent = doc.name;
 		});
 	}
 
 	on_click(event) {
-		var close = event.target.closest('.doc_close');
+		const close = event.target.closest('.doc_close');
 		if (close) {
 			this.close(parseInt(close.dataset.index, 10));
 			return;
@@ -219,27 +219,27 @@ class GUI_documents_class {
 			app.GUI.run_target('file/new.new');
 			return;
 		}
-		var tab = event.target.closest('.doc_tab');
+		const tab = event.target.closest('.doc_tab');
 		if (tab) {
 			this.switch_to(parseInt(tab.dataset.index, 10));
 		}
 	}
 
 	on_key(event) {
-		var tab = event.target.closest ? event.target.closest('.doc_tab') : null;
+		const tab = event.target.closest ? event.target.closest('.doc_tab') : null;
 		if (!tab) {
 			return;
 		}
-		var index = parseInt(tab.dataset.index, 10);
+		const index = parseInt(tab.dataset.index, 10);
 		if (event.key == 'Enter' || event.key == ' ') {
 			event.preventDefault();
 			this.switch_to(index);
 		}
 		else if (event.key == 'ArrowRight' || event.key == 'ArrowLeft') {
 			event.preventDefault();
-			var next = (index + (event.key == 'ArrowRight' ? 1 : -1) + this.documents.length) % this.documents.length;
+			const next = (index + (event.key == 'ArrowRight' ? 1 : -1) + this.documents.length) % this.documents.length;
 			this.switch_to(next).then(() => {
-				var focus = this.bar.querySelector('.doc_tab[data-index="' + next + '"]');
+				const focus = this.bar.querySelector(`.doc_tab[data-index="${next}"]`);
 				if (focus) {
 					focus.focus();
 				}
@@ -256,15 +256,15 @@ class GUI_documents_class {
 	 * the current project stays in its tab and the new one gets a new tab
 	 */
 	before_new() {
-		var previous = this.active;
-		var doc = {name: next_document_name(this.documents.map((item) => item.name)), json: null, dirty: false};
+		const previous = this.active;
+		const doc = {name: next_document_name(this.documents.map((item) => item.name)), json: null, dirty: false};
 		this.documents[this.active].json = export_as_json();
 		this.documents.splice(this.active + 1, 0, doc);
 		this.active = this.active + 1;
 		this.render();
 		//undo of this step (when creating the project fails)
 		return () => {
-			var index = this.documents.indexOf(doc);
+			const index = this.documents.indexOf(doc);
 			if (index >= 0) {
 				this.documents.splice(index, 1);
 			}
@@ -284,15 +284,15 @@ class GUI_documents_class {
 			return;
 		}
 		this.busy = true;
-		var previous = this.active;
+		const previous = this.active;
 		try {
 			this.documents[previous].json = export_as_json();
-			this.documents.splice(previous + 1, 0, {name: name, json: json, dirty: false});
+			this.documents.splice(previous + 1, 0, {name, json, dirty: false});
 			this.active = previous + 1;
 			this.render();
 			await this.load(json);
 		}
-		catch (error) {
+		catch {
 			alertify.error(t('Document could not be opened.'));
 			//back to the document that is really on the canvas
 			this.documents.splice(previous + 1, 1);
@@ -301,7 +301,7 @@ class GUI_documents_class {
 			try {
 				await this.load(this.documents[previous].json);
 			}
-			catch (second_error) {
+			catch {
 				//nothing more can be done
 			}
 		}
@@ -317,27 +317,27 @@ class GUI_documents_class {
 	 * @returns {boolean} true when the layer was added
 	 */
 	copy_layer_to(index) {
-		var target = this.documents[index];
-		var layer = config.layer;
+		const target = this.documents[index];
+		const layer = config.layer;
 		if (!target || index == this.active || !target.json || !layer) {
 			return false;
 		}
 		try {
-			var project = JSON.parse(target.json);
-			var next_id = project.layers.reduce((max, item) => Math.max(max, parseInt(item.id, 10) || 0), 0) + 1;
-			var next_order = project.layers.reduce((max, item) => Math.max(max, parseInt(item.order, 10) || 0), 0) + 1;
-			var copy = {};
-			for (var key in layer) {
+			const project = JSON.parse(target.json);
+			const next_id = project.layers.reduce((max, item) => Math.max(max, parseInt(item.id, 10) || 0), 0) + 1;
+			const next_order = project.layers.reduce((max, item) => Math.max(max, parseInt(item.order, 10) || 0), 0) + 1;
+			const copy = {};
+			for (const key in layer) {
 				if (key[0] != '_' && key != 'link_canvas' && key != 'link') {
 					copy[key] = JSON.parse(JSON.stringify(layer[key]));
 				}
 			}
 			copy.id = next_id;
 			copy.order = next_order;
-			copy.name = layer.name + ' ' + t('copy');
+			copy.name = `${layer.name  } ${  t('copy')}`;
 			project.layers.push(copy);
 			if (layer.type == 'image') {
-				var canvas = document.createElement('canvas');
+				const canvas = document.createElement('canvas');
 				canvas.width = parseInt(layer.width_original, 10) || layer.link.naturalWidth || layer.link.width || 1;
 				canvas.height = parseInt(layer.height_original, 10) || layer.link.naturalHeight || layer.link.height || 1;
 				canvas.getContext('2d').drawImage(layer.link, 0, 0, canvas.width, canvas.height);
@@ -349,7 +349,7 @@ class GUI_documents_class {
 			this.render();
 			return true;
 		}
-		catch (error) {
+		catch {
 			return false;
 		}
 	}
@@ -360,7 +360,7 @@ class GUI_documents_class {
 	 * @param {number} index
 	 */
 	async duplicate(index) {
-		var doc = this.documents[index];
+		const doc = this.documents[index];
 		if (!doc || this.busy) {
 			return;
 		}
@@ -370,7 +370,7 @@ class GUI_documents_class {
 		if (!doc.json) {
 			return;
 		}
-		var copy = {name: next_document_name(this.documents.map((item) => item.name)).replace('Untitled', doc.name.replace(/-\d+$/, '')), json: doc.json, dirty: true};
+		const copy = {name: next_document_name(this.documents.map((item) => item.name)).replace('Untitled', doc.name.replace(/-\d+$/, '')), json: doc.json, dirty: true};
 		this.documents.splice(index + 1, 0, copy);
 		this.render();
 		await this.switch_to(index + 1);
@@ -380,16 +380,16 @@ class GUI_documents_class {
 	 * called after the new project was created - undo must not bring the previous document back
 	 */
 	async clear_history() {
-		var state = app.State;
-		var actions = state.action_history;
+		const state = app.State;
+		const actions = state.action_history;
 		state.action_history = [];
 		state.action_history_index = 0;
 		state.original_canvas = null;
-		for (var i = 0; i < actions.length; i++) {
+		for (let i = 0; i < actions.length; i++) {
 			try {
 				await actions[i].free();
 			}
-			catch (error) {
+			catch {
 				//nothing to free
 			}
 		}
@@ -398,10 +398,10 @@ class GUI_documents_class {
 
 	async load(json) {
 		//loading puts steps into the history, which must not mark the document as changed
-		var target = this.documents[this.active];
-		var was_dirty = target ? target.dirty : false;
-		var File_open_class = (await import('./../../modules/file/open.js')).default;
-		var open = new File_open_class();
+		const target = this.documents[this.active];
+		const was_dirty = target ? target.dirty : false;
+		const File_open_class = (await import('./../../modules/file/open.js')).default;
+		const open = new File_open_class();
 		await open.json_ops.load_json(json);
 		await this.clear_history();
 		if (target) {
@@ -418,12 +418,12 @@ class GUI_documents_class {
 			return;
 		}
 		this.busy = true;
-		var previous = this.active;
-		var current_json;
+		const previous = this.active;
+		let current_json;
 		try {
 			current_json = export_as_json();
 		}
-		catch (error) {
+		catch {
 			//the open document can not be saved (e.g. an image that can not be read) - leave it untouched on the canvas
 			alertify.error(t('Document could not be opened.'));
 			this.busy = false;
@@ -435,7 +435,7 @@ class GUI_documents_class {
 			this.render();
 			await this.load(this.documents[index].json);
 		}
-		catch (error) {
+		catch {
 			alertify.error(t('Document could not be opened.'));
 			//show the tab of the project that is really on the canvas
 			this.active = previous;
@@ -443,7 +443,7 @@ class GUI_documents_class {
 			try {
 				await this.load(this.documents[previous].json);
 			}
-			catch (second_error) {
+			catch {
 				//nothing more can be done
 			}
 		}
@@ -456,20 +456,20 @@ class GUI_documents_class {
 		if (this.busy) {
 			return;
 		}
-		var doc = this.documents[index];
+		const doc = this.documents[index];
 		if (!doc) {
 			return;
 		}
-		var only_one = this.documents.length < 2;
-		var do_close = async () => {
+		const only_one = this.documents.length < 2;
+		const do_close = async () => {
 			if (only_one) {
 				//the program always has a document: closing the only one gives an empty new one of the same size
 				if (this.documents.length != 1 || this.busy) {
 					return;
 				}
 				await this.new_blank();
-				var fresh = this.documents[this.active];
-				var old = this.documents.indexOf(doc);
+				const fresh = this.documents[this.active];
+				const old = this.documents.indexOf(doc);
 				if (fresh !== doc && old >= 0) {
 					this.documents.splice(old, 1);
 					this.active = this.documents.indexOf(fresh);
@@ -478,20 +478,20 @@ class GUI_documents_class {
 				return;
 			}
 			//the list can change while the confirmation is open
-			var current = this.documents.indexOf(doc);
+			const current = this.documents.indexOf(doc);
 			if (current < 0 || this.busy || this.documents.length < 2) {
 				return;
 			}
-			var was_active = current == this.active;
-			var result = remove_document_index(this.documents.length, this.active, current);
+			const was_active = current == this.active;
+			const result = remove_document_index(this.documents.length, this.active, current);
 			if (was_active) {
 				//load the neighbour first, the document is removed only when it worked
 				this.busy = true;
 				try {
-					var neighbour = this.documents[result.active + (result.active >= current ? 1 : 0)];
+					const neighbour = this.documents[result.active + (result.active >= current ? 1 : 0)];
 					await this.load(neighbour.json);
 				}
-				catch (error) {
+				catch {
 					alertify.error(t('Document could not be opened.'));
 					this.busy = false;
 					return;
@@ -503,7 +503,7 @@ class GUI_documents_class {
 			this.render();
 		};
 		if (doc.dirty) {
-			alertify.confirm(t('Close') + ': ' + doc.name, t('Unsaved changes will be lost.'), do_close, function () {});
+			alertify.confirm(`${t('Close')  }: ${  doc.name}`, t('Unsaved changes will be lost.'), do_close, () => {});
 		}
 		else {
 			do_close();
@@ -511,7 +511,7 @@ class GUI_documents_class {
 	}
 
 	rename(index) {
-		var doc = this.documents[index];
+		const doc = this.documents[index];
 		if (!doc) {
 			return;
 		}
@@ -519,7 +519,7 @@ class GUI_documents_class {
 			title: 'Rename',
 			params: [{name: 'name', title: 'Name:', value: doc.name}],
 			on_finish: (params) => {
-				var name = String(params.name).trim().slice(0, 60);
+				const name = String(params.name).trim().slice(0, 60);
 				if (name != '') {
 					doc.name = name;
 					this.render();

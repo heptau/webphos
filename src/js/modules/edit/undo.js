@@ -1,6 +1,6 @@
 import Base_state_class from './../../core/base-state.js';
 
-var instance = null;
+let instance = null;
 
 class Edit_undo_class {
 
@@ -16,10 +16,9 @@ class Edit_undo_class {
 	}
 
 	events(){
-		var _this = this;
 
-		document.querySelector('#undo_button').addEventListener('click', function (event) {
-			_this.Base_state.undo();
+		document.querySelector('#undo_button').addEventListener('click', () => {
+			this.Base_state.undo();
 		});
 	}
 

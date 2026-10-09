@@ -30,15 +30,15 @@ class BulgePinch_class extends Base_tools_class {
 			return;
 
 		//mouse cursor
-		var mouse = this.get_mouse_info(event);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(event);
+		const params = this.getParams();
 		this.show_mouse_cursor(mouse.x, mouse.y, params.radius, 'circle');
 	}
 
 	mousedown(e) {
 		this.started = false;
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -63,7 +63,7 @@ class BulgePinch_class extends Base_tools_class {
 		config.need_render = true;
 	}
 
-	mouseup(e) {
+	mouseup() {
 		if (this.started == false) {
 			return;
 		}
@@ -88,9 +88,8 @@ class BulgePinch_class extends Base_tools_class {
 			this.fx_filter = glfx.canvas();
 		}
 
-		var ctx = this.tmpCanvasCtx;
-		var mouse_x = Math.round(mouse.x) - config.layer.x;
-		var mouse_y = Math.round(mouse.y) - config.layer.y;
+		let mouse_x = Math.round(mouse.x) - config.layer.x;
+		let mouse_y = Math.round(mouse.y) - config.layer.y;
 
 		//adapt to origin size
 		mouse_x = this.adaptSize(mouse_x, 'width');
@@ -109,7 +108,7 @@ class BulgePinch_class extends Base_tools_class {
 		if (bulge == false)
 			power = -1 * power;
 
-		var texture = this.fx_filter.texture(this.tmpCanvas);
+		const texture = this.fx_filter.texture(this.tmpCanvas);
 		this.fx_filter.draw(texture).bulgePinch(mouse_x, mouse_y, radius, power).update();	//effect
 		this.tmpCanvasCtx.clearRect(0, 0, this.tmpCanvas.width, this.tmpCanvas.height);
 		this.tmpCanvasCtx.drawImage(this.fx_filter, 0, 0);

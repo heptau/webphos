@@ -7,7 +7,7 @@ export class Delete_layer_settings_action extends Base_action {
 	 * Deletes the specified settings in a layer
 	 *
 	 * @param {int} layer_id
-	 * @param {array} setting_names 
+	 * @param {array} setting_names
 	 */
 	constructor(layer_id, setting_names) {
 		super('delete_layer_settings', 'Delete Layer Settings');
@@ -23,7 +23,7 @@ export class Delete_layer_settings_action extends Base_action {
 		if (!this.reference_layer) {
 			throw new Error('Aborted - layer with specified id doesn\'t exist');
 		}
-		for (let name in this.setting_names) {
+		for (const name in this.setting_names) {
 			this.old_settings[name] = this.reference_layer[name];
 			delete this.reference_layer[name];
 		}
@@ -33,7 +33,7 @@ export class Delete_layer_settings_action extends Base_action {
 	async undo() {
 		super.undo();
 		if (this.reference_layer) {
-			for (let i in this.old_settings) {
+			for (const i in this.old_settings) {
 				this.reference_layer[i] = this.old_settings[i];
 			}
 			this.old_settings = {};

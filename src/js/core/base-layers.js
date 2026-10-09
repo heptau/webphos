@@ -20,7 +20,7 @@ import { make_identity, stack_signature, split_for_cache, preview_scale } from "
 import { is_default as blend_if_is_default, apply_blend_if } from "./../libs/blend-if.js";
 import { adjust_image, mix_adjusted } from "./../libs/adjustment-layers.js";
 
-var instance = null;
+let instance = null;
 
 /**
  * Layers class - manages layers. Each layer is object with various types. Keys:
@@ -87,13 +87,13 @@ class Base_layers_class {
 
 		new app.Actions.Insert_layer_action({}).do();
 
-		var sel_config = {
+		const sel_config = {
 			enable_background: false,
 			enable_borders: true,
 			enable_controls: false,
 			enable_rotation: false,
 			enable_move: false,
-			data_function: function () {
+			data_function () {
 				return config.layer;
 			},
 		};
@@ -136,7 +136,6 @@ class Base_layers_class {
 	 * @param {bool} force
 	 */
 	render(force) {
-		var _this = this;
 		if (force !== true) {
 			//request render and exit
 			config.need_render = true;
@@ -155,10 +154,6 @@ class Base_layers_class {
 		if (config.need_render == true && config.freeze_render !== true) {
 			this.render_success = null;
 
-			if (this.debug_rendering === true) {
-				console.log("Rendering...");
-			}
-
 			if (this.last_zoom != config.ZOOM) {
 				//change zoom
 				zoomView.scaleAt(
@@ -168,8 +163,8 @@ class Base_layers_class {
 				);
 			} else if (this.Base_gui.GUI_preview.zoom_data.move_pos != null) {
 				//move visible window
-				var pos = this.Base_gui.GUI_preview.zoom_data.move_pos;
-				var pos_global = zoomView.toScreen(pos);
+				const pos = this.Base_gui.GUI_preview.zoom_data.move_pos;
+				const pos_global = zoomView.toScreen(pos);
 				zoomView.move(-pos_global.x, -pos_global.y);
 				this.Base_gui.GUI_preview.zoom_data.move_pos = null;
 			}
@@ -178,7 +173,7 @@ class Base_layers_class {
 			this.pre_render();
 
 			//take data
-			var layers_sorted = this.get_sorted_layers();
+			const layers_sorted = this.get_sorted_layers();
 
 			zoomView.apply();
 
@@ -224,8 +219,8 @@ class Base_layers_class {
 			}
 		}
 
-		requestAnimationFrame(function () {
-			_this.render(force);
+		requestAnimationFrame(() => {
+			this.render(force);
 		});
 	}
 
@@ -233,13 +228,13 @@ class Base_layers_class {
 	 * the left part of the picture shows the original (config.compare = {before: canvas, x}), a line marks the border
 	 */
 	render_compare() {
-		var compare = config.compare;
+		const compare = config.compare;
 		if (!compare || !compare.before) {
 			return;
 		}
-		var ctx = this.ctx;
-		var x = Math.max(0, Math.min(config.WIDTH, compare.x));
-		var unit = 1 / (config.ZOOM || 1);
+		const ctx = this.ctx;
+		const x = Math.max(0, Math.min(config.WIDTH, compare.x));
+		const unit = 1 / (config.ZOOM || 1);
 		ctx.save();
 		ctx.beginPath();
 		ctx.rect(0, 0, x, config.HEIGHT);
@@ -267,7 +262,7 @@ class Base_layers_class {
 		ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
 		ctx.stroke();
 		ctx.fillStyle = '#555555';
-		ctx.font = (11 * unit) + 'px sans-serif';
+		ctx.font = `${11 * unit  }px sans-serif`;
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
 		ctx.fillText('\u2194', x, config.HEIGHT / 2 + unit);
@@ -275,8 +270,8 @@ class Base_layers_class {
 	}
 
 	render_overlay() {
-		var render_class = config.TOOL.name;
-		var render_function = "render_overlay";
+		const render_class = config.TOOL.name;
+		const render_function = "render_overlay";
 
 		if (
 			typeof this.Base_gui.GUI_tools.tools_modules[render_class].object[
@@ -342,27 +337,27 @@ class Base_layers_class {
 	 */
 	render_objects(ctx, tempCanvas, layers, prepare, shouldSkip) {
 		//a group with its own opacity or blend mode is drawn on its own first
-		var plan = plan_groups(layers);
+		const plan = plan_groups(layers);
 
 		//Adjustment and Blend If layers work on everything below them. Drawing that again for every one of them is slow
 		//(n layers cost n times n), so everything up to the top one of them is drawn once on a canvas of its own, that
 		//already holds what is below the next one; the layers above it are drawn directly.
-		var top = plan.findIndex((entry) => entry.kind !== "group" && this.needs_backdrop(entry));
-		var clipped = plan.some((entry) => entry.composition === "source-atop");
+		const top = plan.findIndex((entry) => entry.kind !== "group" && this.needs_backdrop(entry));
+		const clipped = plan.some((entry) => entry.composition === "source-atop");
 		if (top < 0 || clipped) {
 			this.render_objects_flat(ctx, tempCanvas, plan, prepare, shouldSkip);
 			return;
 		}
-		var width = Math.max(1, config.WIDTH);
-		var height = Math.max(1, config.HEIGHT);
-		var make = () => {
-			var canvas = document.createElement("canvas");
+		const width = Math.max(1, config.WIDTH);
+		const height = Math.max(1, config.HEIGHT);
+		const make = () => {
+			const canvas = document.createElement("canvas");
 			canvas.width = width;
 			canvas.height = height;
 			return canvas;
 		};
-		var accumulated = make();
-		var accumulated_ctx = accumulated.getContext("2d", {willReadFrequently: true});
+		const accumulated = make();
+		const accumulated_ctx = accumulated.getContext("2d", {willReadFrequently: true});
 		this.render_objects_flat(accumulated_ctx, make(), plan.slice(top), () => {
 			accumulated_ctx.save();
 		}, shouldSkip, true);
@@ -381,27 +376,27 @@ class Base_layers_class {
 	 */
 	render_objects_cached(ctx, tempCanvas, layers, prepare, shouldSkip) {
 		this.track_pointer();
-		var split = config.layer ? split_for_cache(layers, config.layer.id, config.ZOOM || 1) : null;
-		var pixels = Math.max(1, config.WIDTH) * Math.max(1, config.HEIGHT);
+		const split = config.layer ? split_for_cache(layers, config.layer.id, config.ZOOM || 1) : null;
+		const pixels = Math.max(1, config.WIDTH) * Math.max(1, config.HEIGHT);
 		if (split == null || pixels > 100 * 1000 * 1000) {
 			this.free_backdrop_cache();
 			this.render_objects(ctx, tempCanvas, layers, prepare, shouldSkip);
 			return;
 		}
-		var backdrop = this.get_backdrop_cache(split.lower);
-		var plan = plan_groups(split.upper);
-		var width = Math.max(1, config.WIDTH);
-		var height = Math.max(1, config.HEIGHT);
-		var backdrop_dependent = plan.some((entry) => entry.kind !== "group" && this.needs_backdrop(entry));
+		const backdrop = this.get_backdrop_cache(split.lower);
+		const plan = plan_groups(split.upper);
+		const width = Math.max(1, config.WIDTH);
+		const height = Math.max(1, config.HEIGHT);
+		const backdrop_dependent = plan.some((entry) => entry.kind !== "group" && this.needs_backdrop(entry));
 		if (backdrop_dependent) {
 			//an adjustment or Blend If layer above the active one works on the cached picture plus the layers above it.
 			//The picture and its small copy in the Navigator are drawn one after the other with the same layers, so
 			//the result is kept for the second one.
 			//While something is dragged the work is done on a smaller copy (like the preview of Photoshop), the full size
 			//follows when the mouse button is up.
-			var scale = this.interactive_scale(width, height);
-			var key = this.backdrop_cache.key + "|" + stack_signature(split.upper, this.layer_identity, "") + "|" + scale;
-			var running = this.running_cache && this.running_cache.key === key ? this.running_cache.canvas : null;
+			const scale = this.interactive_scale(width, height);
+			const key = `${this.backdrop_cache.key  }|${stack_signature(split.upper, this.layer_identity, "")}|${  scale}`;
+			let running = this.running_cache && this.running_cache.key === key ? this.running_cache.canvas : null;
 			if (running == null) {
 				if (this.running_cache) {
 					this.running_cache.canvas.width = this.running_cache.canvas.height = 1;
@@ -409,17 +404,17 @@ class Base_layers_class {
 				running = document.createElement("canvas");
 				running.width = Math.max(1, Math.round(width * scale));
 				running.height = Math.max(1, Math.round(height * scale));
-				var running_ctx = running.getContext("2d", {willReadFrequently: true});
+				const running_ctx = running.getContext("2d", {willReadFrequently: true});
 				running_ctx.drawImage(backdrop, 0, 0, running.width, running.height);
 				running_ctx.scale(running.width / width, running.height / height);
-				var scratch = document.createElement("canvas");
+				const scratch = document.createElement("canvas");
 				scratch.width = running.width;
 				scratch.height = running.height;
 				this.render_objects_flat(running_ctx, scratch, plan, () => {
 					running_ctx.save();
 				}, shouldSkip, true);
 				scratch.width = scratch.height = 1;
-				this.running_cache = {key: key, canvas: running};
+				this.running_cache = {key, canvas: running};
 				this.low_resolution_shown = scale < 1;
 			}
 			prepare && prepare();
@@ -457,10 +452,10 @@ class Base_layers_class {
 		}
 		this.pointer_tracked = true;
 		this.pointer_down = false;
-		var down = () => {
+		const down = () => {
 			this.pointer_down = true;
 		};
-		var up = () => {
+		const up = () => {
 			if (!this.pointer_down) {
 				return;
 			}
@@ -504,28 +499,28 @@ class Base_layers_class {
 		if (!this.layer_identity) {
 			this.layer_identity = make_identity();
 		}
-		var fonts = typeof document !== "undefined" && document.fonts ? document.fonts.size : 0;
-		var key = stack_signature(lower, this.layer_identity, [config.WIDTH, config.HEIGHT, this.disabled_filter_id, fonts].join("x"));
+		const fonts = typeof document !== "undefined" && document.fonts ? document.fonts.size : 0;
+		const key = stack_signature(lower, this.layer_identity, [config.WIDTH, config.HEIGHT, this.disabled_filter_id, fonts].join("x"));
 		if (this.backdrop_cache && this.backdrop_cache.key === key) {
 			return this.backdrop_cache.canvas;
 		}
 		if (this.backdrop_cache) {
 			this.backdrop_cache.canvas.width = this.backdrop_cache.canvas.height = 1;
 		}
-		var canvas = document.createElement("canvas");
+		const canvas = document.createElement("canvas");
 		canvas.width = Math.max(1, config.WIDTH);
 		canvas.height = Math.max(1, config.HEIGHT);
 		//a canvas that is read often is drawn by the processor, like the one that render_objects uses for the layers
 		//above, so the colors come out the same (the graphics card rounds blend modes differently)
-		var canvas_ctx = canvas.getContext("2d", {willReadFrequently: true});
-		var scratch = document.createElement("canvas");
+		const canvas_ctx = canvas.getContext("2d", {willReadFrequently: true});
+		const scratch = document.createElement("canvas");
 		scratch.width = canvas.width;
 		scratch.height = canvas.height;
 		this.render_objects(canvas_ctx, scratch, lower, () => {
 			canvas_ctx.save();
 		});
 		scratch.width = scratch.height = 1;
-		this.backdrop_cache = {key: key, canvas: canvas};
+		this.backdrop_cache = {key, canvas};
 		return canvas;
 	}
 
@@ -546,21 +541,21 @@ class Base_layers_class {
 	 * @param {Function} [shouldSkip]
 	 */
 	render_group(ctx, group, shouldSkip) {
-		var width = Math.max(1, config.WIDTH);
-		var height = Math.max(1, config.HEIGHT);
-		var make = () => {
-			var canvas = document.createElement("canvas");
+		const width = Math.max(1, config.WIDTH);
+		const height = Math.max(1, config.HEIGHT);
+		const make = () => {
+			const canvas = document.createElement("canvas");
 			canvas.width = width;
 			canvas.height = height;
 			return canvas;
 		};
-		var own = make();
-		var own_ctx = own.getContext("2d");
+		const own = make();
+		const own_ctx = own.getContext("2d");
 		this.render_objects_flat(own_ctx, make(), group.entries, () => {
 			own_ctx.save();
 		}, shouldSkip, true);
 		//the mask of the group (in the pixels of the document) cuts what the layers made
-		var mask_canvas = group.props.mask ? this.get_mask_canvas({mask: group.props.mask}) : null;
+		const mask_canvas = group.props.mask ? this.get_mask_canvas({mask: group.props.mask}) : null;
 		if (mask_canvas) {
 			own_ctx.globalCompositeOperation = "destination-in";
 			own_ctx.drawImage(mask_canvas, 0, 0, width, height);
@@ -581,14 +576,14 @@ class Base_layers_class {
 		const tempCtx = tempCanvas.getContext("2d");
 		// Prepare the temporary canvas if needed
 		prepare && prepare();
-		
-		for (var i = layers.length - 1; i >= 0; i--) {
-			var layer = layers[i];
+
+		for (let i = layers.length - 1; i >= 0; i--) {
+			const layer = layers[i];
 			const nextLayer = layers[i - 1];
 
 			// If the previous layer has clip masking effect and the current one is not the other end of the pair,
 			// then render the temporary canvas for clip masking on top of the current.
-			
+
 			// A group drawn on its own (its layers are skipped inside of it if they are not needed)
 			if (layer.kind === "group") {
 				this.render_group(ctx, layer, shouldSkip);
@@ -640,15 +635,15 @@ class Base_layers_class {
 					// If we are in this condition, then it means this is the last layer of clipped layers pair.
 					// Render clipped layers on the temporary canvas
 					this.render_object(tempCtx, layer);
-					
+
 					// Render the clipped layers on top of the current canvas
 					ctx.restore();
 					ctx.drawImage(tempCanvas, 0, 0);
 
-					
+
 					// Prepare canvas to since we called restore
 					prepare && prepare();
-					// Clear temporary canvas 
+					// Clear temporary canvas
 					tempCtx.globalCompositeOperation = null;
 					tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
 				}
@@ -676,42 +671,42 @@ class Base_layers_class {
 	 * @param {Function} [shouldSkip]
 	 */
 	render_adjustment(ctx, layer, below, shouldSkip, current) {
-		var params = layer.params || {};
+		const params = layer.params || {};
 		//with `current` the work is done at the size of that canvas (it can be a smaller copy of the document while
 		//something is being dragged, then its transform scales the layers to it)
-		var width = current ? current.canvas.width : Math.max(1, config.WIDTH);
-		var height = current ? current.canvas.height : Math.max(1, config.HEIGHT);
-		var make = () => {
-			var canvas = document.createElement("canvas");
+		const width = current ? current.canvas.width : Math.max(1, config.WIDTH);
+		const height = current ? current.canvas.height : Math.max(1, config.HEIGHT);
+		const make = () => {
+			const canvas = document.createElement("canvas");
 			canvas.width = width;
 			canvas.height = height;
 			return canvas;
 		};
 
 		//`current` is a canvas of the size of the document that already holds everything below the layer
-		var backdrop = current ? null : make();
-		var backdrop_ctx = current || backdrop.getContext("2d", {willReadFrequently: true});
+		const backdrop = current ? null : make();
+		const backdrop_ctx = current || backdrop.getContext("2d", {willReadFrequently: true});
 		if (!current && below.length > 0) {
 			this.render_objects_flat(backdrop_ctx, make(), below, () => {
 				backdrop_ctx.save();
 			}, shouldSkip);
 		}
-		var original = backdrop_ctx.getImageData(0, 0, width, height);
-		var adjusted = adjust_image(original, params.adjustment, params.settings);
+		const original = backdrop_ctx.getImageData(0, 0, width, height);
+		const adjusted = adjust_image(original, params.adjustment, params.settings);
 
 		//the layer mask limits the change to a part of the picture
-		var weights = null;
-		var mask_canvas = layer.mask && layer.mask_enabled !== false ? this.get_mask_canvas(layer) : null;
+		let weights = null;
+		const mask_canvas = layer.mask && layer.mask_enabled !== false ? this.get_mask_canvas(layer) : null;
 		if (mask_canvas) {
-			var mask_layer = make();
-			var mask_ctx = mask_layer.getContext("2d", {willReadFrequently: true});
+			const mask_layer = make();
+			const mask_ctx = mask_layer.getContext("2d", {willReadFrequently: true});
 			if (current) {
 				mask_ctx.setTransform(current.getTransform());
 			}
 			mask_ctx.drawImage(mask_canvas, layer.x, layer.y, layer.width, layer.height);
-			var mask_data = mask_ctx.getImageData(0, 0, width, height).data;
+			const mask_data = mask_ctx.getImageData(0, 0, width, height).data;
 			weights = new Uint8ClampedArray(width * height);
-			for (var p = 0; p < weights.length; p++) {
+			for (let p = 0; p < weights.length; p++) {
 				weights[p] = mask_data[p * 4 + 3];
 			}
 			mask_layer.width = mask_layer.height = 1;
@@ -741,32 +736,32 @@ class Base_layers_class {
 	 * @param {Function} [shouldSkip]
 	 */
 	render_blend_if(ctx, layer, below, shouldSkip, current) {
-		var width = current ? current.canvas.width : Math.max(1, config.WIDTH);
-		var height = current ? current.canvas.height : Math.max(1, config.HEIGHT);
-		var make = () => {
-			var canvas = document.createElement("canvas");
+		const width = current ? current.canvas.width : Math.max(1, config.WIDTH);
+		const height = current ? current.canvas.height : Math.max(1, config.HEIGHT);
+		const make = () => {
+			const canvas = document.createElement("canvas");
 			canvas.width = width;
 			canvas.height = height;
 			return canvas;
 		};
 
 		//`current` is a canvas of the size of the document that already holds everything below the layer
-		var backdrop = current ? null : make();
-		var backdrop_ctx = current || backdrop.getContext("2d", {willReadFrequently: true});
+		const backdrop = current ? null : make();
+		const backdrop_ctx = current || backdrop.getContext("2d", {willReadFrequently: true});
 		if (!current && below.length > 0) {
 			this.render_objects_flat(backdrop_ctx, make(), below, () => {
 				backdrop_ctx.save();
 			}, shouldSkip);
 		}
 
-		var own = make();
-		var own_ctx = own.getContext("2d", {willReadFrequently: true});
+		const own = make();
+		const own_ctx = own.getContext("2d", {willReadFrequently: true});
 		if (current) {
 			own_ctx.setTransform(current.getTransform());
 		}
 		this.render_object(own_ctx, layer);
 
-		var image = own_ctx.getImageData(0, 0, width, height);
+		const image = own_ctx.getImageData(0, 0, width, height);
 		apply_blend_if(image, backdrop_ctx.getImageData(0, 0, width, height), layer.blend_if);
 		own_ctx.putImageData(image, 0, 0);
 
@@ -787,8 +782,8 @@ class Base_layers_class {
 
 	render_preview(layers) {
 		this.Base_gui.GUI_preview.update_preview_size();
-		var w = this.Base_gui.GUI_preview.PREVIEW_SIZE.w;
-		var h = this.Base_gui.GUI_preview.PREVIEW_SIZE.h;
+		const w = this.Base_gui.GUI_preview.PREVIEW_SIZE.w;
+		const h = this.Base_gui.GUI_preview.PREVIEW_SIZE.h;
 
 		this.ctx_preview.save();
 		this.ctx_preview.clearRect(0, 0, w, h);
@@ -816,7 +811,7 @@ class Base_layers_class {
 		if (object.visible == false || object.type == null) return;
 
 		if (object.mask && object.mask_enabled !== false) {
-			var mask_canvas = this.get_mask_canvas(object);
+			const mask_canvas = this.get_mask_canvas(object);
 			if (mask_canvas) {
 				this.render_masked_object(ctx, object, is_preview, mask_canvas);
 				return;
@@ -836,19 +831,19 @@ class Base_layers_class {
 		if (!this.mask_canvases) {
 			this.mask_canvases = new WeakMap();
 		}
-		var cached = this.mask_canvases.get(object.mask);
+		const cached = this.mask_canvases.get(object.mask);
 		if (cached !== undefined) {
 			return cached;
 		}
-		var mask = deserialize_layer_mask(object.mask);
-		var canvas = null;
+		const mask = deserialize_layer_mask(object.mask);
+		let canvas = null;
 		if (mask) {
 			canvas = document.createElement("canvas");
 			canvas.width = mask.width;
 			canvas.height = mask.height;
-			var ctx = canvas.getContext("2d");
-			var image = ctx.createImageData(mask.width, mask.height);
-			for (var p = 0, i = 3; p < mask.data.length; p++, i += 4) {
+			const ctx = canvas.getContext("2d");
+			const image = ctx.createImageData(mask.width, mask.height);
+			for (let p = 0, i = 3; p < mask.data.length; p++, i += 4) {
 				image.data[i] = mask.data[p];
 			}
 			ctx.putImageData(image, 0, 0);
@@ -862,10 +857,10 @@ class Base_layers_class {
 	 * the mask cuts it and the result is drawn with the current alpha and blend mode of the context
 	 */
 	render_masked_object(ctx, object, is_preview, mask_canvas) {
-		var temp = document.createElement("canvas");
+		const temp = document.createElement("canvas");
 		temp.width = ctx.canvas.width;
 		temp.height = ctx.canvas.height;
-		var temp_ctx = temp.getContext("2d");
+		const temp_ctx = temp.getContext("2d");
 		temp_ctx.setTransform(ctx.getTransform());
 
 		this.render_object_plain(temp_ctx, object, is_preview);
@@ -898,7 +893,7 @@ class Base_layers_class {
 		this.pre_render_object(ctx, object);
 
 		//fill opacity fades the pixels of the layer, but not its styles (drawn in the pre/post render)
-		var alpha_before_fill = ctx.globalAlpha;
+		const alpha_before_fill = ctx.globalAlpha;
 		ctx.globalAlpha = alpha_before_fill * fill_alpha(object);
 
 		//example with canvas object - other types should overwrite this method
@@ -921,8 +916,8 @@ class Base_layers_class {
 			ctx.restore();
 		} else {
 			//call render function from other module
-			var render_class = object.render_function[0];
-			var render_function = object.render_function[1];
+			const render_class = object.render_function[0];
+			const render_function = object.render_function[1];
 			if (
 				typeof this.Base_gui.GUI_tools.tools_modules[render_class] !=
 				"undefined"
@@ -932,7 +927,7 @@ class Base_layers_class {
 				](ctx, object, is_preview);
 			} else {
 				this.render_success = false;
-				console.log("Error: unknown layer type: " + object.type);
+				console.error(`Error: unknown layer type: ${  object.type}`);
 			}
 		}
 
@@ -945,23 +940,23 @@ class Base_layers_class {
 	 * as it is. The halo is what the shadow and glow add to the bare pixels, so it is drawn on its own first.
 	 */
 	render_object_with_halo(ctx, object, is_preview) {
-		var parts = split_halo_filters(object.filters);
-		var make = () => {
-			var temp = document.createElement("canvas");
+		const parts = split_halo_filters(object.filters);
+		const make = () => {
+			const temp = document.createElement("canvas");
 			temp.width = ctx.canvas.width;
 			temp.height = ctx.canvas.height;
-			var temp_ctx = temp.getContext("2d");
+			const temp_ctx = temp.getContext("2d");
 			temp_ctx.setTransform(ctx.getTransform());
 			return temp;
 		};
-		var full = {fill_opacity: 100};
+		const full = {fill_opacity: 100};
 
 		//the bare pixels and the pixels with the halos, both at full strength
-		var bare = make();
+		const bare = make();
 		this.render_object_plain(bare.getContext("2d"), Object.assign({}, object, full, {filters: []}), is_preview);
-		var halo = make();
+		const halo = make();
 		this.render_object_plain(halo.getContext("2d"), Object.assign({}, object, full, {filters: parts.halo}), is_preview);
-		var halo_ctx = halo.getContext("2d");
+		const halo_ctx = halo.getContext("2d");
 		halo_ctx.save();
 		halo_ctx.setTransform(1, 0, 0, 1, 0, 0);
 		halo_ctx.globalCompositeOperation = "destination-out";
@@ -989,8 +984,8 @@ class Base_layers_class {
 	 */
 	pre_render_object(ctx, object) {
 		//apply pre-filters
-		for (var i in object.filters) {
-			var filter = object.filters[i];
+		for (let i in object.filters) {
+			const filter = object.filters[i];
 			if (filter.id == this.disabled_filter_id) {
 				continue;
 			}
@@ -998,12 +993,12 @@ class Base_layers_class {
 			filter.name = filter.name.replace("drop-shadow", "shadow");
 
 			//find filter
-			var found = false;
-			for (var i in this.Base_gui.modules) {
+			let found = false;
+			for (i in this.Base_gui.modules) {
 				if (i.indexOf("effects") == -1 || i.indexOf("abstract") > -1) continue;
 
-				var filter_class = this.Base_gui.modules[i];
-				var module_name = i.split("/").pop();
+				const filter_class = this.Base_gui.modules[i];
+				const module_name = i.split("/").pop();
 				if (module_name == filter.name) {
 					//found it
 					found = true;
@@ -1012,7 +1007,7 @@ class Base_layers_class {
 			}
 			if (found == false) {
 				this.render_success = false;
-				console.log("Error: can not find filter: " + filter.name);
+				console.error(`Error: can not find filter: ${  filter.name}`);
 			}
 		}
 	}
@@ -1024,20 +1019,20 @@ class Base_layers_class {
 	 */
 	after_render_object(ctx, object) {
 		//apply post-filters
-		for (var i in object.filters) {
-			var filter = object.filters[i];
+		for (let i in object.filters) {
+			const filter = object.filters[i];
 			if (filter.id == this.disabled_filter_id) {
 				continue;
 			}
 			filter.name = filter.name.replace("drop-shadow", "shadow");
 
 			//find filter
-			var found = false;
-			for (var i in this.Base_gui.modules) {
+			let found = false;
+			for (i in this.Base_gui.modules) {
 				if (i.indexOf("effects") == -1 || i.indexOf("abstract") > -1) continue;
 
-				var filter_class = this.Base_gui.modules[i];
-				var module_name = i.split("/").pop();
+				const filter_class = this.Base_gui.modules[i];
+				const module_name = i.split("/").pop();
 				if (module_name == filter.name) {
 					//found it
 					found = true;
@@ -1046,7 +1041,7 @@ class Base_layers_class {
 			}
 			if (found == false) {
 				this.render_success = false;
-				console.log("Error: can not find filter: " + filter.name);
+				console.error(`Error: can not find filter: ${  filter.name}`);
 			}
 		}
 	}
@@ -1092,7 +1087,7 @@ class Base_layers_class {
 		if (id == undefined) {
 			id = config.layer.id;
 		}
-		for (var i in config.layers) {
+		for (const i in config.layers) {
 			if (config.layers[i].id == id) {
 				return config.layers[i];
 			}
@@ -1204,7 +1199,7 @@ class Base_layers_class {
 	 * @returns {Boolean}
 	 */
 	is_layer_empty(id) {
-		var link = this.get_layer(id);
+		const link = this.get_layer(id);
 
 		if (
 			(link.width == 0 || link.width === null) &&
@@ -1225,12 +1220,12 @@ class Base_layers_class {
 	 */
 	find_next(id) {
 		id = parseInt(id);
-		var link = this.get_layer(id);
-		var layers_sorted = this.get_sorted_layers();
+		const link = this.get_layer(id);
+		const layers_sorted = this.get_sorted_layers();
 
-		var last = null;
-		for (var i = layers_sorted.length - 1; i >= 0; i--) {
-			var value = layers_sorted[i];
+		let last = null;
+		for (let i = layers_sorted.length - 1; i >= 0; i--) {
+			const value = layers_sorted[i];
 
 			if (last != null && last.id == link.id) {
 				return value;
@@ -1249,12 +1244,12 @@ class Base_layers_class {
 	 */
 	find_previous(id) {
 		id = parseInt(id);
-		var link = this.get_layer(id);
-		var layers_sorted = this.get_sorted_layers();
+		const link = this.get_layer(id);
+		const layers_sorted = this.get_sorted_layers();
 
-		var last = null;
-		for (var i in layers_sorted) {
-			var value = layers_sorted[i];
+		let last = null;
+		for (const i in layers_sorted) {
+			const value = layers_sorted[i];
 
 			if (last != null && last.id == link.id) {
 				return value;
@@ -1307,9 +1302,8 @@ class Base_layers_class {
 	 *
 	 * @param {canvas.context} ctx
 	 * @param {int} layer_id Optional
-	 * @param {boolean} is_preview Optional
 	 */
-	convert_layers_to_canvas(ctx, layer_id = null, is_preview = true) {
+	convert_layers_to_canvas(ctx, layer_id = null) {
 		const newCanvas = this.create_new_canvas(ctx);
 		const layers_sorted = this.get_sorted_layers();
 		this.render_objects(ctx, newCanvas, layers_sorted, ()=>{
@@ -1334,12 +1328,12 @@ class Base_layers_class {
 	convert_layer_to_canvas(layer_id, actual_area = false, can_trim) {
 		if (actual_area == null) actual_area = false;
 		if (layer_id == null) layer_id = config.layer.id;
-		var link = this.get_layer(layer_id);
-		var offset_x = 0;
-		var offset_y = 0;
+		const link = this.get_layer(layer_id);
+		let offset_x = 0;
+		let offset_y = 0;
 
 		//create tmp canvas
-		var canvas = document.createElement("canvas");
+		const canvas = document.createElement("canvas");
 		if (actual_area === true && link.type == "image") {
 			canvas.width = link.width_original;
 			canvas.height = link.height_original;
@@ -1358,7 +1352,7 @@ class Base_layers_class {
 
 		//trim
 		if ((can_trim == true || can_trim == undefined) && link.type != null) {
-			var trim_info = this.Image_trim.get_trim_info(layer_id);
+			const trim_info = this.Image_trim.get_trim_info(layer_id);
 			if (
 				trim_info.left > 0 ||
 				trim_info.top > 0 ||
@@ -1368,8 +1362,8 @@ class Base_layers_class {
 				offset_x = trim_info.left;
 				offset_y = trim_info.top;
 
-				var w = canvas.width - trim_info.left - trim_info.right;
-				var h = canvas.height - trim_info.top - trim_info.bottom;
+				const w = canvas.width - trim_info.left - trim_info.right;
+				const h = canvas.height - trim_info.top - trim_info.bottom;
 				if (w > 1 && h > 1) {
 					this.Helper.change_canvas_size(canvas, w, h, offset_x, offset_y);
 				}
@@ -1433,14 +1427,15 @@ class Base_layers_class {
 	 * @returns {object}
 	 */
 	find_filter_by_id(filter_id, filter_name, layer_id) {
+		let layer;
 		if (typeof layer_id == "undefined") {
-			var layer = config.layer;
+			layer = config.layer;
 		} else {
-			var layer = this.get_layer(layer_id);
+			layer = this.get_layer(layer_id);
 		}
 
-		var filter = {};
-		for (var i in layer.filters) {
+		const filter = {};
+		for (const i in layer.filters) {
 			if (
 				layer.filters[i].name == filter_name &&
 				layer.filters[i].id == filter_id

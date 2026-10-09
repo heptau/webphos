@@ -54,36 +54,36 @@ class Reader {
 
 	u16() {
 		this.need(2);
-		var value = this.view.getUint16(this.pos);
+		const value = this.view.getUint16(this.pos);
 		this.pos += 2;
 		return value;
 	}
 
 	i16() {
 		this.need(2);
-		var value = this.view.getInt16(this.pos);
+		const value = this.view.getInt16(this.pos);
 		this.pos += 2;
 		return value;
 	}
 
 	u32() {
 		this.need(4);
-		var value = this.view.getUint32(this.pos);
+		const value = this.view.getUint32(this.pos);
 		this.pos += 4;
 		return value;
 	}
 
 	i32() {
 		this.need(4);
-		var value = this.view.getInt32(this.pos);
+		const value = this.view.getInt32(this.pos);
 		this.pos += 4;
 		return value;
 	}
 
 	text(count) {
 		this.need(count);
-		var result = '';
-		for (var i = 0; i < count; i++) {
+		let result = '';
+		for (let i = 0; i < count; i++) {
 			result += String.fromCharCode(this.bytes[this.pos + i]);
 		}
 		this.pos += count;
@@ -107,25 +107,25 @@ class Reader {
  * @param {number} expected bytes of the unpacked row
  */
 export function unpack_bits(source, start, length, target, target_start, expected) {
-	var i = start;
-	var end = start + length;
-	var out = 0;
+	let i = start;
+	const end = start + length;
+	let out = 0;
 	while (i < end && out < expected) {
-		var n = source[i++];
+		let n = source[i++];
 		if (n > 127) {
 			n -= 256;
 		}
 		if (n >= 0) {
-			var count = n + 1;
-			for (var k = 0; k < count && out < expected; k++) {
+			const count = n + 1;
+			for (let k = 0; k < count && out < expected; k++) {
 				target[target_start + out++] = i < end ? source[i] : 0;
 				i++;
 			}
 		}
 		else if (n != -128) {
-			var value = i < end ? source[i] : 0;
+			const value = i < end ? source[i] : 0;
 			i++;
-			for (var r = 0; r < 1 - n && out < expected; r++) {
+			for (let r = 0; r < 1 - n && out < expected; r++) {
 				target[target_start + out++] = value;
 			}
 		}
@@ -143,20 +143,20 @@ export function unpack_bits(source, start, length, target, target_start, expecte
  * @returns {Uint8Array} 8 bit values, width * height
  */
 function read_channel(reader, width, height, depth, end) {
-	var compression = reader.u16();
-	var row_bytes = width * (depth / 8);
-	var raw = new Uint8Array(row_bytes * height);
+	const compression = reader.u16();
+	const row_bytes = width * (depth / 8);
+	const raw = new Uint8Array(row_bytes * height);
 	if (compression == 0) {
 		reader.need(raw.length);
 		raw.set(reader.bytes.subarray(reader.pos, reader.pos + raw.length));
 		reader.pos += raw.length;
 	}
 	else if (compression == 1) {
-		var counts = [];
-		for (var y = 0; y < height; y++) {
+		const counts = [];
+		for (let y = 0; y < height; y++) {
 			counts.push(reader.u16());
 		}
-		for (var row = 0; row < height; row++) {
+		for (let row = 0; row < height; row++) {
 			reader.need(counts[row]);
 			unpack_bits(reader.bytes, reader.pos, counts[row], raw, row * row_bytes, row_bytes);
 			reader.pos += counts[row];
@@ -169,8 +169,8 @@ function read_channel(reader, width, height, depth, end) {
 	if (depth == 8) {
 		return raw;
 	}
-	var out = new Uint8Array(width * height);
-	for (var i = 0; i < out.length; i++) {
+	const out = new Uint8Array(width * height);
+	for (let i = 0; i < out.length; i++) {
 		out[i] = raw[i * 2]; //the high byte of 16 bits
 	}
 	return out;
@@ -185,12 +185,12 @@ function read_channel(reader, width, height, depth, end) {
  * @returns {Uint8ClampedArray}
  */
 function to_rgba(channels, count, mode) {
-	var out = new Uint8ClampedArray(count * 4);
-	var red = channels[0];
-	var green = mode == 1 ? channels[0] : channels[1];
-	var blue = mode == 1 ? channels[0] : channels[2];
-	var alpha = channels[-1];
-	for (var i = 0; i < count; i++) {
+	const out = new Uint8ClampedArray(count * 4);
+	const red = channels[0];
+	const green = mode == 1 ? channels[0] : channels[1];
+	const blue = mode == 1 ? channels[0] : channels[2];
+	const alpha = channels[-1];
+	for (let i = 0; i < count; i++) {
 		out[i * 4] = red ? red[i] : 0;
 		out[i * 4 + 1] = green ? green[i] : 0;
 		out[i * 4 + 2] = blue ? blue[i] : 0;
@@ -204,7 +204,7 @@ function to_rgba(channels, count, mode) {
  * @returns {Psd_file}
  */
 export function parse_psd(buffer) {
-	var reader = new Reader(buffer);
+	const reader = new Reader(buffer);
 	if (reader.text(4) != '8BPS') {
 		throw new Error('This is not a Photoshop file.');
 	}
@@ -212,11 +212,11 @@ export function parse_psd(buffer) {
 		throw new Error('Large Photoshop files (PSB) are not supported.');
 	}
 	reader.skip(6);
-	var channel_count = reader.u16();
-	var height = reader.u32();
-	var width = reader.u32();
-	var depth = reader.u16();
-	var mode = reader.u16();
+	const channel_count = reader.u16();
+	const height = reader.u32();
+	const width = reader.u32();
+	const depth = reader.u16();
+	const mode = reader.u16();
 	if (width < 1 || height < 1 || width > MAX_SIDE || height > MAX_SIDE || width * height > MAX_PIXELS) {
 		throw new Error('The picture is too big.');
 	}
@@ -230,62 +230,62 @@ export function parse_psd(buffer) {
 	reader.skip(reader.u32()); //image resources
 
 	/** @type {Psd_layer[]} */
-	var layers = [];
+	const layers = [];
 	/** @type {Object<string, Psd_group>} */
-	var groups = Object.create(null);
-	var layer_section = reader.u32();
-	var section_end = reader.pos + layer_section;
+	const groups = Object.create(null);
+	const layer_section = reader.u32();
+	const section_end = reader.pos + layer_section;
 	if (layer_section > 0) {
-		var info_length = reader.u32();
-		var info_end = reader.pos + info_length;
+		const info_length = reader.u32();
+		const info_end = reader.pos + info_length;
 		if (info_length > 0) {
-			var count = reader.i16();
+			let count = reader.i16();
 			count = Math.abs(count);
-			var records = [];
-			for (var l = 0; l < count; l++) {
-				var top = reader.i32();
-				var left = reader.i32();
-				var bottom = reader.i32();
-				var right = reader.i32();
-				var channels = reader.u16();
+			const records = [];
+			for (let l = 0; l < count; l++) {
+				const top = reader.i32();
+				const left = reader.i32();
+				const bottom = reader.i32();
+				const right = reader.i32();
+				const channels = reader.u16();
 				if (channels > 56) {
 					throw new Error('The file is damaged (too many channels).');
 				}
-				var list = [];
-				for (var c = 0; c < channels; c++) {
+				const list = [];
+				for (let c = 0; c < channels; c++) {
 					list.push({id: reader.i16(), length: reader.u32()});
 				}
 				if (reader.text(4) != '8BIM') {
 					throw new Error('The file is damaged (a layer record).');
 				}
-				var key = reader.text(4);
-				var opacity = reader.u8();
+				const key = reader.text(4);
+				const opacity = reader.u8();
 				reader.u8(); //clipping
-				var flags = reader.u8();
+				const flags = reader.u8();
 				reader.u8();
-				var extra = reader.u32();
-				var extra_end = reader.pos + extra;
+				const extra = reader.u32();
+				const extra_end = reader.pos + extra;
 				reader.need(extra);
 				reader.skip(reader.u32()); //layer mask
 				reader.skip(reader.u32()); //blending ranges
-				var name_start = reader.pos;
-				var name_length = reader.u8();
-				var name = reader.text(name_length);
+				const name_start = reader.pos;
+				const name_length = reader.u8();
+				let name = reader.text(name_length);
 				//tagged blocks: the Unicode name (luni) is better than the ASCII one, lsct marks the start / end of a group
 				reader.pos = name_start + Math.ceil((1 + name_length) / 4) * 4;
-				var section = 0;
+				let section = 0;
 				while (reader.pos + 12 <= extra_end) {
-					var signature = reader.text(4);
-					var tag = reader.text(4);
-					var tag_length = reader.u32();
+					const signature = reader.text(4);
+					const tag = reader.text(4);
+					const tag_length = reader.u32();
 					if (signature != '8BIM' || reader.pos + tag_length > extra_end) {
 						break;
 					}
-					var tag_end = reader.pos + tag_length + (tag_length % 2);
+					const tag_end = reader.pos + tag_length + (tag_length % 2);
 					if (tag == 'luni' && tag_length >= 4) {
-						var letters = Math.min(reader.u32(), 250, Math.floor((tag_length - 4) / 2));
-						var unicode = '';
-						for (var u = 0; u < letters; u++) {
+						const letters = Math.min(reader.u32(), 250, Math.floor((tag_length - 4) / 2));
+						let unicode = '';
+						for (let u = 0; u < letters; u++) {
 							unicode += String.fromCharCode(reader.u16());
 						}
 						if (unicode != '') {
@@ -302,21 +302,21 @@ export function parse_psd(buffer) {
 					x: left, y: top, width: right - left, height: bottom - top, channels: list,
 					opacity: Math.round(opacity / 255 * 100), visible: (flags & 2) == 0, composition: blend_mode(key),
 					name: Array.from(name).filter((c) => c.charCodeAt(0) >= 32).join('').slice(0, 100) || 'Layer',
-					section: section,
+					section,
 				});
 			}
 			//groups: the end of a group comes first (a divider), then its layers, then the record with its name and settings
 			/** @type {any[][]} */
-			var open_groups = [];
-			records.forEach(function (record) {
-				var empty = record.width <= 0 || record.height <= 0;
+			const open_groups = [];
+			records.forEach((record) => {
+				const empty = record.width <= 0 || record.height <= 0;
 				if (empty == false && (record.width > MAX_SIDE || record.height > MAX_SIDE || record.width * record.height > MAX_PIXELS)) {
 					throw new Error('A layer is too big.');
 				}
 				/** @type {Object<number, Uint8Array>} */
-				var planes = {};
-				record.channels.forEach(function (channel) {
-					var end = reader.pos + channel.length;
+				const planes = {};
+				record.channels.forEach((channel) => {
+					const end = reader.pos + channel.length;
 					if (empty || channel.id < -1 || channel.length < 2) {
 						reader.skip(channel.length);
 						return;
@@ -328,9 +328,9 @@ export function parse_psd(buffer) {
 					return;
 				}
 				if (record.section == 1 || record.section == 2) {
-					var members = open_groups.pop() || [];
-					var label = Array.from(record.name).map(function (c) { return c == '/' ? '-' : c; }).join('').trim() || 'Group';
-					members.forEach(function (member) {
+					const members = open_groups.pop() || [];
+					const label = Array.from(record.name).map((c) => { return c == '/' ? '-' : c; }).join('').trim() || 'Group';
+					members.forEach((member) => {
 						member.chain.push({name: label, opacity: record.opacity, composition: record.composition, visible: record.visible});
 					});
 					if (open_groups.length > 0) {
@@ -341,7 +341,7 @@ export function parse_psd(buffer) {
 				if (empty) {
 					return; //an empty layer
 				}
-				var layer = {
+				const layer = {
 					name: record.name, x: record.x, y: record.y, width: record.width, height: record.height,
 					opacity: record.opacity, visible: record.visible, composition: record.composition,
 					data: to_rgba(planes, record.width * record.height, mode), group: null, chain: [],
@@ -351,11 +351,11 @@ export function parse_psd(buffer) {
 					open_groups[open_groups.length - 1].push(layer);
 				}
 			});
-			layers.forEach(function (layer) {
-				var chain = layer['chain'].slice().reverse(); //outermost group first
+			layers.forEach((layer) => {
+				const chain = layer['chain'].slice().reverse(); //outermost group first
 				delete layer['chain'];
-				var path = [];
-				chain.slice(0, 5).forEach(function (entry) {
+				const path = [];
+				chain.slice(0, 5).forEach((entry) => {
 					path.push(entry.name.slice(0, 60));
 					groups[path.join('/')] = {opacity: entry.opacity, composition: entry.composition};
 					if (entry.visible == false) {
@@ -371,37 +371,37 @@ export function parse_psd(buffer) {
 
 	//the flattened picture is the fallback when a file has no layers
 	/** @type {Uint8ClampedArray|null} */
-	var composite = null;
+	let composite = null;
 	try {
-		var compression = reader.u16();
-		var plane_size = width * height * (depth / 8);
-		var wanted = Math.min(channel_count, 4);
-		var planes_all = {};
+		const compression = reader.u16();
+		const plane_size = width * height * (depth / 8);
+		const wanted = Math.min(channel_count, 4);
+		const planes_all = {};
 		if (compression == 0 || compression == 1) {
-			var counts_all = [];
+			const counts_all = [];
 			if (compression == 1) {
-				for (var n = 0; n < channel_count * height; n++) {
+				for (let n = 0; n < channel_count * height; n++) {
 					counts_all.push(reader.u16());
 				}
 			}
-			for (var ch = 0; ch < wanted; ch++) {
-				var raw = new Uint8Array(plane_size);
-				var row_bytes = width * (depth / 8);
-				for (var y = 0; y < height; y++) {
+			for (let ch = 0; ch < wanted; ch++) {
+				const raw = new Uint8Array(plane_size);
+				const row_bytes = width * (depth / 8);
+				for (let y = 0; y < height; y++) {
 					if (compression == 0) {
 						reader.need(row_bytes);
 						raw.set(reader.bytes.subarray(reader.pos, reader.pos + row_bytes), y * row_bytes);
 						reader.pos += row_bytes;
 					}
 					else {
-						var packed = counts_all[ch * height + y];
+						const packed = counts_all[ch * height + y];
 						reader.need(packed);
 						unpack_bits(reader.bytes, reader.pos, packed, raw, y * row_bytes, row_bytes);
 						reader.pos += packed;
 					}
 				}
-				var plane = new Uint8Array(width * height);
-				for (var p = 0; p < plane.length; p++) {
+				const plane = new Uint8Array(width * height);
+				for (let p = 0; p < plane.length; p++) {
 					plane[p] = depth == 8 ? raw[p] : raw[p * 2];
 				}
 				planes_all[ch] = plane;
@@ -416,9 +416,9 @@ export function parse_psd(buffer) {
 			composite = to_rgba(planes_all, width * height, mode);
 		}
 	}
-	catch (error) {
+	catch {
 		composite = null;
 	}
 
-	return {width: width, height: height, layers: layers, groups: groups, composite: composite};
+	return {width, height, layers, groups, composite};
 }

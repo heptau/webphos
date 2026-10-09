@@ -57,7 +57,7 @@ export class Reset_layers_action extends Base_action {
 			this.insert_action = null;
 		}
 		if (this.delete_actions) {
-			for (let action of this.delete_actions) {
+			for (const action of this.delete_actions) {
 				action.free();
 			}
 			this.delete_actions = null;

@@ -19,11 +19,11 @@ import File_open_webcam_class from './open-webcam.js';
 import menuDefinition from './../../config-menu.js';
 import { add_recent, list_recent, get_recent, clear_recent } from './../../libs/recent-files.js';
 
-var instance = null;
+let instance = null;
 
-/** 
+/**
  * manages files / open
- * 
+ *
  * @author ViliusL
  */
 class File_open_class {
@@ -35,7 +35,6 @@ class File_open_class {
 		}
 		instance = this;
 
-		var _this = this;
 		this.POP = new Dialog_class();
 		this.Base_layers = new Base_layers_class();
 		this.Base_gui = new Base_gui_class();
@@ -44,8 +43,8 @@ class File_open_class {
 		this.GUI_tools = new GUI_tools_class();
 
 		//clipboard class
-		this.Clipboard_class = new Clipboard_class(function (data, w, h) {
-			_this.on_paste(data, w, h);
+		this.Clipboard_class = new Clipboard_class((data, w, h) => {
+			this.on_paste(data, w, h);
 		});
 
 		//sub modules
@@ -61,23 +60,22 @@ class File_open_class {
 	}
 
 	events() {
-		var _this = this;
 
-		window.ondrop = function (e) {
+		window.ondrop = (e) => {
 			//drop
 			e.preventDefault();
-			_this.open_handler(e);
+			this.open_handler(e);
 		};
 		window.ondragover = function (e) {
 			e.preventDefault();
 		};
 	}
 
-	on_paste(data, width, height) {
-		var new_layer = {
+	on_paste(data) {
+		const new_layer = {
 			name: 'Paste',
 			type: 'image',
-			data: data,
+			data,
 		};
 		app.State.do_action(
 			new app.Actions.Insert_layer_action(new_layer)
@@ -88,13 +86,13 @@ class File_open_class {
 	 * fills File > Open Recent (the menu definition array is updated in place)
 	 */
 	async refresh_recent_menu() {
-		var file_menu = menuDefinition.find((item) => item.name == 'File');
-		var recent_menu = file_menu && file_menu.children.find((item) => item.name == 'Open Recent');
+		const file_menu = menuDefinition.find((item) => item.name == 'File');
+		const recent_menu = file_menu && file_menu.children.find((item) => item.name == 'Open Recent');
 		if (!recent_menu) {
 			return;
 		}
-		var items = await list_recent();
-		var children = items.map((item) => ({
+		const items = await list_recent();
+		const children = items.map((item) => ({
 			name: item.name,
 			target: 'file/open.open_recent',
 			parameter: item.id,
@@ -114,7 +112,7 @@ class File_open_class {
 	 * @param {number} id id from the recent files list
 	 */
 	async open_recent(id) {
-		var file = await get_recent(parseInt(id, 10));
+		const file = await get_recent(parseInt(id, 10));
 		if (!file) {
 			alertify.error(t('File not found.'));
 			return;
@@ -128,54 +126,52 @@ class File_open_class {
 	}
 
 	open_file() {
-		var _this = this;
 
 		alertify.success(t('You can also drag and drop items into browser.'));
 
 		document.getElementById("tmp").innerHTML = '';
-		var a = document.createElement('input');
+		const a = document.createElement('input');
 		a.setAttribute("id", "file_open");
 		a.type = 'file';
 		a.multiple = 'multiple';
 		document.getElementById("tmp").appendChild(a);
-		document.getElementById('file_open').addEventListener('change', function (e) {
-			_this.open_handler(e);
+		document.getElementById('file_open').addEventListener('change', (e) => {
+			this.open_handler(e);
 		}, false);
 
 		//force click
 		document.querySelector('#file_open').click();
 	}
-	
+
 	/**
 	 * File > Open > Open as Layer - the pictures are added to the current document as new layers
 	 * (File > Open File would open them in a new document tab)
 	 */
 	open_as_layer() {
-		var _this = this;
 		document.getElementById("tmp").innerHTML = '';
-		var input = document.createElement('input');
+		const input = document.createElement('input');
 		input.setAttribute("id", "file_open_layer");
 		input.type = 'file';
 		input.multiple = 'multiple';
 		input.accept = 'image/*';
 		document.getElementById("tmp").appendChild(input);
-		input.addEventListener('change', function () {
-			_this.add_files_as_layers(Array.from(input.files));
+		input.addEventListener('change', () => {
+			this.add_files_as_layers(Array.from(input.files));
 		}, false);
 		input.click();
 	}
 
 	async add_files_as_layers(files) {
-		for (var file of files) {
-			var validation = validate_file(file);
+		for (const file of files) {
+			const validation = validate_file(file);
 			if (!validation.valid) {
 				alertify.error(validation.error);
 				continue;
 			}
 			try {
 				//createImageBitmap: the page does not allow blob: images (CSP)
-				var bitmap = await createImageBitmap(file);
-				var canvas = document.createElement('canvas');
+				const bitmap = await createImageBitmap(file);
+				const canvas = document.createElement('canvas');
 				canvas.width = bitmap.width;
 				canvas.height = bitmap.height;
 				canvas.getContext('2d').drawImage(bitmap, 0, 0);
@@ -192,7 +188,7 @@ class File_open_class {
 					])
 				);
 			}
-			catch (error) {
+			catch {
 				alertify.error(t('Sorry, image could not be loaded.'));
 			}
 		}
@@ -203,16 +199,15 @@ class File_open_class {
 	}
 
 	open_dir() {
-		var _this = this;
 
 		document.getElementById("tmp").innerHTML = '';
-		var a = document.createElement('input');
+		const a = document.createElement('input');
 		a.setAttribute("id", "file_open_dir");
 		a.type = 'file';
 		a.webkitdirectory = 'webkitdirectory';
 		document.getElementById("tmp").appendChild(a);
-		document.getElementById('file_open_dir').addEventListener('change', function (e) {
-			_this.open_handler(e);
+		document.getElementById('file_open_dir').addEventListener('change', (e) => {
+			this.open_handler(e);
 		}, false);
 
 		//force click
@@ -221,40 +216,38 @@ class File_open_class {
 
 	/**
 	 * opens data URLs, like: "data:image/png;base64,xxxxxx"
-	 * 
+	 *
 	 * data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAG0lEQVQYV2N89+7df0FBQQbG/////3///j0DAF9wCsg9spQfAAAAAElFTkSuQmCC
 	 */
 	open_data_url() {
-		var _this = this;
 
-		var settings = {
+		const settings = {
 			title: 'Open data URL',
 			params: [
 				{name: "data", title: "Data URL:", type: "textarea", value: ""},
 			],
-			on_finish: function (params) {
-				_this.file_open_data_url_handler(params.data);
+			on_finish: (params) => {
+				this.file_open_data_url_handler(params.data);
 			},
 		};
 		this.POP.show(settings);
 	}
 
 	file_open_data_url_handler(data) {
-		var _this = this;
 		if (data == '')
 			return;
 
 		// Validate data URL
-		var validation = validate_data_url(data);
+		const validation = validate_data_url(data);
 		if (!validation.valid) {
 			alertify.error(validation.error);
 			return;
 		}
 
-		var img = new Image();
+		const img = new Image();
 		img.crossOrigin = "Anonymous";
 		img.onload = function () {
-			var new_layer = {
+			const new_layer = {
 				name: "Data URL",
 				type: 'image',
 				link: img,
@@ -273,7 +266,7 @@ class File_open_class {
 				config.need_render = true;
 			};
 		};
-		img.onerror = function (ex) {
+		img.onerror = function () {
 			alertify.error(t('Sorry, image could not be loaded. Try copy image and paste it.'));
 		};
 		img.src = data;
@@ -284,10 +277,10 @@ class File_open_class {
 	}
 
 	async open_handler(e) {
-		var _this = this;
-		var files = e.target.files;
+		let i, f, items, item, sanitizedName;
+		let files = e.target.files;
 
-		var auto_increment = this.Base_layers.auto_increment;
+		let auto_increment = this.Base_layers.auto_increment;
 
 		if (files == undefined) {
 			//drag and drop
@@ -295,36 +288,36 @@ class File_open_class {
 		}
 
 		//an image opens in a new document tab (if the current document has content and the setting allows it)
-		var has_image = Array.from(files).some((file) => (file.type && file.type.match('image.*')) || /\.psd$/i.test(file.name));
+		const has_image = Array.from(files).some((file) => (file.type && file.type.match('image.*')) || /\.psd$/i.test(file.name));
 		if (has_image && this.Tools_settings.get_setting('open_in_new_tab') && app.GUI.GUI_documents.has_content()) {
 			await app.GUI.GUI_documents.new_blank();
 			auto_increment = this.Base_layers.auto_increment;
 		}
 
 		//sort
-		var orders = [];
-		for (var i = 0, f; i < files.length; i++) {
+		const orders = [];
+		for (i = 0; i < files.length; i++) {
 			orders.push(files[i].name);
 		}
 		orders.sort();
-		var order_map = [];
-		for (var i in orders) {
+		const order_map = [];
+		for (i in orders) {
 			order_map[orders[i]] = parseInt(i);
 		}
 
 		//check if dropped directory
-		var dir_opened = false;
+		let dir_opened = false;
 		if (e.dataTransfer && e.dataTransfer.items)	{
-			var items = e.dataTransfer.items;
-			for (var i=0; i<items.length; i++) {
-				var item = items[i].webkitGetAsEntry();
+			items = e.dataTransfer.items;
+			for (i=0; i<items.length; i++) {
+				item = items[i].webkitGetAsEntry();
 				if(item && item.isDirectory){
 					dir_opened = true;
 				}
 			}
 		}
 
-		for (var i = 0, f; i < files.length; i++) {
+		for (i = 0; i < files.length; i++) {
 			f = files[i];
 
 			//Photoshop files are read by our own reader
@@ -334,7 +327,7 @@ class File_open_class {
 			}
 
 			// Validate file
-			var fileValidation = validate_file(f);
+			const fileValidation = validate_file(f);
 			if (!fileValidation.valid) {
 				if(dir_opened == false) {
 					alertify.error(fileValidation.error);
@@ -343,7 +336,7 @@ class File_open_class {
 			}
 
 			// Sanitize filename
-			var sanitizedName = sanitize_filename(f.name);
+			sanitizedName = sanitize_filename(f.name);
 
 			//remember for File > Open Recent
 			add_recent(f, sanitizedName).then(() => this.refresh_recent_menu());
@@ -352,19 +345,19 @@ class File_open_class {
 				this.SAVE_NAME = sanitizedName.split('.')[sanitizedName.split('.').length - 2];
 			}
 
-			var FR = new FileReader();
+			const FR = new FileReader();
 			FR.file = files[i];
 
-			FR.onload = function (event) {
-				if (this.file.type.match('image.*')) {
-					var order = auto_increment + order_map[this.file.name];
+			FR.onload = (event) => {
+				if (FR.file.type.match('image.*')) {
+					const order = auto_increment + order_map[FR.file.name];
 					//image
-					var new_layer = {
+					const new_layer = {
 						name: sanitizedName,
 						type: 'image',
 						data: event.target.result,
-						order: order,
-						_exif: _this.extract_exif(this.file)
+						order,
+						_exif: this.extract_exif(FR.file)
 					};
 					app.State.do_action(
 						new app.Actions.Bundle_action('open_image', 'Open Image', [
@@ -374,12 +367,12 @@ class File_open_class {
 				}
 				else {
 					//json - validate JSON file
-					validate_json_file(this.file).then(function(result) {
+					validate_json_file(FR.file).then((result) => {
 						if (!result.valid) {
 							alertify.error(result.error);
 							return;
 						}
-						_this.load_json(result.data);
+						this.load_json(result.data);
 					});
 				}
 			};
@@ -396,9 +389,9 @@ class File_open_class {
 
 		//try to open dropped directory
 		if (e.dataTransfer && e.dataTransfer.items)	{
-			var items = e.dataTransfer.items;
-			for (var i=0; i<items.length; i++) {
-				var item = items[i].webkitGetAsEntry();
+			items = e.dataTransfer.items;
+			for (i=0; i<items.length; i++) {
+				item = items[i].webkitGetAsEntry();
 				if (item && item.isDirectory == true) {
 					this.traverseFileTree(item);
 				}
@@ -417,50 +410,50 @@ class File_open_class {
 			alertify.error(t('The file is too big.'));
 			return;
 		}
-		var psd;
+		let psd;
 		try {
 			psd = parse_psd(await file.arrayBuffer());
 		}
 		catch (error) {
-			alertify.error(t('The Photoshop file could not be read:') + ' ' + t(error && error.message ? error.message : 'Unknown error'));
+			alertify.error(`${t('The Photoshop file could not be read:')  } ${  t(error && error.message ? error.message : 'Unknown error')}`);
 			return;
 		}
-		var name = sanitize_filename(file.name);
+		const name = sanitize_filename(file.name);
 		this.SAVE_NAME = name.replace(/\.psd$/i, '');
-		var to_data = (data, width, height) => {
-			var canvas = document.createElement('canvas');
+		const to_data = (data, width, height) => {
+			const canvas = document.createElement('canvas');
 			canvas.width = width;
 			canvas.height = height;
 			canvas.getContext('2d').putImageData(new ImageData(data, width, height), 0, 0);
-			var url = canvas.toDataURL('image/png');
+			const url = canvas.toDataURL('image/png');
 			canvas.width = 1;
 			canvas.height = 1;
 			return url;
 		};
 		//the opacity and blend mode of the groups of a layer, as they are kept on every layer of a group
-		var group_props_of_layer = (layer) => {
-			var map = {};
+		const group_props_of_layer = (layer) => {
+			const map = {};
 			group_ancestors(layer.group).forEach((path) => {
-				var group = psd.groups[path];
+				const group = psd.groups[path];
 				if (group && is_isolated({opacity: group.opacity, composition: group.composition, mask: null})) {
 					map[path] = {opacity: group.opacity, composition: group.composition, mask: null};
 				}
 			});
 			return Object.keys(map).length > 0 ? map : null;
 		};
-		var layers = psd.layers;
+		let layers = psd.layers;
 		if (layers.length == 0 && psd.composite) {
-			layers = [{name: name, x: 0, y: 0, width: psd.width, height: psd.height, opacity: 100, visible: true, composition: 'source-over', data: psd.composite}];
+			layers = [{name, x: 0, y: 0, width: psd.width, height: psd.height, opacity: 100, visible: true, composition: 'source-over', data: psd.composite}];
 		}
 		if (layers.length == 0) {
 			alertify.error(t('The Photoshop file has no picture.'));
 			return;
 		}
-		var actions = [];
-		var first = layers[0];
+		const actions = [];
+		const first = layers[0];
 		if (first.x != 0 || first.y != 0 || first.width != psd.width || first.height != psd.height) {
 			//the first layer sets the size of the document, so a transparent one with the size of the file comes first
-			var base = document.createElement('canvas');
+			const base = document.createElement('canvas');
 			base.width = psd.width;
 			base.height = psd.height;
 			actions.push(new app.Actions.Insert_layer_action({
@@ -487,25 +480,23 @@ class File_open_class {
 	}
 
 	traverseFileTree(item, path) {
-		var _this = this;
-		var auto_increment = this.Base_layers.auto_increment;
 
 		path = path || "";
 		if (item.isFile) {
-			item.file(async function(file) {
-				var FR = new FileReader();
+			item.file(async (file) => {
+				const FR = new FileReader();
 				FR.file = file;
 
-				FR.onload = function (event) {
-					if (this.file.type.match('image.*')
+				FR.onload = (event) => {
+					if (file.type.match('image.*')
 						//below is fix for firefox, it has empty type
-						|| (this.file.type == '' && this.file.name.match(/\.(png|jpg|jpeg|webp|gif|avif)/g))) {
+						|| (file.type == '' && file.name.match(/\.(png|jpg|jpeg|webp|gif|avif)/g))) {
 						//image
-						var new_layer = {
-							name: this.file.name,
+						const new_layer = {
+							name: file.name,
 							type: 'image',
 							data: event.target.result,
-							_exif: _this.extract_exif(this.file)
+							_exif: this.extract_exif(file)
 						};
 						app.State.do_action(
 							new app.Actions.Bundle_action('open_image', 'Open Image', [
@@ -524,15 +515,15 @@ class File_open_class {
 		}
 		else if (item.isDirectory) {
 			// Get folder contents
-			var dirReader = item.createReader();
-			dirReader.readEntries(function(entries) {
-				for (var i=0; i<entries.length; i++) {
-					_this.traverseFileTree(entries[i], path + item.name + "/");
+			const dirReader = item.createReader();
+			dirReader.readEntries((entries) => {
+				for (let i=0; i<entries.length; i++) {
+					this.traverseFileTree(entries[i], `${path + item.name  }/`);
 				}
 			});
 		}
 	}
-	
+
 	/**
 	 * check if url has url params, for example: https://viliusle.github.io/miniPaint/?image=http://i.imgur.com/ATda8Ae.jpg
 	 */
@@ -562,7 +553,7 @@ class File_open_class {
 	 * Returns an action that saves the exif data of the provided object to the current layer
 	 */
 	extract_exif(object) {
-		var exif_data = {
+		const exif_data = {
 			general: [],
 			exif: [],
 		};
@@ -577,7 +568,7 @@ class File_open_class {
 		if (object.name != undefined)
 			exif_data.general.Name = object.name;
 		if (object.size != undefined)
-			exif_data.general.Size = this.Helper.number_format(object.size / 1000, 2) + ' KB';
+			exif_data.general.Size = `${this.Helper.number_format(object.size / 1000, 2)  } KB`;
 		if (object.type != undefined)
 			exif_data.general.Type = object.type;
 		if (object.lastModified != undefined)
@@ -589,4 +580,3 @@ class File_open_class {
 }
 
 export default File_open_class;
-

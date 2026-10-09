@@ -1,14 +1,13 @@
 import config from './../../config.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
-import { has_modifier } from './../../libs/shortcuts.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Tools_settings_class from './../tools/settings.js';
 import Base_gui_class from './../../core/base-gui.js';
 import { UNIT_NAMES, is_unit, clamp_dpi } from './../../libs/units.js';
 import app from './../../app.js';
 
-var instance = null;
+let instance = null;
 
 class Image_information_class {
 
@@ -32,21 +31,20 @@ class Image_information_class {
 	}
 
 	information() {
-		var _this = this;
-		var pixels = config.WIDTH * config.HEIGHT;
+		let pixels = config.WIDTH * config.HEIGHT;
 		pixels = this.Helper.number_format(pixels, 0);
 
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
-		var width = this.Helper.get_user_unit(config.WIDTH, units, resolution);
-		var height = this.Helper.get_user_unit(config.HEIGHT, units, resolution);
+		const width = this.Helper.get_user_unit(config.WIDTH, units, resolution);
+		const height = this.Helper.get_user_unit(config.HEIGHT, units, resolution);
 
-		var settings = {
+		const settings = {
 			title: 'Information',
 			params: [
-				{title: "Width:", value: width + ' ' + units},
-				{title: "Height:", value: height + ' ' + units},
+				{title: "Width:", value: `${width  } ${  units}`},
+				{title: "Height:", value: `${height  } ${  units}`},
 				{title: "Pixels:", value: pixels},
 				{name: "dpi", title: "Resolution (dpi):", value: parseInt(resolution, 10) || 72},
 				{name: "units", title: "Units:", type: "select", values: UNIT_NAMES, value: units},
@@ -54,12 +52,12 @@ class Image_information_class {
 				{title: "Unique colors:", value: '...'},
 			],
 			on_finish: (params) => {
-				var dpi = Math.round(parseFloat(params.dpi));
+				let dpi = Math.round(parseFloat(params.dpi));
 				if (isNaN(dpi)) {
 					return;
 				}
 				dpi = clamp_dpi(dpi);
-				var new_units = is_unit(params.units) ? params.units : units;
+				const new_units = is_unit(params.units) ? params.units : units;
 				if (dpi != (parseInt(resolution, 10) || 72) || new_units != units) {
 					app.State.do_action(new app.Actions.Update_config_action({RESOLUTION: dpi, UNITS: new_units})).then(() => {
 						this.Base_gui.GUI_information.update_units();
@@ -68,28 +66,29 @@ class Image_information_class {
 			},
 		};
 		if(units != 'pixels'){
-			settings.params[0].value += " (" + config.WIDTH + " pixels)";
-			settings.params[1].value += " (" + config.HEIGHT + " pixels)";
+			settings.params[0].value += ` (${config.WIDTH} pixels)`;
+			settings.params[1].value += ` (${config.HEIGHT} pixels)`;
 		}
 
 		//exif data
 		if (config.layer._exif != undefined) {
 			//show exif and general data
-			var exif_data = config.layer._exif;
+			let i;
+			const exif_data = config.layer._exif;
 
 			//show general data
-			for (var i in exif_data.general) {
-				settings.params.push({title: i + ":", value: exif_data.general[i]});
+			for (i in exif_data.general) {
+				settings.params.push({title: `${i  }:`, value: exif_data.general[i]});
 			}
 
 			//show exif data
-			var n = 0;
-			for (var i in exif_data.exif) {
+			let n = 0;
+			for (i in exif_data.exif) {
 				if (i == 'undefined')
 					continue;
 				if (n == 0)
 					settings.params.push({title: "==== EXIF ====", value: ''});
-				settings.params.push({title: i + ":", value: exif_data.exif[i]});
+				settings.params.push({title: `${i  }:`, value: exif_data.exif[i]});
 				n++;
 			}
 		}
@@ -97,33 +96,34 @@ class Image_information_class {
 		this.POP.show(settings);
 
 		//calc colors
-		setTimeout(function () {
-			var colors = _this.unique_colors_count();
-			colors = _this.Helper.number_format(colors, 0);
+		setTimeout(() => {
+			let colors = this.unique_colors_count();
+			colors = this.Helper.number_format(colors, 0);
 			document.getElementById('pop_data_uniquecolo').innerHTML = colors;
 		}, 50);
 	}
 
 	unique_colors_count() {
-		var method = 'v2'; //v1 or v2
+		let n, i, key;
+		const method = 'v2'; //v1 or v2
 
 		if (config.WIDTH * config.HEIGHT > 20 * 1000 * 1000) {
 			return '-';
 		}
 
-		var canvas = this.Base_layers.convert_layer_to_canvas();
-		var ctx = canvas.getContext("2d");
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var imgData = img.data;
+		const canvas = this.Base_layers.convert_layer_to_canvas();
+		const ctx = canvas.getContext("2d");
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const imgData = img.data;
 
 		//v1 - simple, slow
 		if (method == 'v1') {
-			var colors = [];
-			var n = 0;
-			for (var i = 0; i < imgData.length; i += 4) {
+			const colors = [];
+			n = 0;
+			for (i = 0; i < imgData.length; i += 4) {
 				if (imgData[i + 3] == 0)
 					continue;	//transparent
-				var key = imgData[i] + "." + imgData[i + 1] + "." + imgData[i + 2];
+				key = `${imgData[i]  }.${imgData[i + 1]}.${  imgData[i + 2]}`;
 				if (colors[key] == undefined) {
 					colors[key] = 1;
 					n++;
@@ -133,13 +133,13 @@ class Image_information_class {
 
 		//v2 - 30% faster
 		else if (method == 'v2') {
-			var buffer32 = new Uint32Array(imgData.buffer);
-			var len = buffer32.length;
-			var stats = {};
-			var n = 0;
+			const buffer32 = new Uint32Array(imgData.buffer);
+			const len = buffer32.length;
+			const stats = {};
+			n = 0;
 
-			for (var i = 0; i < len; i++) {
-				var key = "" + (buffer32[i] & 0xffffff);
+			for (i = 0; i < len; i++) {
+				key = `${  buffer32[i] & 0xffffff}`;
 				if (stats[key] == undefined) {
 					stats[key] = 0;
 					n++;

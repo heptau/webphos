@@ -23,11 +23,11 @@ class Effects_blueprint_class {
 		}
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var data = this.change(canvas, canvas.width, canvas.height);
+		const data = this.change(canvas, canvas.width, canvas.height);
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(data, 0, 0);
 
@@ -42,29 +42,29 @@ class Effects_blueprint_class {
 			//init glfx lib
 			this.fx_filter = glfx.canvas();
 		}
-		var ctx = canvas.getContext("2d");
-		
+		const ctx = canvas.getContext("2d");
+
 		//create blue layer
-		var canvas2 = document.createElement('canvas');
-		var ctx2 = canvas2.getContext("2d");
+		const canvas2 = document.createElement('canvas');
+		const ctx2 = canvas2.getContext("2d");
 		canvas2.width = width;
 		canvas2.height = height;
 		ctx2.fillStyle = '#0e58a3';
 		ctx2.fillRect(0, 0, width, height);
-		
+
 		//apply edges
-		var img = ctx.getImageData(0, 0, width, height);
-		var img = this.ImageFilters.Edge(img);
+		let img = ctx.getImageData(0, 0, width, height);
+		img = this.ImageFilters.Edge(img);
 		ctx.putImageData(img, 0, 0);
-		
+
 		//denoise
-		var texture = this.fx_filter.texture(canvas);
+		const texture = this.fx_filter.texture(canvas);
 		this.fx_filter.draw(texture).denoise(20).update();	//effect
 		canvas = this.fx_filter;
-		
+
 		//Brightness
-		var img = ctx.getImageData(0, 0, width, height);
-		var img = this.ImageFilters.BrightnessContrastPhotoshop(img, 80, 0);
+		img = ctx.getImageData(0, 0, width, height);
+		img = this.ImageFilters.BrightnessContrastPhotoshop(img, 80, 0);
 		ctx.putImageData(img, 0, 0);
 
 		//merge
@@ -76,30 +76,30 @@ class Effects_blueprint_class {
 
 		//draw lines
 		this.draw_grid(ctx2, 20);
-		
+
 		return canvas2;
 	}
-	
+
 	/**
 	 * draw grid
-	 * 
+	 *
 	 * @param {CanvasContext} ctx
 	 * @param {Int} size
 	 */
 	draw_grid(ctx, size) {
+		let i;
 		if (this.grid == false)
 			return;
 
-		var width = config.WIDTH;
-		var height = config.HEIGHT;
-		var color_main = 'rgba(255, 255, 255, 0.5)';
-		var color_small = 'rgba(255, 255, 255, 0.1)';
+		const width = config.WIDTH;
+		const height = config.HEIGHT;
+		const color_main = 'rgba(255, 255, 255, 0.5)';
+		const color_small = 'rgba(255, 255, 255, 0.1)';
 
 		//size
 		if (size != undefined && size != undefined)
 			this.grid_size = [size, size];
 		else {
-			size = this.grid_size[0];
 			size = this.grid_size[1];
 		}
 		size = parseInt(size);
@@ -110,7 +110,7 @@ class Effects_blueprint_class {
 			size = 2;
 		if (size < 2)
 			size = 2;
-		for (var i = size; i < width; i = i + size) {
+		for (i = size; i < width; i = i + size) {
 			if (size == 0)
 				break;
 			if (i % (size * 5) == 0) {
@@ -126,7 +126,7 @@ class Effects_blueprint_class {
 			ctx.lineTo(0.5 + i, height);
 			ctx.stroke();
 		}
-		for (var i = size; i < height; i = i + size) {
+		for (i = size; i < height; i = i + size) {
 			if (size == 0)
 				break;
 			if (i % (size * 5) == 0) {
@@ -145,12 +145,12 @@ class Effects_blueprint_class {
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 		ctx.drawImage(canvas_thumb, 0, 0);
 
 		//now update
-		var data = this.change(canvas, canvas_thumb.width, canvas_thumb.height);
+		const data = this.change(canvas, canvas_thumb.width, canvas_thumb.height);
 		ctx.drawImage(data, 0, 0);
 	}
 }

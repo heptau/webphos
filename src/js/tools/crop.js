@@ -12,7 +12,6 @@ class Crop_class extends Base_tools_class {
 
 	constructor(ctx) {
 		super();
-		var _this = this;
 		this.Base_layers = new Base_layers_class();
 		this.Base_gui = new Base_gui_class();
 		this.GUI_tools = new GUI_tools_class();
@@ -24,7 +23,7 @@ class Crop_class extends Base_tools_class {
 			width: null,
 			height: null,
 		};
-		var sel_config = {
+		const sel_config = {
 			enable_background: false,
 			shade_outside: true,
 			enable_borders: true,
@@ -32,8 +31,8 @@ class Crop_class extends Base_tools_class {
 			crop_lines: true,
 			enable_rotation: false,
 			enable_move: false,
-			data_function: function () {
-				return _this.selection;
+			data_function: () => {
+				return this.selection;
 			},
 		};
 		this.mousedown_selection = null;
@@ -56,7 +55,7 @@ class Crop_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (this.Base_selection.is_drag == false || mouse.click_valid == false)
 			return;
 
@@ -71,7 +70,7 @@ class Crop_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (this.Base_selection.is_drag == false || mouse.is_drag == false) {
 			return;
 		}
@@ -82,14 +81,14 @@ class Crop_class extends Base_tools_class {
 			return;
 		}
 
-		var width = mouse.x - mouse.click_x;
-		var height = mouse.y - mouse.click_y;
-		
+		let width = mouse.x - mouse.click_x;
+		let height = mouse.y - mouse.click_y;
+
 		if(e.ctrlKey == true || e.metaKey){
 			//ctrl is pressed - crop will be calculated based on global width and height ratio
-			var ratio = config.WIDTH / config.HEIGHT;
-			var width_new = Math.round(height * ratio);
-			var height_new = Math.round(width / ratio);
+			const ratio = config.WIDTH / config.HEIGHT;
+			const width_new = Math.round(height * ratio);
+			const height_new = Math.round(width / ratio);
 
 			if(Math.abs(width * 100 / width_new) > Math.abs(height * 100 / height_new)){
 				if (width * 100 / width_new > 0)
@@ -109,7 +108,7 @@ class Crop_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 
 		if (!this.Base_selection.is_drag) {
 			return;
@@ -118,8 +117,8 @@ class Crop_class extends Base_tools_class {
 			return;
 		}
 
-		var width = mouse.x - this.selection.x;
-		var height = mouse.y - this.selection.y;
+		const width = mouse.x - this.selection.x;
+		const height = mouse.y - this.selection.y;
 
 		if (width == 0 || height == 0) {
 			//cancel selection
@@ -130,9 +129,9 @@ class Crop_class extends Base_tools_class {
 
 		if (this.selection.width != null) {
 			//make sure coords not negative
-			var details = this.selection;
-			var x = details.x;
-			var y = details.y;
+			const details = this.selection;
+			let x = details.x;
+			let y = details.y;
 			if (details.width < 0) {
 				x = x + details.width;
 			}
@@ -140,8 +139,8 @@ class Crop_class extends Base_tools_class {
 				y = y + details.height;
 			}
 			this.selection = {
-				x: x,
-				y: y,
+				x,
+				y,
 				width: Math.abs(details.width),
 				height: Math.abs(details.height),
 			};
@@ -168,7 +167,7 @@ class Crop_class extends Base_tools_class {
 		);
 	}
 
-	render(ctx, layer) {
+	render() {
 		//nothing
 	}
 
@@ -176,8 +175,9 @@ class Crop_class extends Base_tools_class {
 	 * do actual crop
 	 */
 	async on_params_update() {
-		var params = this.getParams();
-		var selection = this.selection;
+		let i, link;
+		const params = this.getParams();
+		const selection = this.selection;
 		params.crop = true;
 		this.GUI_tools.show_action_attributes();
 
@@ -185,21 +185,21 @@ class Crop_class extends Base_tools_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		
+
 		//check for rotation
-		var rotated_name = false;
-		for (var i in config.layers) {
-			var link = config.layers[i];
+		let rotated_name = false;
+		for (i in config.layers) {
+			link = config.layers[i];
 			if (link.type == null)
 				continue;
-			
+
 			if(link.rotate > 0){
 				rotated_name = link.name;
 				break;
 			}
 		}
 		if (rotated_name !== false) {
-			alertify.error(t('Crop on rotated layer is not supported. Convert it to raster to continue.') + '('+ rotated_name + ')');
+			alertify.error(`${t('Crop on rotated layer is not supported. Convert it to raster to continue.')  }(${rotated_name})`);
 			return;
 		}
 
@@ -209,10 +209,10 @@ class Crop_class extends Base_tools_class {
 		selection.width = Math.min(selection.width, config.WIDTH);
 		selection.height = Math.min(selection.height, config.HEIGHT);
 
-		let actions = [];
+		const actions = [];
 
-		for (var i in config.layers) {
-			var link = config.layers[i];
+		for (i in config.layers) {
+			link = config.layers[i];
 			if (link.type == null)
 				continue;
 
@@ -241,16 +241,16 @@ class Crop_class extends Base_tools_class {
 				let bottom = 0;
 				if (y + height > selection.height)
 					bottom = y + height - selection.height;
-				let crop_width = width - left - right;
-				let crop_height = height - top - bottom;
+				const crop_width = width - left - right;
+				const crop_height = height - top - bottom;
 
 				//if image was streched
-				let width_ratio = (width / width_original);
-				let height_ratio = (height / height_original);
+				const width_ratio = (width / width_original);
+				const height_ratio = (height / height_original);
 
 				//create smaller canvas
-				let canvas = document.createElement('canvas');
-				let ctx = canvas.getContext("2d");
+				const canvas = document.createElement('canvas');
+				const ctx = canvas.getContext("2d");
 				canvas.width = crop_width / width_ratio;
 				canvas.height = crop_height / height_ratio;
 

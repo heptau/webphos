@@ -16,7 +16,6 @@ class Tools_contentFill_class {
 	}
 
 	content_fill() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
@@ -28,19 +27,19 @@ class Tools_contentFill_class {
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Content Fill',
 			preview: true,
-			on_change: function (params, canvas_preview, w, h, canvasElement) {
+			on_change: (params, canvas_preview, w, h) => {
 				canvas_preview.clearRect(0, 0, w, h);
 
 				//create tmp canvas
-				var canvas = document.createElement('canvas');
+				const canvas = document.createElement('canvas');
 				canvas.width = config.WIDTH;
 				canvas.height = config.HEIGHT;
 
 				//change data
-				_this.change(canvas, params);
+				this.change(canvas, params);
 
 				//add to preview
 				canvas_preview.drawImage(canvas, 0, 0, w, h);
@@ -52,8 +51,8 @@ class Tools_contentFill_class {
 				{name: "blur_v", title: "Vertical blur:", value: 5, range: [0, 30]},
 				{name: "clone_count", title: "Clone count:", value: 15, range: [10, 50]},
 			],
-			on_finish: function (params) {
-				_this.apply_affect(params);
+			on_finish: (params) => {
+				this.apply_affect(params);
 			},
 		};
 		this.POP.show(settings);
@@ -61,7 +60,7 @@ class Tools_contentFill_class {
 
 	apply_affect(params) {
 		//create tmp canvas
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
 
@@ -83,8 +82,8 @@ class Tools_contentFill_class {
 	}
 
 	change(canvas, params) {
-		var ctx = canvas.getContext("2d");
-		var mode = params.mode;
+		const ctx = canvas.getContext("2d");
+		const mode = params.mode;
 
 		//generate background
 		if (mode == 'Expand edges')
@@ -99,9 +98,9 @@ class Tools_contentFill_class {
 	}
 
 	add_edge_background(canvas, params) {
-		var ctx = canvas.getContext("2d");
-		var trim_info = this.Image_trim.get_trim_info(config.layer.id);
-		var original = this.Base_layers.convert_layer_to_canvas();
+		const ctx = canvas.getContext("2d");
+		const trim_info = this.Image_trim.get_trim_info(config.layer.id);
+		const original = this.Base_layers.convert_layer_to_canvas();
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(original, trim_info.left, trim_info.top);
@@ -149,37 +148,38 @@ class Tools_contentFill_class {
 			trim_info.left + original.width, trim_info.top + original.height, trim_info.right, trim_info.bottom);
 
 		//add blur
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var blurred = ImageFilters.BoxBlur(img, params.blur_h, params.blur_v, params.blur_power);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const blurred = ImageFilters.BoxBlur(img, params.blur_h, params.blur_v, params.blur_power);
 		ctx.putImageData(blurred, 0, 0);
 	}
 
 	add_resized_background(canvas, params) {
-		var ctx = canvas.getContext("2d");
+		const ctx = canvas.getContext("2d");
 
 		//draw original resized
-		var original = this.Base_layers.convert_layer_to_canvas();
+		const original = this.Base_layers.convert_layer_to_canvas();
 		ctx.drawImage(original, 0, 0, canvas.width, canvas.height);
 
 		//add blur
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var blurred = ImageFilters.BoxBlur(img, params.blur_h, params.blur_v, params.blur_power);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const blurred = ImageFilters.BoxBlur(img, params.blur_h, params.blur_v, params.blur_power);
 		ctx.putImageData(blurred, 0, 0);
 	}
 
 	add_cloned_background(canvas, params) {
-		var blocks = params.clone_count;
-		var ctx = canvas.getContext("2d");
-		var trim_info = this.Image_trim.get_trim_info(config.layer.id);
-		var original = this.Base_layers.convert_layer_to_canvas();
+		let i, j;
+		const blocks = params.clone_count;
+		const ctx = canvas.getContext("2d");
+		const trim_info = this.Image_trim.get_trim_info(config.layer.id);
+		const original = this.Base_layers.convert_layer_to_canvas();
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(original, trim_info.left, trim_info.top);
 
 		//top
-		var bsize = Math.ceil(original.width / blocks);
-		for (var i = 0; i < original.width; i = i + bsize) {
-			for (var j = 0; j < trim_info.top; j = j + bsize) {
+		let bsize = Math.ceil(original.width / blocks);
+		for (i = 0; i < original.width; i = i + bsize) {
+			for (j = 0; j < trim_info.top; j = j + bsize) {
 				ctx.drawImage(original,
 					i, 0, bsize, bsize,
 					trim_info.left + i, 0 + j, bsize, bsize);
@@ -187,9 +187,9 @@ class Tools_contentFill_class {
 		}
 
 		//bottom
-		var bsize = Math.ceil(original.width / blocks);
-		for (var i = 0; i < original.width; i = i + bsize) {
-			for (var j = 0; j < canvas.height; j = j + bsize) {
+		bsize = Math.ceil(original.width / blocks);
+		for (i = 0; i < original.width; i = i + bsize) {
+			for (j = 0; j < canvas.height; j = j + bsize) {
 				ctx.drawImage(original,
 					i, original.height - bsize, bsize, bsize,
 					trim_info.left + i, trim_info.top + original.height + j, bsize, bsize);
@@ -197,9 +197,9 @@ class Tools_contentFill_class {
 		}
 
 		//left
-		var bsize = Math.ceil(original.height / blocks);
-		for (var i = 0; i < trim_info.left; i = i + bsize) {
-			for (var j = trim_info.top; j < trim_info.top + original.height; j = j + bsize) {
+		bsize = Math.ceil(original.height / blocks);
+		for (i = 0; i < trim_info.left; i = i + bsize) {
+			for (j = trim_info.top; j < trim_info.top + original.height; j = j + bsize) {
 				ctx.drawImage(original,
 					0, j - trim_info.top, bsize, bsize,
 					i, j, bsize, bsize);
@@ -207,9 +207,9 @@ class Tools_contentFill_class {
 		}
 
 		//right
-		var bsize = Math.ceil(original.height / blocks);
-		for (var i = trim_info.left + original.width; i < canvas.width; i = i + bsize) {
-			for (var j = trim_info.top; j < trim_info.top + original.height; j = j + bsize) {
+		bsize = Math.ceil(original.height / blocks);
+		for (i = trim_info.left + original.width; i < canvas.width; i = i + bsize) {
+			for (j = trim_info.top; j < trim_info.top + original.height; j = j + bsize) {
 				ctx.drawImage(original,
 					original.width - bsize, j - trim_info.top, bsize, bsize,
 					i, j, bsize, bsize);
@@ -217,11 +217,11 @@ class Tools_contentFill_class {
 		}
 
 		//corners
-		var bsize = Math.ceil(Math.min(original.width, original.height) / blocks);
+		bsize = Math.ceil(Math.min(original.width, original.height) / blocks);
 
 		//top left
-		for (var i = 0; i < trim_info.left; i = i + bsize) {
-			for (var j = 0; j < trim_info.top; j = j + bsize) {
+		for (i = 0; i < trim_info.left; i = i + bsize) {
+			for (j = 0; j < trim_info.top; j = j + bsize) {
 				ctx.drawImage(original,
 					0, 0, bsize, bsize,
 					i, j, bsize, bsize);
@@ -229,8 +229,8 @@ class Tools_contentFill_class {
 		}
 
 		//top right
-		for (var i = trim_info.left + original.width; i < canvas.width; i = i + bsize) {
-			for (var j = 0; j < trim_info.top; j = j + bsize) {
+		for (i = trim_info.left + original.width; i < canvas.width; i = i + bsize) {
+			for (j = 0; j < trim_info.top; j = j + bsize) {
 				ctx.drawImage(original,
 					original.width - bsize, 0, bsize, bsize,
 					i, j, bsize, bsize);
@@ -238,8 +238,8 @@ class Tools_contentFill_class {
 		}
 
 		//bottom left
-		for (var i = 0; i < trim_info.left; i = i + bsize) {
-			for (var j = trim_info.top + original.height; j < canvas.height; j = j + bsize) {
+		for (i = 0; i < trim_info.left; i = i + bsize) {
+			for (j = trim_info.top + original.height; j < canvas.height; j = j + bsize) {
 				ctx.drawImage(original,
 					0, original.height - bsize, bsize, bsize,
 					i, j, bsize, bsize);
@@ -247,8 +247,8 @@ class Tools_contentFill_class {
 		}
 
 		//bottom right
-		for (var i = trim_info.left + original.width; i < canvas.width; i = i + bsize) {
-			for (var j = trim_info.top + original.height; j < canvas.height; j = j + bsize) {
+		for (i = trim_info.left + original.width; i < canvas.width; i = i + bsize) {
+			for (j = trim_info.top + original.height; j < canvas.height; j = j + bsize) {
 				ctx.drawImage(original,
 					original.width - bsize, original.height - bsize, bsize, bsize,
 					i, j, bsize, bsize);
@@ -257,8 +257,8 @@ class Tools_contentFill_class {
 
 
 		//add blur
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var blurred = ImageFilters.BoxBlur(img, params.blur_h, params.blur_v, params.blur_power);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const blurred = ImageFilters.BoxBlur(img, params.blur_h, params.blur_v, params.blur_power);
 		ctx.putImageData(blurred, 0, 0);
 	}
 

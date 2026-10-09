@@ -19,7 +19,7 @@ export const PANELS = {
 const helper = new Helper_class();
 
 export function is_panel_visible(name) {
-	var element = document.querySelector(PANELS[name]);
+	const element = document.querySelector(PANELS[name]);
 	return element != null && element.classList.contains('panel_hidden') == false;
 }
 
@@ -29,7 +29,7 @@ export function is_panel_visible(name) {
  * @param {boolean} [save] remember the choice
  */
 export function set_panel_visible(name, visible, save = true, notify = true) {
-	var element = PANELS[name] ? document.querySelector(PANELS[name]) : null;
+	const element = PANELS[name] ? document.querySelector(PANELS[name]) : null;
 	if (!element) {
 		return;
 	}
@@ -41,7 +41,7 @@ export function set_panel_visible(name, visible, save = true, notify = true) {
 		document.body.classList.toggle('no_options', visible == false);
 	}
 	if (save) {
-		helper.setCookie('panel_' + name, visible ? 1 : 0);
+		helper.setCookie(`panel_${  name}`, visible ? 1 : 0);
 	}
 	if (notify) {
 		window.dispatchEvent(new Event('resize'));
@@ -54,8 +54,8 @@ export function set_panel_visible(name, visible, save = true, notify = true) {
  * hide panels that were hidden last time
  */
 export function restore_panels() {
-	for (var name in PANELS) {
-		if (helper.getCookie('panel_' + name) === 0) {
+	for (const name in PANELS) {
+		if (helper.getCookie(`panel_${  name}`) === 0) {
 			set_panel_visible(name, false, false, false);
 		}
 	}
@@ -65,8 +65,8 @@ export function restore_panels() {
  * Tab key - hide / show all panels
  */
 export function toggle_all_panels() {
-	var any_visible = Object.keys(PANELS).some((name) => name != 'options' && is_panel_visible(name));
-	for (var name in PANELS) {
+	const any_visible = Object.keys(PANELS).some((name) => name != 'options' && is_panel_visible(name));
+	for (const name in PANELS) {
 		set_panel_visible(name, any_visible == false, false, false);
 	}
 	window.dispatchEvent(new Event('resize'));
@@ -85,7 +85,7 @@ export const WORKSPACES = {
  * @param {string[]} visible names of panels that stay visible
  */
 export function apply_visible_panels(visible) {
-	for (var name in PANELS) {
+	for (const name in PANELS) {
 		set_panel_visible(name, visible.includes(name), true, false);
 	}
 	window.dispatchEvent(new Event('resize'));
@@ -104,12 +104,12 @@ export function get_visible_panels() {
  * @returns {boolean} false when there is no such workspace
  */
 export function apply_workspace(name) {
-	var visible = WORKSPACES[name];
+	let visible = WORKSPACES[name];
 	if (name == 'custom') {
 		try {
 			visible = JSON.parse(String(helper.getCookie('workspace_custom') || ''));
 		}
-		catch (e) {
+		catch {
 			visible = null;
 		}
 		if (Array.isArray(visible) == false) {

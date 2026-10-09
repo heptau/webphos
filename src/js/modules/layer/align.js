@@ -53,12 +53,12 @@ class Layer_align_class {
 	 * @param {string} mode left, center, right, top, middle, bottom
 	 */
 	align(mode) {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (!this.is_movable(layer)) {
 			alertify.error(t('Layer is empty.'));
 			return;
 		}
-		var delta = align_delta(layer_bounds(layer), mode, this.get_reference());
+		const delta = align_delta(layer_bounds(layer), mode, this.get_reference());
 		if (delta.dx == 0 && delta.dy == 0) {
 			return;
 		}
@@ -69,12 +69,12 @@ class Layer_align_class {
 	 * @param {'x'|'y'} axis
 	 */
 	distribute(axis) {
-		var layers = config.layers.filter((layer) => this.is_movable(layer) && layer.visible != false);
+		const layers = config.layers.filter((layer) => this.is_movable(layer) && layer.visible != false);
 		if (layers.length < 3) {
 			alertify.error(t('At least 3 visible layers are needed.'));
 			return;
 		}
-		var deltas = distribute_deltas(layers.map((layer) => ({id: layer.id, bounds: layer_bounds(layer)})), axis)
+		const deltas = distribute_deltas(layers.map((layer) => ({id: layer.id, bounds: layer_bounds(layer)})), axis)
 			.filter((delta) => delta.dx != 0 || delta.dy != 0);
 		if (deltas.length == 0) {
 			return;
@@ -93,9 +93,9 @@ class Layer_align_class {
 		if (this.Edit_selection == null) {
 			this.Edit_selection = new Edit_selection_class();
 		}
-		var current = this.Edit_selection.get_mask();
+		const current = this.Edit_selection.get_mask();
 		if (current != null) {
-			var rect = current.kind == 'custom' ? mask_bounds(current.mask) : current.rect;
+			const rect = current.kind == 'custom' ? mask_bounds(current.mask) : current.rect;
 			if (rect) {
 				return {left: rect.x, top: rect.y, right: rect.x + rect.width, bottom: rect.y + rect.height};
 			}
@@ -104,8 +104,8 @@ class Layer_align_class {
 	}
 
 	move_layers(deltas, name) {
-		var actions = deltas.map((delta) => {
-			var layer = app.Layers.get_layer(delta.id);
+		const actions = deltas.map((delta) => {
+			const layer = app.Layers.get_layer(delta.id);
 			return new app.Actions.Update_layer_action(delta.id, {x: layer.x + delta.dx, y: layer.y + delta.dy});
 		});
 		return app.State.do_action(new app.Actions.Bundle_action('align_layers', name, actions));

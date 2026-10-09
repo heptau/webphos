@@ -13,7 +13,7 @@ function open_db() {
 			reject(new Error('IndexedDB not supported'));
 			return;
 		}
-		var request = indexedDB.open(DB_NAME, 1);
+		const request = indexedDB.open(DB_NAME, 1);
 		request.onerror = () => reject(request.error);
 		request.onsuccess = () => resolve(request.result);
 		request.onupgradeneeded = () => {
@@ -24,8 +24,8 @@ function open_db() {
 
 function run(mode, action) {
 	return open_db().then((db) => new Promise((resolve, reject) => {
-		var transaction = db.transaction([STORE], mode);
-		var result = action(transaction.objectStore(STORE));
+		const transaction = db.transaction([STORE], mode);
+		const result = action(transaction.objectStore(STORE));
 		transaction.oncomplete = () => {
 			db.close();
 			resolve(result && result.result !== undefined ? result.result : undefined);
@@ -42,7 +42,7 @@ function run(mode, action) {
 }
 
 //adding files is done one by one, so two additions never work with an outdated list
-var queue = Promise.resolve();
+let queue = Promise.resolve();
 
 /**
  * pure helper: which items to drop so at most `max` newest items remain and duplicates by name are removed
@@ -53,10 +53,10 @@ var queue = Promise.resolve();
  * @returns {number[]} ids to delete
  */
 export function select_obsolete(items, new_name, max) {
-	var sorted = items.slice().sort((a, b) => b.time - a.time);
-	var remove = [];
-	var kept = 0;
-	for (var i = 0; i < sorted.length; i++) {
+	const sorted = items.slice().sort((a, b) => b.time - a.time);
+	const remove = [];
+	let kept = 0;
+	for (let i = 0; i < sorted.length; i++) {
 		if (sorted[i].name == new_name || kept >= max - 1) {
 			remove.push(sorted[i].id);
 		}
@@ -81,14 +81,14 @@ async function add_recent_now(file, name) {
 		return;
 	}
 	try {
-		var all = await run('readonly', (store) => store.getAll());
-		var obsolete = select_obsolete((all || []).map((item) => ({id: item.id, name: item.name, time: item.time})), name, MAX_RECENT);
+		const all = await run('readonly', (store) => store.getAll());
+		const obsolete = select_obsolete((all || []).map((item) => ({id: item.id, name: item.name, time: item.time})), name, MAX_RECENT);
 		await run('readwrite', (store) => {
 			obsolete.forEach((id) => store.delete(id));
-			return store.add({name: name, time: Date.now(), file: file});
+			return store.add({name, time: Date.now(), file});
 		});
 	}
-	catch (e) {
+	catch {
 		//recent files are optional
 	}
 }
@@ -98,10 +98,10 @@ async function add_recent_now(file, name) {
  */
 export async function list_recent() {
 	try {
-		var all = await run('readonly', (store) => store.getAll());
+		const all = await run('readonly', (store) => store.getAll());
 		return (all || []).map((item) => ({id: item.id, name: item.name, time: item.time})).sort((a, b) => b.time - a.time);
 	}
-	catch (e) {
+	catch {
 		return [];
 	}
 }
@@ -112,10 +112,10 @@ export async function list_recent() {
  */
 export async function get_recent(id) {
 	try {
-		var item = await run('readonly', (store) => store.get(id));
+		const item = await run('readonly', (store) => store.get(id));
 		return item ? item.file : null;
 	}
-	catch (e) {
+	catch {
 		return null;
 	}
 }
@@ -124,7 +124,7 @@ export async function clear_recent() {
 	try {
 		await run('readwrite', (store) => store.clear());
 	}
-	catch (e) {
+	catch {
 		//ignore
 	}
 }

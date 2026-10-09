@@ -15,7 +15,6 @@ class Effects_zoomBlur_class {
 	}
 
 	zoom_blur() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
@@ -23,9 +22,9 @@ class Effects_zoomBlur_class {
 		}
 
 		//get layer size
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
 
-		var settings = {
+		const settings = {
 			title: 'Zoom blur',
 			preview: true,
 			effects: true,
@@ -34,17 +33,17 @@ class Effects_zoomBlur_class {
 				{name: "param2", title: "Center x:", value: Math.round(canvas.width / 2), range: [0, canvas.width]},
 				{name: "param3", title: "Center y:", value: Math.round(canvas.height / 2), range: [0, canvas.height]},
 			],
-			on_change: function (params, canvas_preview, w, h, canvas_) {
+			on_change: (params, canvas_preview, w, h, canvas_) => {
 				//recalc param by size
 				params.param2 = params.param2 / canvas.width * w;
 				params.param3 = params.param3 / canvas.height * h;
 
-				var data = _this.change(canvas_, params);
+				const data = this.change(canvas_, params);
 				canvas_preview.clearRect(0, 0, canvas_.width, canvas_.height);
 				canvas_preview.drawImage(data, 0, 0);
 			},
-			on_finish: function (params) {
-				_this.save(params);
+			on_finish: (params) => {
+				this.save(params);
 			},
 		};
 		this.POP.show(settings);
@@ -52,11 +51,11 @@ class Effects_zoomBlur_class {
 
 	save(params) {
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var data = this.change(canvas, params);
+		const data = this.change(canvas, params);
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(data, 0, 0);
 
@@ -72,27 +71,27 @@ class Effects_zoomBlur_class {
 			this.fx_filter = glfx.canvas();
 		}
 
-		var param1 = parseFloat(params.param1);
-		var param2 = parseInt(params.param2);
-		var param3 = parseInt(params.param3);
+		const param1 = parseFloat(params.param1);
+		const param2 = parseInt(params.param2);
+		const param3 = parseInt(params.param3);
 
-		var texture = this.fx_filter.texture(canvas);
+		const texture = this.fx_filter.texture(canvas);
 		this.fx_filter.draw(texture).zoomBlur(param2, param3, param1).update();	//effect
 
 		return this.fx_filter;
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//modify
-		var params = {
+		const params = {
 			param1: 0.3,
 			param2: Math.round(canvas_thumb.width / 2),
 			param3: Math.round(canvas_thumb.height / 2),
 		};
-		var data = this.change(canvas_thumb, params);
+		const data = this.change(canvas_thumb, params);
 
 		//draw
 		ctx.drawImage(data, 0, 0);

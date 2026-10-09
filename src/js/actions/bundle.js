@@ -13,7 +13,7 @@ export class Bundle_action extends Base_action {
 	async do() {
 		super.do();
 		let error = null;
-		let i = 0;
+		let i;
 		this.memory_estimate = 0;
 		this.database_estimate = 0;
 		for (i = 0; i < this.actions_to_do.length; i++) {
@@ -50,7 +50,7 @@ export class Bundle_action extends Base_action {
 
 	free() {
 		if (this.actions_to_do) {
-			for (let action of this.actions_to_do) {
+			for (const action of this.actions_to_do) {
 				action.free();
 			}
 			this.actions_to_do = null;

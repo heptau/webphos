@@ -16,21 +16,21 @@ class Help_privacy_class {
 	}
 
 	async privacy() {
-		var session = await load_session();
-		var recent = await list_recent();
-		var selections = await load_all_selections();
+		const session = await load_session();
+		const recent = await list_recent();
+		const selections = await load_all_selections();
 
 		this.POP.show({
 			title: 'Privacy',
 			params: [
-				{html: '<div>' + t('Your images never leave this browser - nothing is uploaded and there is no account. Only the data below is kept on this computer.') + '</div>'},
+				{html: `<div>${t('Your images never leave this browser - nothing is uploaded and there is no account. Only the data below is kept on this computer.')}</div>`},
 				{heading: 'Delete stored data'},
-				{name: 'autosave', title: t('Autosaved work:') + ' ' + (session ? session.documents.length : 0), value: false},
-				{name: 'recent', title: t('Recent files:') + ' ' + recent.length, value: false},
-				{name: 'selections', title: t('Saved selections:') + ' ' + selections.length, value: false},
+				{name: 'autosave', title: `${t('Autosaved work:')  } ${  session ? session.documents.length : 0}`, value: false},
+				{name: 'recent', title: `${t('Recent files:')  } ${  recent.length}`, value: false},
+				{name: 'selections', title: `${t('Saved selections:')  } ${  selections.length}`, value: false},
 			],
 			on_finish: async (params) => {
-				var deleted = false;
+				let deleted = false;
 				if (params.autosave) {
 					await clear_session();
 					deleted = true;
@@ -40,7 +40,7 @@ class Help_privacy_class {
 					deleted = true;
 				}
 				if (params.selections) {
-					for (var i = 0; i < selections.length; i++) {
+					for (let i = 0; i < selections.length; i++) {
 						await delete_selection(selections[i].name);
 					}
 					deleted = true;

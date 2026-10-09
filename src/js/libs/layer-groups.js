@@ -8,8 +8,8 @@
  * @returns {string[]} names of all groups in the order of their first appearance
  */
 export function group_names(layers) {
-	var names = [];
-	layers.forEach(function (layer) {
+	const names = [];
+	layers.forEach((layer) => {
 		if (typeof layer.group === 'string' && layer.group !== '' && names.indexOf(layer.group) < 0) {
 			names.push(layer.group);
 		}
@@ -26,7 +26,7 @@ export function group_names(layers) {
  * @returns {T[]}
  */
 export function layers_in_group(layers, name) {
-	return layers.filter(function (layer) {
+	return layers.filter((layer) => {
 		return in_group(layer, name) && layer.type != null;
 	});
 }
@@ -37,7 +37,7 @@ export function layers_in_group(layers, name) {
  * @returns {boolean} the layer is in the group or in a group inside of it
  */
 export function in_group(layer, name) {
-	return typeof layer.group === 'string' && (layer.group === name || layer.group.indexOf(name + '/') === 0);
+	return typeof layer.group === 'string' && (layer.group === name || layer.group.indexOf(`${name  }/`) === 0);
 }
 
 /**
@@ -48,8 +48,8 @@ export function group_ancestors(group) {
 	if (typeof group !== 'string' || group === '') {
 		return [];
 	}
-	var parts = group.split('/');
-	return parts.map(function (part, index) { return parts.slice(0, index + 1).join('/'); });
+	const parts = group.split('/');
+	return parts.map((part, index) => { return parts.slice(0, index + 1).join('/'); });
 }
 
 /**
@@ -61,11 +61,11 @@ export function group_ancestors(group) {
  * @returns {{ids: *[], visible: boolean}} ids of the layers to toggle and the visibility they get
  */
 export function group_visibility_toggles(layers, name) {
-	var members = layers_in_group(layers, name);
-	var any_visible = members.some(function (layer) { return layer.visible !== false; });
-	var target = !any_visible;
+	const members = layers_in_group(layers, name);
+	const any_visible = members.some((layer) => { return layer.visible !== false; });
+	const target = !any_visible;
 	return {
-		ids: members.filter(function (layer) { return (layer.visible !== false) !== target; }).map(function (layer) { return layer.id; }),
+		ids: members.filter((layer) => { return (layer.visible !== false) !== target; }).map((layer) => { return layer.id; }),
 		visible: target,
 	};
 }
@@ -80,8 +80,8 @@ export function clean_group_name(name) {
 	if (typeof name !== 'string') {
 		return '';
 	}
-	return name.replace(/[\r\n\t]+/g, ' ').split('/').map(function (part) { return part.trim().slice(0, 60); })
-		.filter(function (part) { return part !== ''; }).slice(0, 5).join('/');
+	return name.replace(/[\r\n\t]+/g, ' ').split('/').map((part) => { return part.trim().slice(0, 60); })
+		.filter((part) => { return part !== ''; }).slice(0, 5).join('/');
 }
 
 /**
@@ -97,25 +97,25 @@ export function clean_group_name(name) {
  * @returns {Group_props}
  */
 export function group_props_of(layer, name) {
-	var stored = layer && layer.group_props && typeof layer.group_props === 'object' ? layer.group_props[name] : null;
-	var opacity = 100;
-	var composition = 'source-over';
-	var mask = null;
+	const stored = layer && layer.group_props && typeof layer.group_props === 'object' ? layer.group_props[name] : null;
+	let opacity = 100;
+	let composition = 'source-over';
+	let mask = null;
 	if (stored && typeof stored === 'object') {
-		var candidate = stored.mask;
+		const candidate = stored.mask;
 		if (candidate && typeof candidate === 'object' && candidate.width > 0 && candidate.height > 0
 			&& Array.isArray(candidate.values) && Array.isArray(candidate.counts)) {
 			mask = candidate;
 		}
-		var value = parseFloat(String(stored.opacity));
+		const value = parseFloat(String(stored.opacity));
 		opacity = isNaN(value) ? 100 : Math.min(100, Math.max(0, value));
 		composition = typeof stored.composition === 'string' && /^[a-z-]{1,20}$/.test(stored.composition) ? stored.composition : 'source-over';
 	}
 	else if (layer && layer.group === name && layer.group_opacity !== undefined && layer.group_opacity !== null) {
-		var old = parseFloat(String(layer.group_opacity));
+		const old = parseFloat(String(layer.group_opacity));
 		opacity = isNaN(old) ? 100 : Math.min(100, Math.max(0, old));
 	}
-	return {opacity: opacity, composition: composition, mask: mask};
+	return {opacity, composition, mask};
 }
 
 /**
@@ -136,7 +136,7 @@ export function is_isolated(props) {
  * @returns {number} 0-1, for `ctx.globalAlpha`
  */
 export function effective_alpha(layer) {
-	var own = layer.opacity === undefined || layer.opacity === null ? 100 : layer.opacity;
+	const own = layer.opacity === undefined || layer.opacity === null ? 100 : layer.opacity;
 	return own / 100;
 }
 
@@ -154,17 +154,17 @@ export function effective_alpha(layer) {
  * @returns {(T|Group_entry)[]}
  */
 export function plan_groups(layers, depth) {
-	var start = depth || 0;
-	var result = [];
+	const start = depth || 0;
+	const result = [];
 	/** @type {Object<string, Group_entry & {members: T[]}>} */
-	var nodes = {};
-	layers.forEach(function (layer) {
-		var chain = group_ancestors(layer.group).slice(start);
-		var outer = null;
-		for (var i = 0; i < chain.length; i++) {
-			var props = group_props_of(layer, chain[i]);
+	const nodes = {};
+	layers.forEach((layer) => {
+		const chain = group_ancestors(layer.group).slice(start);
+		let outer = null;
+		for (let i = 0; i < chain.length; i++) {
+			const props = group_props_of(layer, chain[i]);
 			if (is_isolated(props)) {
-				outer = {name: chain[i], props: props, level: start + i + 1};
+				outer = {name: chain[i], props, level: start + i + 1};
 				break;
 			}
 		}
@@ -179,7 +179,7 @@ export function plan_groups(layers, depth) {
 		nodes[outer.name].members.push(layer);
 		nodes[outer.name].level = outer.level;
 	});
-	Object.keys(nodes).forEach(function (name) {
+	Object.keys(nodes).forEach((name) => {
 		nodes[name].entries = plan_groups(nodes[name].members, nodes[name].level);
 		delete nodes[name].members;
 		delete nodes[name].level;
@@ -197,36 +197,36 @@ export function plan_groups(layers, depth) {
  * @returns {({kind: 'header', group: string, label: string, depth: number, members: T[], collapsed: boolean}|{kind: 'layer', layer: T, depth: number})[]}
  */
 export function panel_rows(layers, collapsed) {
-	var rows = [];
-	var seen = {};
+	const rows = [];
+	const seen = {};
 	//the layers of a group are listed together, at the place of its first layer
-	var ordered = [];
-	var placed = [];
-	layers.forEach(function (layer) {
+	const ordered = [];
+	const placed = [];
+	layers.forEach((layer) => {
 		if (placed.indexOf(layer) >= 0) {
 			return;
 		}
-		var top = group_ancestors(layer.group)[0];
+		const top = group_ancestors(layer.group)[0];
 		if (top === undefined) {
 			ordered.push(layer);
 			placed.push(layer);
 			return;
 		}
-		layers.forEach(function (other) {
+		layers.forEach((other) => {
 			if (placed.indexOf(other) < 0 && in_group(other, top)) {
 				ordered.push(other);
 				placed.push(other);
 			}
 		});
 	});
-	ordered.forEach(function (layer) {
-		var chain = group_ancestors(layer.group);
-		var hidden = false;
-		chain.forEach(function (name, index) {
+	ordered.forEach((layer) => {
+		const chain = group_ancestors(layer.group);
+		let hidden = false;
+		chain.forEach((name, index) => {
 			if (hidden) {
 				return;
 			}
-			var folded = collapsed.indexOf(name) >= 0;
+			const folded = collapsed.indexOf(name) >= 0;
 			if (!seen[name]) {
 				seen[name] = true;
 				rows.push({
@@ -234,7 +234,7 @@ export function panel_rows(layers, collapsed) {
 					group: name,
 					label: name.split('/').pop(),
 					depth: index,
-					members: layers.filter(function (other) { return in_group(other, name); }),
+					members: layers.filter((other) => { return in_group(other, name); }),
 					collapsed: folded,
 				});
 			}
@@ -243,7 +243,7 @@ export function panel_rows(layers, collapsed) {
 			}
 		});
 		if (!hidden) {
-			rows.push({kind: 'layer', layer: layer, depth: chain.length});
+			rows.push({kind: 'layer', layer, depth: chain.length});
 		}
 	});
 	return rows;
@@ -260,11 +260,11 @@ export function panel_rows(layers, collapsed) {
  */
 export function props_for_join(layers, layer_id, name) {
 	/** @type {Object<string, Group_props>} */
-	var map = {};
-	group_ancestors(name).forEach(function (path) {
-		var member = layers.find(function (item) { return item.id != layer_id && in_group(item, path); });
+	const map = {};
+	group_ancestors(name).forEach((path) => {
+		const member = layers.find((item) => { return item.id != layer_id && in_group(item, path); });
 		if (member) {
-			var props = group_props_of(member, path);
+			const props = group_props_of(member, path);
 			if (is_isolated(props)) {
 				map[path] = props;
 			}
@@ -283,11 +283,11 @@ export function props_for_join(layers, layer_id, name) {
  */
 export function with_group_props(layer, name, props) {
 	/** @type {Object<string, Group_props>} */
-	var map = {};
-	var old = layer.group_props && typeof layer.group_props === 'object' ? layer.group_props : {};
-	Object.keys(old).forEach(function (key) {
+	const map = {};
+	const old = layer.group_props && typeof layer.group_props === 'object' ? layer.group_props : {};
+	Object.keys(old).forEach((key) => {
 		if (key !== name && old[key] && typeof old[key] === 'object') {
-			var other = group_props_of({group: key, group_props: old}, key);
+			const other = group_props_of({group: key, group_props: old}, key);
 			map[key] = {opacity: other.opacity, composition: other.composition, mask: other.mask};
 		}
 	});
@@ -312,24 +312,24 @@ export function with_group_props(layer, name, props) {
  * @returns {(Nest_layer|Nest_group)[]}
  */
 export function nest_layers(layers, prefix) {
-	var depth = prefix ? prefix.split('/').length : 0;
+	const depth = prefix ? prefix.split('/').length : 0;
 	/** @type {(Nest_layer|Nest_group)[]} */
-	var items = [];
-	var placed = [];
-	layers.forEach(function (layer) {
+	const items = [];
+	const placed = [];
+	layers.forEach((layer) => {
 		if (placed.indexOf(layer) >= 0) {
 			return;
 		}
-		var inside = group_ancestors(layer.group).slice(depth);
+		const inside = group_ancestors(layer.group).slice(depth);
 		if (inside.length == 0) {
 			placed.push(layer);
-			items.push({kind: 'layer', layer: layer});
+			items.push({kind: 'layer', layer});
 			return;
 		}
-		var name = inside[0];
-		var members = layers.filter(function (other) { return placed.indexOf(other) < 0 && in_group(other, name); });
-		members.forEach(function (member) { placed.push(member); });
-		items.push({kind: 'group', name: name, label: name.split('/').pop(), items: nest_layers(members, name)});
+		const name = inside[0];
+		const members = layers.filter((other) => { return placed.indexOf(other) < 0 && in_group(other, name); });
+		members.forEach((member) => { placed.push(member); });
+		items.push({kind: 'group', name, label: name.split('/').pop(), items: nest_layers(members, name)});
 	});
 	return items;
 }

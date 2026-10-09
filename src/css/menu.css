@@ -14,7 +14,8 @@
 	top: 0;
 	left: 0;
 	right: 0;
-	z-index: 100;
+	/* above the dialogs (#popups .popup has z-index 100 and a dimming shadow) */
+	z-index: 1000;
 }
 .main_menu > ul.menu_bar {
 	display: flex;

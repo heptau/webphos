@@ -6,7 +6,7 @@ import { translate_mask, mask_bounds } from './../../libs/selection-mask.js';
 import { point_in_selection, moved_rect, lift_pixels, put_shifted } from './../../libs/selection-move.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * Moving a selection with the mouse: the Move tool (or the marquee tool) drags the selection with the pixels in it
@@ -65,17 +65,17 @@ class Edit_selection_move_class {
 	 * @param {string} mode 'Content' or 'Outline'
 	 */
 	begin(mode) {
-		var current = this.Selection.get_mask();
-		this.active = {mode: mode, mask: current.mask, rect: current.rect, kind: current.kind, last_preview: 0};
+		const current = this.Selection.get_mask();
+		this.active = {mode, mask: current.mask, rect: current.rect, kind: current.kind, last_preview: 0};
 		if (mode == 'Content' && this.can_lift(config.layer)) {
-			var layer = config.layer;
-			var canvas = document.createElement('canvas');
+			const layer = config.layer;
+			const canvas = document.createElement('canvas');
 			canvas.width = layer.width_original;
 			canvas.height = layer.height_original;
-			var ctx = canvas.getContext('2d', {willReadFrequently: true});
+			const ctx = canvas.getContext('2d', {willReadFrequently: true});
 			ctx.drawImage(layer.link, 0, 0);
-			var image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-			var parts = lift_pixels(image, current.mask, layer);
+			const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const parts = lift_pixels(image, current.mask, layer);
 			this.active.original = image;
 			this.active.parts = parts;
 			this.active.layer = layer;
@@ -84,13 +84,13 @@ class Edit_selection_move_class {
 		else if (mode == 'Content') {
 			//a layer without pixels of its own (stroke, text, shape): it is drawn to pixels the size of the picture and the
 			//selected part is lifted from them; the result is a new picture layer (see finish)
-			var vector = config.layer;
-			var picture = document.createElement('canvas');
+			const vector = config.layer;
+			const picture = document.createElement('canvas');
 			picture.width = config.WIDTH;
 			picture.height = config.HEIGHT;
-			var picture_ctx = picture.getContext('2d', {willReadFrequently: true});
+			const picture_ctx = picture.getContext('2d', {willReadFrequently: true});
 			this.Base_layers.render_object(picture_ctx, vector);
-			var drawn = picture_ctx.getImageData(0, 0, picture.width, picture.height);
+			const drawn = picture_ctx.getImageData(0, 0, picture.width, picture.height);
 			this.active.original = drawn;
 			this.active.parts = lift_pixels(drawn, current.mask, {x: 0, y: 0, width: picture.width, height: picture.height});
 			this.active.vector = vector;
@@ -108,22 +108,22 @@ class Edit_selection_move_class {
 	 * @param {boolean} copy Alt is held (Content only)
 	 */
 	update(dx, dy, copy) {
-		var active = this.active;
+		const active = this.active;
 		if (!active) {
 			return;
 		}
 		dx = Math.round(dx);
 		dy = Math.round(dy);
 		//not more often than every 35 ms (a big picture takes long to compose)
-		var now = Date.now();
+		const now = Date.now();
 		if (now - active.last_preview < 35) {
 			return;
 		}
 		active.last_preview = now;
 		if (active.mode == 'Content' && active.vector) {
 			//the preview is drawn over the picture; the vector layer is hidden while it is moved (not when it is copied)
-			var empty = new Uint8ClampedArray(active.original.data.length);
-			var pieces = {data: copy ? empty : new Uint8ClampedArray(active.parts.hole.data), width: active.original.width, height: active.original.height};
+			const empty = new Uint8ClampedArray(active.original.data.length);
+			const pieces = {data: copy ? empty : new Uint8ClampedArray(active.parts.hole.data), width: active.original.width, height: active.original.height};
 			put_shifted(pieces, active.parts.selected, dx, dy);
 			active.preview.getContext('2d').putImageData(new ImageData(pieces.data, pieces.width, pieces.height), 0, 0);
 			active.vector.visible = copy ? active.was_visible : false;
@@ -132,7 +132,7 @@ class Edit_selection_move_class {
 		}
 		else if (active.mode == 'Content') {
 			//the pixels as they would be: the layer with a hole (or untouched for a copy) and the lifted pixels shifted
-			var base = {data: new Uint8ClampedArray((copy ? active.original : active.parts.hole).data), width: active.original.width, height: active.original.height};
+			const base = {data: new Uint8ClampedArray((copy ? active.original : active.parts.hole).data), width: active.original.width, height: active.original.height};
 			put_shifted(base, active.parts.selected, dx, dy);
 			active.preview.getContext('2d').putImageData(new ImageData(base.data, base.width, base.height), 0, 0);
 			active.layer.link_canvas = active.preview;
@@ -153,7 +153,7 @@ class Edit_selection_move_class {
 	 * @param {boolean} copy
 	 */
 	async finish(dx, dy, copy) {
-		var active = this.active;
+		const active = this.active;
 		if (!active) {
 			return;
 		}
@@ -164,13 +164,13 @@ class Edit_selection_move_class {
 			return;
 		}
 		//the selection after the move
-		var actions;
+		let actions;
 		if (active.kind == 'custom') {
-			var moved = translate_mask(active.mask, dx, dy);
+			const moved = translate_mask(active.mask, dx, dy);
 			actions = mask_bounds(moved) == null ? null : this.Selection.mask_actions(moved);
 		}
 		else {
-			var rect = moved_rect(active.rect, dx, dy, config.WIDTH, config.HEIGHT);
+			const rect = moved_rect(active.rect, dx, dy, config.WIDTH, config.HEIGHT);
 			actions = rect == null ? null : [new app.Actions.Set_selection_action(rect.x, rect.y, rect.width, rect.height)];
 		}
 		if (actions == null) {
@@ -180,15 +180,15 @@ class Edit_selection_move_class {
 		}
 		if (active.mode == 'Content' && active.vector) {
 			//the result is a picture layer; a copy leaves the vector layer as it is, a move replaces it (in the same place of the stack)
-			var vector = active.vector;
-			var parts = {data: copy ? new Uint8ClampedArray(active.original.data.length) : new Uint8ClampedArray(active.parts.hole.data), width: active.original.width, height: active.original.height};
+			const vector = active.vector;
+			const parts = {data: copy ? new Uint8ClampedArray(active.original.data.length) : new Uint8ClampedArray(active.parts.hole.data), width: active.original.width, height: active.original.height};
 			put_shifted(parts, active.parts.selected, dx, dy);
-			var result = document.createElement('canvas');
+			const result = document.createElement('canvas');
 			result.width = parts.width;
 			result.height = parts.height;
 			result.getContext('2d').putImageData(new ImageData(parts.data, parts.width, parts.height), 0, 0);
-			var params = {
-				name: copy ? vector.name + ' ' + t('copy') : vector.name,
+			const params = {
+				name: copy ? `${vector.name  } ${  t('copy')}` : vector.name,
 				type: 'image',
 				data: result.toDataURL('image/png'),
 				x: 0,
@@ -201,16 +201,16 @@ class Edit_selection_move_class {
 			if (!copy) {
 				params.order = vector.order;
 			}
-			var changes = [new app.Actions.Insert_layer_action(params, false)];
+			const changes = [new app.Actions.Insert_layer_action(params, false)];
 			if (!copy) {
 				changes.push(new app.Actions.Delete_layer_action(vector.id));
 			}
 			await app.State.do_action(new app.Actions.Bundle_action('move_selection_content', copy ? 'Copy Selection Content' : 'Move Selection Content', changes.concat(actions)));
 		}
 		else if (active.mode == 'Content') {
-			var base = {data: new Uint8ClampedArray((copy ? active.original : active.parts.hole).data), width: active.original.width, height: active.original.height};
+			const base = {data: new Uint8ClampedArray((copy ? active.original : active.parts.hole).data), width: active.original.width, height: active.original.height};
 			put_shifted(base, active.parts.selected, dx, dy);
-			var canvas = document.createElement('canvas');
+			const canvas = document.createElement('canvas');
 			canvas.width = base.width;
 			canvas.height = base.height;
 			canvas.getContext('2d').putImageData(new ImageData(base.data, base.width, base.height), 0, 0);

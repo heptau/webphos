@@ -27,7 +27,7 @@
     "Empty selection or type not image.": "You have selected nothing or the asset is not an image.",
     "English": "English UK",
     "Erase on rotate object is disabled. Sorry.": "Sorry you can not erase on rotated asset (object). Remove the rotation then you can delete it.",
-    "Image data with multi-layers. Can be opened using WebPhos -": "You can open asset (image) data with multi-layers using WebPhos. -",
+    "Image data with multi-layers. Can be opened using Lumifex -": "You can open asset (image) data with multi-layers using Lumifex. -",
     "Layer is not compatible with resize": "Sorry, this layer is not compatible with resize",
     "Layer is vector, convert it to raster to apply this tool.": "Sorry this layer is a vector, please convert it to a raster to apply this tool. (Layer, Convert to a Raster)",
     "Missing at least 1 size parameter.": "Sorry, you are missing at least 1 size parameter.",

@@ -4,8 +4,8 @@ import {
 	build_registry, effective_specs, clean_overrides, overrides_from, find_conflict, find_entry, normalize_spec, menu_text, command_id, export_shortcuts, import_shortcuts,
 } from './../libs/shortcut-registry.js';
 
-var instance = null;
-const STORAGE_KEY = 'webphos_shortcuts';
+let instance = null;
+const STORAGE_KEY = 'lumifex_shortcuts';
 
 //commands that make sense when the key is held down (the others run once per press: holding a key repeats the
 //event, and a command that switches something would switch it back and forth)
@@ -41,7 +41,7 @@ class Shortcut_manager_class {
 		try {
 			return clean_overrides(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'), this.registry);
 		}
-		catch (error) {
+		catch {
 			return {};
 		}
 	}
@@ -50,7 +50,7 @@ class Shortcut_manager_class {
 		try {
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(this.overrides));
 		}
-		catch (error) {
+		catch {
 			//a private window or full storage: the change lasts until the page is closed
 		}
 	}
@@ -77,14 +77,14 @@ class Shortcut_manager_class {
 	 * @returns {{ok: true}|{ok: false, conflict: object}}
 	 */
 	set(id, spec) {
-		var entry = this.registry.find((item) => item.id === id);
+		const entry = this.registry.find((item) => item.id === id);
 		if (!entry || entry.fixed) {
 			return {ok: false, conflict: null};
 		}
-		var clean = normalize_spec(spec);
-		var conflict = clean === '' ? null : find_conflict(this.registry, this.specs, id, clean);
+		const clean = normalize_spec(spec);
+		const conflict = clean === '' ? null : find_conflict(this.registry, this.specs, id, clean);
 		if (conflict) {
-			return {ok: false, conflict: conflict};
+			return {ok: false, conflict};
 		}
 		this.specs[id] = clean;
 		this.after_change();
@@ -96,13 +96,13 @@ class Shortcut_manager_class {
 	 * @returns {{ok: true}|{ok: false, conflict: object}}
 	 */
 	reset(id) {
-		var entry = this.registry.find((item) => item.id === id);
+		const entry = this.registry.find((item) => item.id === id);
 		if (!entry || entry.fixed) {
 			return {ok: false, conflict: null};
 		}
-		var conflict = entry.spec === '' ? null : find_conflict(this.registry, this.specs, id, entry.spec);
+		const conflict = entry.spec === '' ? null : find_conflict(this.registry, this.specs, id, entry.spec);
 		if (conflict) {
-			return {ok: false, conflict: conflict};
+			return {ok: false, conflict};
 		}
 		this.specs[id] = entry.spec;
 		this.after_change();
@@ -125,7 +125,7 @@ class Shortcut_manager_class {
 	 * @returns {{ok: true, applied: number, skipped: number}|{ok: false, error: string}}
 	 */
 	import_text(text) {
-		var result = import_shortcuts(this.registry, text);
+		const result = import_shortcuts(this.registry, text);
 		if (!result.ok) {
 			return result;
 		}
@@ -173,8 +173,8 @@ class Shortcut_manager_class {
 	 * @returns {string|null} for example "Shift+Ctrl+D", '' when the command has none now, null when it is not a command with a shortcut
 	 */
 	text_for(target, parameter) {
-		var id = command_id(target, parameter);
-		var entry = this.registry.find((item) => item.id === id);
+		const id = command_id(target, parameter);
+		const entry = this.registry.find((item) => item.id === id);
 		return entry ? menu_text(entry.fixed ? entry.spec : this.get(id)) : null;
 	}
 
@@ -182,16 +182,16 @@ class Shortcut_manager_class {
 	 * The menu items show the shortcut that is used now
 	 */
 	apply_to_menu() {
-		var walk = (items) => {
+		const walk = (items) => {
 			items.forEach((item) => {
 				if (item.divider) {
 					return;
 				}
 				if (item.target) {
-					var id = command_id(item.target, item.parameter);
-					var entry = this.registry.find((candidate) => candidate.id === id);
+					const id = command_id(item.target, item.parameter);
+					const entry = this.registry.find((candidate) => candidate.id === id);
 					if (entry) {
-						var text = menu_text(entry.fixed ? entry.spec : this.get(id));
+						const text = menu_text(entry.fixed ? entry.spec : this.get(id));
 						if (text !== '') {
 							item.shortcut = text;
 						}

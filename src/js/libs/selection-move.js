@@ -15,13 +15,13 @@ export function point_in_selection(current, point) {
 	if (current == null) {
 		return false;
 	}
-	var x = Math.floor(point.x);
-	var y = Math.floor(point.y);
+	const x = Math.floor(point.x);
+	const y = Math.floor(point.y);
 	if (current.kind == 'custom') {
-		var mask = current.mask;
+		const mask = current.mask;
 		return x >= 0 && y >= 0 && x < mask.width && y < mask.height && mask.data[y * mask.width + x] > 0;
 	}
-	var rect = current.rect;
+	const rect = current.rect;
 	return point.x > rect.x && point.x < rect.x + rect.width && point.y > rect.y && point.y < rect.y + rect.height;
 }
 
@@ -36,10 +36,10 @@ export function point_in_selection(current, point) {
  * @returns {Rect|null} null when nothing of it would be left
  */
 export function moved_rect(rect, dx, dy, width, height) {
-	var left = Math.max(0, Math.round(rect.x + dx));
-	var top = Math.max(0, Math.round(rect.y + dy));
-	var right = Math.min(width, Math.round(rect.x + dx + rect.width));
-	var bottom = Math.min(height, Math.round(rect.y + dy + rect.height));
+	const left = Math.max(0, Math.round(rect.x + dx));
+	const top = Math.max(0, Math.round(rect.y + dy));
+	const right = Math.min(width, Math.round(rect.x + dx + rect.width));
+	const bottom = Math.min(height, Math.round(rect.y + dy + rect.height));
 	if (right <= left || bottom <= top) {
 		return null;
 	}
@@ -54,7 +54,7 @@ export function moved_rect(rect, dx, dy, width, height) {
  * @returns {Mask} a new mask (the same one when it is empty or the rectangle is empty)
  */
 export function fit_mask_to_rect(mask, new_rect) {
-	var bounds = mask_bounds(mask);
+	const bounds = mask_bounds(mask);
 	if (bounds == null || !(new_rect.width > 0) || !(new_rect.height > 0)) {
 		return mask;
 	}
@@ -77,7 +77,7 @@ export function fit_mask_to_rect(mask, new_rect) {
  * @returns {{selected: {data: Uint8ClampedArray, width: number, height: number}, hole: {data: Uint8ClampedArray, width: number, height: number}}}
  */
 export function lift_pixels(image, mask, layer) {
-	var copy = function () {
+	const copy = function () {
 		return {data: new Uint8ClampedArray(image.data), width: image.width, height: image.height};
 	};
 	return {selected: keep_with_mask(copy(), mask, layer), hole: erase_with_mask(copy(), mask, layer)};
@@ -94,29 +94,29 @@ export function lift_pixels(image, mask, layer) {
  * @returns {{data: Uint8ClampedArray, width: number, height: number}} base, changed in place
  */
 export function put_shifted(base, selected, dx, dy) {
-	var w = base.width;
-	var h = base.height;
+	const w = base.width;
+	const h = base.height;
 	dx = Math.round(dx) || 0;
 	dy = Math.round(dy) || 0;
-	for (var y = 0; y < h; y++) {
-		var ty = y + dy;
+	for (let y = 0; y < h; y++) {
+		const ty = y + dy;
 		if (ty < 0 || ty >= h) {
 			continue;
 		}
-		for (var x = 0; x < w; x++) {
-			var tx = x + dx;
+		for (let x = 0; x < w; x++) {
+			const tx = x + dx;
 			if (tx < 0 || tx >= w) {
 				continue;
 			}
-			var s = (y * w + x) * 4;
-			var sa = selected.data[s + 3];
+			const s = (y * w + x) * 4;
+			const sa = selected.data[s + 3];
 			if (sa == 0) {
 				continue;
 			}
-			var t = (ty * w + tx) * 4;
-			var ta = base.data[t + 3];
-			var a = sa + ta * (255 - sa) / 255;
-			for (var c = 0; c < 3; c++) {
+			const t = (ty * w + tx) * 4;
+			const ta = base.data[t + 3];
+			const a = sa + ta * (255 - sa) / 255;
+			for (let c = 0; c < 3; c++) {
 				base.data[t + c] = a > 0 ? (selected.data[s + c] * sa + base.data[t + c] * ta * (255 - sa) / 255) / a : 0;
 			}
 			base.data[t + 3] = a;

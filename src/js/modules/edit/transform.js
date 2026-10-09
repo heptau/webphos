@@ -49,12 +49,12 @@ class Edit_transform_class {
 	}
 
 	distort_numbers() {
-		var layer = config.layer;
-		var w = layer ? Math.round(layer.width) : 100;
-		var h = layer ? Math.round(layer.height) : 100;
-		var corner = (key, name) => [
-			{name: key + '_x', title: name + " X:", value: 0, range: [-w, w]},
-			{name: key + '_y', title: name + " Y:", value: 0, range: [-h, h]},
+		const layer = config.layer;
+		const w = layer ? Math.round(layer.width) : 100;
+		const h = layer ? Math.round(layer.height) : 100;
+		const corner = (key, name) => [
+			{name: `${key  }_x`, title: `${name  } X:`, value: 0, range: [-w, w]},
+			{name: `${key  }_y`, title: `${name  } Y:`, value: 0, range: [-h, h]},
 		];
 		this.distort_dialog('distort', 'Distort', [].concat(
 			corner('tl', 'Top left'), corner('tr', 'Top right'), corner('br', 'Bottom right'), corner('bl', 'Bottom left')
@@ -71,7 +71,7 @@ class Edit_transform_class {
 	 * @param {object[]} params dialog parameters
 	 */
 	distort_dialog(mode, title, params) {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
@@ -84,25 +84,25 @@ class Edit_transform_class {
 			alertify.error(t('Apply or delete the layer mask first.'));
 			return;
 		}
-		var w = Math.max(1, Math.round(layer.width));
-		var h = Math.max(1, Math.round(layer.height));
+		const w = Math.max(1, Math.round(layer.width));
+		const h = Math.max(1, Math.round(layer.height));
 
 		//the picture as it is shown on the canvas (also when the layer was stretched)
-		var full = document.createElement('canvas');
+		const full = document.createElement('canvas');
 		full.width = w;
 		full.height = h;
 		full.getContext('2d').drawImage(layer.link, 0, 0, w, h);
 
 		//a smaller copy for the preview
-		var scale = Math.min(1, 500 / Math.max(w, h));
-		var small = document.createElement('canvas');
+		const scale = Math.min(1, 500 / Math.max(w, h));
+		const small = document.createElement('canvas');
 		small.width = Math.max(1, Math.round(w * scale));
 		small.height = Math.max(1, Math.round(h * scale));
 		small.getContext('2d').drawImage(full, 0, 0, small.width, small.height);
-		var small_image = small.getContext('2d').getImageData(0, 0, small.width, small.height);
+		const small_image = small.getContext('2d').getImageData(0, 0, small.width, small.height);
 
-		var saved = {x: layer.x, y: layer.y, width: layer.width, height: layer.height, link_canvas: layer.link_canvas};
-		var restore = () => {
+		const saved = {x: layer.x, y: layer.y, width: layer.width, height: layer.height, link_canvas: layer.link_canvas};
+		const restore = () => {
 			layer.x = saved.x;
 			layer.y = saved.y;
 			layer.width = saved.width;
@@ -117,15 +117,15 @@ class Edit_transform_class {
 		};
 
 		new Dialog_class().show({
-			title: title,
-			params: params,
+			title,
+			params,
 			on_change: (values) => {
-				var quad = quad_for(mode, values, w, h);
-				var result = warp_to_quad(small_image, quad.map((c) => [c[0] * scale, c[1] * scale]));
+				const quad = quad_for(mode, values, w, h);
+				const result = warp_to_quad(small_image, quad.map((c) => [c[0] * scale, c[1] * scale]));
 				if (result == null) {
 					return;
 				}
-				var canvas = document.createElement('canvas');
+				const canvas = document.createElement('canvas');
 				canvas.width = result.image.width;
 				canvas.height = result.image.height;
 				canvas.getContext('2d').putImageData(new ImageData(result.image.data, canvas.width, canvas.height), 0, 0);
@@ -138,18 +138,18 @@ class Edit_transform_class {
 			},
 			on_finish: (values) => {
 				restore();
-				var quad = quad_for(mode, values, w, h);
-				var bounds = quad_bounds(quad);
+				const quad = quad_for(mode, values, w, h);
+				const bounds = quad_bounds(quad);
 				if (bounds.width > MAX_SIDE || bounds.height > MAX_SIDE) {
 					alertify.error(t('The result would be too big.'));
 					return;
 				}
-				var result = warp_to_quad(full.getContext('2d').getImageData(0, 0, w, h), quad);
+				const result = warp_to_quad(full.getContext('2d').getImageData(0, 0, w, h), quad);
 				if (result == null) {
 					alertify.error(t('The corners make a shape that folds over itself.'));
 					return;
 				}
-				var canvas = document.createElement('canvas');
+				const canvas = document.createElement('canvas');
 				canvas.width = result.image.width;
 				canvas.height = result.image.height;
 				canvas.getContext('2d').putImageData(new ImageData(result.image.data, canvas.width, canvas.height), 0, 0);
@@ -172,8 +172,8 @@ class Edit_transform_class {
 	}
 
 	transform_again() {
-		var change = last_transform();
-		var layer = config.layer;
+		const change = last_transform();
+		const layer = config.layer;
 		if (change == null) {
 			alertify.warning(t('There is no transformation to repeat.'));
 			return;
@@ -186,7 +186,7 @@ class Edit_transform_class {
 			alertify.error(t('Rotate is not supported on this type of object. Convert to raster?'));
 			return;
 		}
-		var settings = apply_transform(layer, change);
+		const settings = apply_transform(layer, change);
 		if (layer.rotate === null) {
 			delete settings.rotate;
 		}

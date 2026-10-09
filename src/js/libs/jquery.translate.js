@@ -1,11 +1,11 @@
 // https://github.com/jorgejeferson/translate.js/tree/39be8237666a76035fc210a28d8e431f1416579e
 (function ($) {
 	//translations may contain simple inline markup; everything else (scripts, event handlers...) is dropped
-	var ALLOWED_TAGS = ['B', 'I', 'U', 'EM', 'STRONG', 'SPAN', 'SMALL', 'BR', 'CODE', 'SUB', 'SUP', 'A'];
-	var ALLOWED_ATTRS = ['class', 'title', 'href', 'target', 'rel'];
+	const ALLOWED_TAGS = ['B', 'I', 'U', 'EM', 'STRONG', 'SPAN', 'SMALL', 'BR', 'CODE', 'SUB', 'SUP', 'A'];
+	const ALLOWED_ATTRS = ['class', 'title', 'href', 'target', 'rel'];
 
 	function clean_node(source, target) {
-		Array.prototype.forEach.call(source.childNodes, function (node) {
+		Array.prototype.forEach.call(source.childNodes, (node) => {
 			if (node.nodeType === 3) {
 				target.appendChild(document.createTextNode(node.nodeValue));
 			}
@@ -15,9 +15,9 @@
 					clean_node(node, target);
 					return;
 				}
-				var copy = document.createElement(node.tagName);
-				Array.prototype.forEach.call(node.attributes, function (attribute) {
-					var name = attribute.name.toLowerCase();
+				const copy = document.createElement(node.tagName);
+				Array.prototype.forEach.call(node.attributes, (attribute) => {
+					const name = attribute.name.toLowerCase();
 					if (ALLOWED_ATTRS.indexOf(name) < 0) {
 						return;
 					}
@@ -34,15 +34,15 @@
 
 	//sets the content of the element from a text with simple markup, without evaluating it as HTML
 	function set_safe_content($element, text) {
-		var parsed = new DOMParser().parseFromString(String(text), 'text/html');
-		var fragment = document.createDocumentFragment();
+		const parsed = new DOMParser().parseFromString(String(text), 'text/html');
+		const fragment = document.createDocumentFragment();
 		clean_node(parsed.body, fragment);
 		$element.empty().append(fragment);
 	}
 
 	$.fn.translate = function (options) {
-		var that = this; //a reference to ourselves
-		var settings = {
+		const that = this; //a reference to ourselves
+		let settings = {
 			css: "trn",
 			attrs: ["alt", "placeholder", "title"],
 			lang: "pt",
@@ -50,9 +50,9 @@
 		};
 		settings = $.extend(settings, options || {});
 		if (settings.css.lastIndexOf(".", 0) !== 0) { //doesn't start with '.'
-			settings.css = "." + settings.css;
+			settings.css = `.${  settings.css}`;
 		}
-		var t = settings.t;
+		const t = settings.t;
 		//public methods
 		this.lang = function (l) {
 			if (l) {
@@ -62,12 +62,12 @@
 			return settings.lang;
 		};
 		this.get = function (index) {
-			var res = index;
+			let res;
 
 			try {
 				res = t[index][settings.lang];
 			}
-			catch (err) { //not found, return index
+			catch { //not found, return index
 				return index;
 			}
 			if (res) {
@@ -79,12 +79,12 @@
 		};
 		this.g = this.get;
 		//main
-		this.find(settings.css).each(function (i) {
-			var $this = $(this);
+		this.find(settings.css).each(function () {
+			const $this = $(this);
 
 			//elements with an icon (svg) keep their content, only the attributes (title) are translated
-			var has_icon = $this.find("svg").length > 0;
-			var trn_key = $this.attr("data-trn-key");
+			const has_icon = $this.find("svg").length > 0;
+			let trn_key = $this.attr("data-trn-key");
 			if (!trn_key && !has_icon) {
 				trn_key = $this.html();
 				$this.attr("data-trn-key", trn_key);
@@ -92,7 +92,7 @@
 			// Filtering attr
 			$.each(this.attributes, function () {
 				if ($.inArray(this.name, settings.attrs) !== -1) {
-					var trn_attr_key = $this.attr("data-trn-attr");
+					let trn_attr_key = $this.attr("data-trn-attr");
 					if (!trn_attr_key) {
 						trn_attr_key = $this.attr(this.name);
 						$this.attr("data-trn-attr", trn_attr_key);

@@ -14,7 +14,7 @@ export function symmetry_transforms(mode) {
 	if (mode && mode.value !== undefined) {
 		mode = mode.value;
 	}
-	var identity = {sx: 1, sy: 1, angle: 0};
+	const identity = {sx: 1, sy: 1, angle: 0};
 	switch (mode) {
 		case 'Horizontal':
 			//left and right are swapped
@@ -26,11 +26,11 @@ export function symmetry_transforms(mode) {
 		default:
 			break;
 	}
-	var radial = /^Radial (\d+)$/.exec(String(mode));
+	const radial = /^Radial (\d+)$/.exec(String(mode));
 	if (radial) {
-		var count = Math.min(24, Math.max(2, parseInt(radial[1], 10)));
-		var result = [];
-		for (var i = 0; i < count; i++) {
+		const count = Math.min(24, Math.max(2, parseInt(radial[1], 10)));
+		const result = [];
+		for (let i = 0; i < count; i++) {
 			result.push({sx: 1, sy: 1, angle: 2 * Math.PI * i / count});
 		}
 		return result;
@@ -47,11 +47,11 @@ export function symmetry_transforms(mode) {
  * @returns {{x: number, y: number}[]}
  */
 export function symmetric_points(point, center, mode) {
-	return symmetry_transforms(mode).map(function (transform) {
-		var dx = (point.x - center.x) * transform.sx;
-		var dy = (point.y - center.y) * transform.sy;
-		var cos = Math.cos(transform.angle);
-		var sin = Math.sin(transform.angle);
+	return symmetry_transforms(mode).map((transform) => {
+		const dx = (point.x - center.x) * transform.sx;
+		const dy = (point.y - center.y) * transform.sy;
+		const cos = Math.cos(transform.angle);
+		const sin = Math.sin(transform.angle);
 		return {x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos};
 	});
 }

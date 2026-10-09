@@ -4,7 +4,7 @@ import Base_gui_class from './../../core/base-gui.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Tools_settings_class from './../tools/settings.js';
 
-var instance = null;
+let instance = null;
 
 class View_ruler_class {
 
@@ -24,19 +24,18 @@ class View_ruler_class {
 	}
 
 	set_events() {
-		var _this = this;
 
-		window.addEventListener('resize', function (event) {
+		window.addEventListener('resize', () => {
 			//resize
-			_this.prepare_ruler();
-			_this.render_ruler();
+			this.prepare_ruler();
+			this.render_ruler();
 		}, false);
 
 		this.set_marker_events();
 
 		//drag from a ruler to create a guide (as in Photoshop)
-		var ruler_top = document.getElementById('ruler_top');
-		var ruler_left = document.getElementById('ruler_left');
+		const ruler_top = document.getElementById('ruler_top');
+		const ruler_left = document.getElementById('ruler_left');
 		if (ruler_top && ruler_left) {
 			ruler_top.addEventListener('mousedown', (event) => {
 				this.drag_guide(event, true);
@@ -51,13 +50,13 @@ class View_ruler_class {
 	 * A line on each ruler shows where the mouse is (as the rulers of Photoshop do)
 	 */
 	set_marker_events() {
-		var middle_area = document.getElementById('middle_area');
+		const middle_area = document.getElementById('middle_area');
 		if (!middle_area) {
 			return;
 		}
-		var make = (name) => {
-			var marker = document.createElement('div');
-			marker.className = 'ruler_marker ' + name;
+		const make = (name) => {
+			const marker = document.createElement('div');
+			marker.className = `ruler_marker ${  name}`;
 			marker.setAttribute('aria-hidden', 'true');
 			middle_area.appendChild(marker);
 			return marker;
@@ -82,26 +81,26 @@ class View_ruler_class {
 	 * @param {number} client_y
 	 */
 	update_markers(client_x, client_y) {
-		var ruler_top = document.getElementById('ruler_top');
-		var ruler_left = document.getElementById('ruler_left');
-		var middle_area = document.getElementById('middle_area');
+		const ruler_top = document.getElementById('ruler_top');
+		const ruler_left = document.getElementById('ruler_left');
+		const middle_area = document.getElementById('middle_area');
 		if (config.ruler_active == false || !this.marker_x || !ruler_top || !ruler_left || !middle_area) {
 			this.hide_markers();
 			return;
 		}
 		//the rulers start 20 pixels from the corner of the work area, like the picture does (see layout.css)
-		var rect = middle_area.getBoundingClientRect();
-		var x = client_x - rect.left - 20;
-		var y = client_y - rect.top - 20;
-		var inside_x = x >= 0 && x <= ruler_top.width && client_y >= rect.top && client_y <= rect.bottom;
-		var inside_y = y >= 0 && y <= ruler_left.height && client_x >= rect.left && client_x <= rect.right;
+		const rect = middle_area.getBoundingClientRect();
+		const x = client_x - rect.left - 20;
+		const y = client_y - rect.top - 20;
+		const inside_x = x >= 0 && x <= ruler_top.width && client_y >= rect.top && client_y <= rect.bottom;
+		const inside_y = y >= 0 && y <= ruler_left.height && client_x >= rect.left && client_x <= rect.right;
 		this.marker_x.style.display = inside_x ? 'block' : 'none';
 		this.marker_y.style.display = inside_y ? 'block' : 'none';
 		if (inside_x) {
-			this.marker_x.style.transform = 'translateX(' + Math.round(20 + x) + 'px)';
+			this.marker_x.style.transform = `translateX(${Math.round(20 + x)}px)`;
 		}
 		if (inside_y) {
-			this.marker_y.style.transform = 'translateY(' + Math.round(20 + y) + 'px)';
+			this.marker_y.style.transform = `translateY(${Math.round(20 + y)}px)`;
 		}
 	}
 
@@ -113,20 +112,21 @@ class View_ruler_class {
 	 * @param {boolean} horizontal true for the top ruler (horizontal guide)
 	 */
 	drag_guide(event, horizontal) {
+		let stop = null, up = null;
 		if (config.ruler_active == false || event.button !== 0) {
 			return;
 		}
 		event.preventDefault();
-		var canvas = document.getElementById('canvas_minipaint');
-		var guide = null;
+		const canvas = document.getElementById('canvas_minipaint');
+		let guide = null;
 
-		var position = (e) => {
-			var rect = canvas.getBoundingClientRect();
-			var world = this.Base_layers.get_world_coords(e.clientX - rect.left, e.clientY - rect.top);
+		const position = (e) => {
+			const rect = canvas.getBoundingClientRect();
+			const world = this.Base_layers.get_world_coords(e.clientX - rect.left, e.clientY - rect.top);
 			return Math.round(horizontal ? world.y : world.x);
 		};
-		var move = (e) => {
-			var value = position(e);
+		const move = (e) => {
+			const value = position(e);
 			if (guide == null) {
 				guide = horizontal ? {x: null, y: value} : {x: value, y: null};
 				config.guides.push(guide);
@@ -143,37 +143,37 @@ class View_ruler_class {
 			}
 			config.need_render = true;
 		};
-		var cancel = () => {
+		const cancel = () => {
 			stop();
 			if (guide != null) {
-				var index = config.guides.indexOf(guide);
+				const index = config.guides.indexOf(guide);
 				if (index >= 0) {
 					config.guides.splice(index, 1);
 				}
 				config.need_render = true;
 			}
 		};
-		var on_key = (e) => {
+		const on_key = (e) => {
 			if (e.key == 'Escape') {
 				cancel();
 			}
 		};
-		var stop = () => {
+		stop = () => {
 			document.removeEventListener('mousemove', move);
 			document.removeEventListener('mouseup', up);
 			document.removeEventListener('keydown', on_key);
 			window.removeEventListener('blur', cancel);
 		};
-		var up = (e) => {
+		up = (e) => {
 			stop();
 			if (guide == null) {
 				return;
 			}
-			var over = document.elementFromPoint(e.clientX, e.clientY);
-			var value = horizontal ? guide.y : guide.x;
-			var limit = horizontal ? config.HEIGHT : config.WIDTH;
+			const over = document.elementFromPoint(e.clientX, e.clientY);
+			const value = horizontal ? guide.y : guide.x;
+			const limit = horizontal ? config.HEIGHT : config.WIDTH;
 			if ((over && (over.id == 'ruler_top' || over.id == 'ruler_left')) || value <= 0 || value > limit) {
-				var index = config.guides.indexOf(guide);
+				const index = config.guides.indexOf(guide);
 				if (index >= 0) {
 					config.guides.splice(index, 1);
 				}
@@ -187,9 +187,8 @@ class View_ruler_class {
 	}
 
 	ruler() {
-		var ruler_left = document.getElementById('ruler_left');
-		var ruler_top = document.getElementById('ruler_top');
-		var middle_area = document.getElementById('middle_area');
+		const ruler_left = document.getElementById('ruler_left');
+		const ruler_top = document.getElementById('ruler_top');
 
 		if(config.ruler_active == false){
 			//activate
@@ -219,12 +218,12 @@ class View_ruler_class {
 		if(config.ruler_active == false)
 			return;
 
-		var ruler_left = document.getElementById('ruler_left');
-		var ruler_top = document.getElementById('ruler_top');
-		var middle_area = document.getElementById('middle_area');
+		const ruler_left = document.getElementById('ruler_left');
+		const ruler_top = document.getElementById('ruler_top');
+		const middle_area = document.getElementById('middle_area');
 
-		var middle_area_width = middle_area.clientWidth;
-		var middle_area_height = middle_area.clientHeight;
+		const middle_area_width = middle_area.clientWidth;
+		const middle_area_height = middle_area.clientHeight;
 
 		ruler_left.width = 15;
 		ruler_left.height = middle_area_height - 20;
@@ -234,37 +233,38 @@ class View_ruler_class {
 	}
 
 	render_ruler(){
+		let i, global_pos, value, text;
 		if(config.ruler_active == false)
 			return;
 
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
-		var ruler_left = document.getElementById('ruler_left');
-		var ruler_top = document.getElementById('ruler_top');
+		const ruler_left = document.getElementById('ruler_left');
+		const ruler_top = document.getElementById('ruler_top');
 
-		var ctx_left = ruler_left.getContext("2d");
-		var ctx_top = ruler_top.getContext("2d");
+		const ctx_left = ruler_left.getContext("2d");
+		const ctx_top = ruler_top.getContext("2d");
 
-		var color = getComputedStyle(document.body).getPropertyValue('--text-color-muted').trim() || '#111';
-		var size = 15;
+		const color = getComputedStyle(document.body).getPropertyValue('--text-color-muted').trim() || '#111';
+		const size = 15;
 
 		//calc step
-		var step = Math.ceil(10 * config.ZOOM);
+		let step = Math.ceil(10 * config.ZOOM);
 		while (step < 5) {
 			step = step * 2;
 		}
 		while (step > 10) {
 			step = Math.ceil(step / 2);
 		}
-		var step_big = step * 10;
+		const step_big = step * 10;
 
 		//calc begin/end point
-		var begin_x = Math.max(0, ruler_top.width / 2 - config.WIDTH * config.ZOOM / 2);
-		var begin_y = Math.max(0, ruler_left.height / 2 - config.HEIGHT * config.ZOOM / 2);
+		const begin_x = Math.max(0, ruler_top.width / 2 - config.WIDTH * config.ZOOM / 2);
+		const begin_y = Math.max(0, ruler_left.height / 2 - config.HEIGHT * config.ZOOM / 2);
 
-		var end_x = Math.min(ruler_top.width, ruler_top.width / 2 + config.WIDTH * config.ZOOM / 2);
-		var end_y = Math.min(ruler_left.height, ruler_left.height / 2 + config.HEIGHT * config.ZOOM / 2);
+		const end_x = Math.min(ruler_top.width, ruler_top.width / 2 + config.WIDTH * config.ZOOM / 2);
+		const end_y = Math.min(ruler_left.height, ruler_left.height / 2 + config.HEIGHT * config.ZOOM / 2);
 
 		//left
 		ctx_left.strokeStyle = color;
@@ -275,33 +275,33 @@ class View_ruler_class {
 		ctx_left.clearRect(0, 0, ruler_left.width, ruler_left.height);
 
 		ctx_left.beginPath();
-		for (var i = begin_y; i < end_y; i += step) {
+		for (i = begin_y; i < end_y; i += step) {
 			ctx_left.moveTo(10, i + 0.5);
 			ctx_left.lineTo(size, i + 0.5);
 		}
 		ctx_left.stroke();
 
 		ctx_left.beginPath();
-		for (var i = begin_y; i <= end_y; i += step_big) {
+		for (i = begin_y; i <= end_y; i += step_big) {
 			ctx_left.moveTo(0, i + 0.5);
 			ctx_left.lineTo(size, i + 0.5);
 
-			var global_pos = this.Base_layers.get_world_coords(0, i - begin_y);
-			var value = this.Helper.get_user_unit(global_pos.y, units, resolution);
+			global_pos = this.Base_layers.get_world_coords(0, i - begin_y);
+			value = this.Helper.get_user_unit(global_pos.y, units, resolution);
 
 			if(units == 'inches'){
 				//more decimals value
-				var text = this.Helper.number_format(value, 1);
+				text = this.Helper.number_format(value, 1);
 			}
 			else{
-				var text = Math.ceil(value);
+				text = Math.ceil(value);
 			}
 			text = text.toString();
 
 			//text
-			for (var j = 0; j < text.length; j++) {
-				var letter = text.charAt(j);
-				var line_height = 10;
+			for (let j = 0; j < text.length; j++) {
+				const letter = text.charAt(j);
+				const line_height = 10;
 				ctx_left.fillText(letter, 1, i + 11 + j * line_height);
 			}
 		}
@@ -316,27 +316,26 @@ class View_ruler_class {
 		ctx_top.clearRect(0, 0, ruler_top.width, ruler_top.height);
 
 		ctx_top.beginPath();
-		for (var i = begin_x; i < end_x; i += step) {
-			var y = (i / step_big == parseInt(i / step_big)) ? 0 : step;
+		for (i = begin_x; i < end_x; i += step) {
 			ctx_top.moveTo(i + 0.5, 10);
 			ctx_top.lineTo(i + 0.5, size);
 		}
 		ctx_top.stroke();
 
 		ctx_top.beginPath();
-		for (var i = begin_x; i <= end_x; i += step_big) {
+		for (i = begin_x; i <= end_x; i += step_big) {
 			ctx_top.moveTo(i + 0.5, 0);
 			ctx_top.lineTo(i + 0.5, size);
 
-			var global_pos = this.Base_layers.get_world_coords(i - begin_x, 0);
-			var value = this.Helper.get_user_unit(global_pos.x, units, resolution);
+			global_pos = this.Base_layers.get_world_coords(i - begin_x, 0);
+			value = this.Helper.get_user_unit(global_pos.x, units, resolution);
 
 			if(units == 'inches'){
 				//more decimals value
-				var text = this.Helper.number_format(value, 1);
+				text = this.Helper.number_format(value, 1);
 			}
 			else{
-				var text = Math.ceil(value);
+				text = Math.ceil(value);
 			}
 			text = text.toString();
 

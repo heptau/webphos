@@ -21,8 +21,8 @@ class Layer_rename_all_class {
 				{html: '<span class="field_comment">{n} {nn} {name} {type}</span>'},
 			],
 			on_finish: (params) => {
-				var layers = config.layers.slice().sort((a, b) => b.order - a.order);
-				var actions = [new app.Actions.Refresh_layers_gui_action('undo')].concat(layers.map((layer, index) => new app.Actions.Update_layer_action(layer.id, {
+				const layers = config.layers.slice().sort((a, b) => b.order - a.order);
+				const actions = [new app.Actions.Refresh_layers_gui_action('undo')].concat(layers.map((layer, index) => new app.Actions.Update_layer_action(layer.id, {
 					name: apply_name_pattern(params.pattern, layer, index, params.start),
 				})));
 				actions.push(new app.Actions.Refresh_layers_gui_action('do'));

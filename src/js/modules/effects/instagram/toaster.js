@@ -24,11 +24,11 @@ class Effects_toaster_class {
 		}
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var data = this.change(canvas, canvas.width, canvas.height);
+		const data = this.change(canvas, canvas.width, canvas.height);
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(data, 0, 0);
 
@@ -41,15 +41,15 @@ class Effects_toaster_class {
 	change(canvas, width, height) {
 
 		//create temp canvas
-		var canvas2 = document.createElement('canvas');
-		var ctx2 = canvas2.getContext("2d");
+		const canvas2 = document.createElement('canvas');
+		const ctx2 = canvas2.getContext("2d");
 		canvas2.width = width;
 		canvas2.height = height;
 		ctx2.drawImage(canvas, 0, 0);
 
 		//merge
 		ctx2.globalCompositeOperation = "screen";
-		var gradient = ctx2.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.6);
+		const gradient = ctx2.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.6);
 		gradient.addColorStop(0, "#804e0f");
 		gradient.addColorStop(1, "#3b003b");
 		ctx2.fillStyle = gradient;
@@ -65,11 +65,11 @@ class Effects_toaster_class {
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//modify
-		var data = this.change(canvas_thumb, canvas_thumb.width, canvas_thumb.height);
+		const data = this.change(canvas_thumb, canvas_thumb.width, canvas_thumb.height);
 
 		//draw
 		ctx.drawImage(data, 0, 0);

@@ -3,29 +3,29 @@
 const zoomView = (() => {
 	const matrix = [1, 0, 0, 1, 0, 0]; // current view transform
 	const invMatrix = [1, 0, 0, 1, 0, 0]; // current inverse view transform
-	var m = matrix;  // alias
-	var im = invMatrix; // alias
-	var scale = 1;   // current scale
+	const m = matrix;  // alias
+	const im = invMatrix; // alias
+	let scale = 1;   // current scale
 	const bounds = {
 		top: 0,
 		left: 0,
 		right: 200,
 		bottom: 200,
 	};
-	var useConstraint = true; // if true then limit pan and zoom to 
+	let useConstraint = true; // if true then limit pan and zoom to
 	// keep bounds within the current context
 
-	var maxScale = 1;
+	let maxScale = 1;
 	const workPoint1 = {x: 0, y: 0};
 	const workPoint2 = {x: 0, y: 0};
 	const wp1 = workPoint1; // alias
 	const wp2 = workPoint2; // alias
-	var ctx;
+	let ctx;
 	const pos = {// current position of origin
 		x: 0,
 		y: 0,
 	};
-	var dirty = true;
+	let dirty = true;
 	const API = {
 		canvasDefault() {
 			ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -64,7 +64,7 @@ const zoomView = (() => {
 			}
 			this.invScale = 1 / scale;
 			// calculate the inverse transformation
-			var cross = m[0] * m[3] - m[1] * m[2];
+			const cross = m[0] * m[3] - m[1] * m[2];
 			im[0] = m[3] / cross;
 			im[1] = -m[1] / cross;
 			im[2] = -m[2] / cross;
@@ -98,13 +98,12 @@ const zoomView = (() => {
 			}
 		},
 		toWorld(from_x, from_y) {  // convert screen to world coords
-			var xx, yy;
-			var pointW = {};
+						const pointW = {};
 			if (dirty) {
 				this.update();
 			}
-			xx = from_x - m[4];
-			yy = from_y - m[5];
+			const xx = from_x - m[4];
+			const yy = from_y - m[5];
 			pointW.x = xx * im[0] + yy * im[2];
 			pointW.y = xx * im[1] + yy * im[3];
 			return pointW;

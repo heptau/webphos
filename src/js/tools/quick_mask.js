@@ -48,12 +48,12 @@ class Quick_mask_class extends Base_mask_tool_class {
 	}
 
 	is_layer_mask_target(params) {
-		var target = params.target && params.target.value !== undefined ? params.target.value : params.target;
+		const target = params.target && params.target.value !== undefined ? params.target.value : params.target;
 		return target === 'Layer mask';
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false || mouse.valid == false) {
 			return;
 		}
@@ -66,8 +66,8 @@ class Quick_mask_class extends Base_mask_tool_class {
 			return;
 		}
 
-		var params = this.getParams();
-		var current = this.Selection_mask.get();
+		const params = this.getParams();
+		const current = this.Selection_mask.get();
 		this.work = current ? {width: current.mask.width, height: current.mask.height, data: new Uint8ClampedArray(current.mask.data)}
 			: create_mask(config.WIDTH, config.HEIGHT);
 		this.mode = (Boolean(params.subtract) != Boolean(e.altKey)) ? 'subtract' : 'add';
@@ -83,7 +83,7 @@ class Quick_mask_class extends Base_mask_tool_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		config.need_render = true; //brush cursor
 		if (this.painting == false || mouse.is_drag == false) {
 			return;
@@ -92,12 +92,12 @@ class Quick_mask_class extends Base_mask_tool_class {
 			this.paint_layer_mask({x: mouse.x, y: mouse.y});
 			return;
 		}
-		var point = {x: mouse.x, y: mouse.y};
+		const point = {x: mouse.x, y: mouse.y};
 		this.paint(this.last, point);
 		this.last = point;
 	}
 
-	async mouseup(e) {
+	async mouseup() {
 		if (this.painting == false) {
 			return;
 		}
@@ -106,7 +106,7 @@ class Quick_mask_class extends Base_mask_tool_class {
 			return;
 		}
 		this.painting = false;
-		var work = this.work;
+		const work = this.work;
 		this.work = null;
 		this.overlay = null;
 		this.last = null;
@@ -126,7 +126,7 @@ class Quick_mask_class extends Base_mask_tool_class {
 	 * Starts painting the mask of the active layer
 	 */
 	start_layer_mask(e, mouse) {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type == null || !(layer.width > 0) || !(layer.height > 0)) {
 			alertify.error(t('Layer is empty.'));
 			return;
@@ -135,7 +135,7 @@ class Quick_mask_class extends Base_mask_tool_class {
 			alertify.error(t('Rotate is not supported on this type of object. Convert to raster?'));
 			return;
 		}
-		var params = this.getParams();
+		const params = this.getParams();
 		this.layer_target = layer;
 		this.original_mask = layer.mask;
 		this.original_enabled = layer.mask_enabled;
@@ -157,11 +157,11 @@ class Quick_mask_class extends Base_mask_tool_class {
 	}
 
 	paint_layer_mask(point, first) {
-		var layer = this.layer_target;
-		var params = this.getParams();
-		var radius = Math.max(0.5, (parseFloat(params.size) || 30) / 2) * this.work.width / layer.width;
-		var softness = (parseFloat(params.softness) || 0) / 100;
-		var to = this.to_layer_position(point, layer);
+		const layer = this.layer_target;
+		const params = this.getParams();
+		const radius = Math.max(0.5, (parseFloat(params.size) || 30) / 2) * this.work.width / layer.width;
+		const softness = (parseFloat(params.softness) || 0) / 100;
+		const to = this.to_layer_position(point, layer);
 		paint_mask_line(this.work, first ? to : this.last, to, radius, softness, this.mode == 'hide' ? 'subtract' : 'add');
 		this.last = to;
 
@@ -172,15 +172,15 @@ class Quick_mask_class extends Base_mask_tool_class {
 	}
 
 	finish_layer_mask() {
-		var layer = this.layer_target;
-		var work = this.work;
+		const layer = this.layer_target;
+		const work = this.work;
 		this.painting = false;
 		this.layer_target = null;
 		this.work = null;
 		this.last = null;
 
 		//put the original mask back, so undo returns to it
-		var painted = serialize_layer_mask(work);
+		const painted = serialize_layer_mask(work);
 		layer.mask = this.original_mask;
 		layer.mask_enabled = this.original_enabled;
 		app.State.do_action(
@@ -191,10 +191,10 @@ class Quick_mask_class extends Base_mask_tool_class {
 	}
 
 	paint(from, to) {
-		var params = this.getParams();
-		var radius = Math.max(0.5, (parseFloat(params.size) || 30) / 2);
-		var softness = (parseFloat(params.softness) || 0) / 100;
-		var dirty = paint_mask_line(this.work, from, to, radius, softness, this.mode);
+		const params = this.getParams();
+		const radius = Math.max(0.5, (parseFloat(params.size) || 30) / 2);
+		const softness = (parseFloat(params.softness) || 0) / 100;
+		const dirty = paint_mask_line(this.work, from, to, radius, softness, this.mode);
 		if (dirty) {
 			this.update_overlay(dirty);
 		}
@@ -205,12 +205,12 @@ class Quick_mask_class extends Base_mask_tool_class {
 	 * Redraws a part of the overlay (green tint = selected) from the mask being painted
 	 */
 	update_overlay(rect) {
-		var ctx = this.overlay.getContext('2d');
-		var image = ctx.createImageData(rect.width, rect.height);
-		for (var y = 0; y < rect.height; y++) {
-			for (var x = 0; x < rect.width; x++) {
-				var value = this.work.data[(rect.y + y) * this.work.width + rect.x + x];
-				var i = (y * rect.width + x) * 4;
+		const ctx = this.overlay.getContext('2d');
+		const image = ctx.createImageData(rect.width, rect.height);
+		for (let y = 0; y < rect.height; y++) {
+			for (let x = 0; x < rect.width; x++) {
+				const value = this.work.data[(rect.y + y) * this.work.width + rect.x + x];
+				const i = (y * rect.width + x) * 4;
 				image.data[i + 1] = 255;
 				image.data[i + 3] = Math.round(value * 0.3);
 			}
@@ -227,9 +227,9 @@ class Quick_mask_class extends Base_mask_tool_class {
 		}
 
 		//brush outline
-		var mouse = config.mouse;
+		const mouse = config.mouse;
 		if (mouse && mouse.valid) {
-			var radius = Math.max(0.5, (parseFloat(this.getParams().size) || 30) / 2);
+			const radius = Math.max(0.5, (parseFloat(this.getParams().size) || 30) / 2);
 			ctx.save();
 			ctx.lineWidth = 2 / config.ZOOM;
 			ctx.strokeStyle = 'rgb(255, 255, 255)';

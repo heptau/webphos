@@ -15,7 +15,7 @@ class Background_eraser_class extends Base_pixel_tool_class {
 	}
 
 	begin(ctx, position) {
-		var pixel = ctx.getImageData(
+		const pixel = ctx.getImageData(
 			Math.min(ctx.canvas.width - 1, Math.max(0, Math.round(position.x))),
 			Math.min(ctx.canvas.height - 1, Math.max(0, Math.round(position.y))), 1, 1
 		).data;
@@ -23,9 +23,9 @@ class Background_eraser_class extends Base_pixel_tool_class {
 	}
 
 	stamp(ctx, position, size, params) {
-		var radius = Math.max(2, size / 2);
+		const radius = Math.max(2, size / 2);
 		//tolerance in percent of the color range
-		var tolerance = (params.tolerance || 30) * 2.55;
+		const tolerance = (params.tolerance || 30) * 2.55;
 		this.with_region(ctx, position, radius + 1, (image, x, y) => {
 			erase_similar(image, x, y, radius, this.color, tolerance);
 		});

@@ -2,16 +2,16 @@
  * Minimal ZIP writer (files are stored without compression - PNG and JPEG are compressed already).
  */
 
-var table = null;
+let table = null;
 
 function crc_table() {
 	if (table) {
 		return table;
 	}
 	table = new Uint32Array(256);
-	for (var n = 0; n < 256; n++) {
-		var c = n;
-		for (var k = 0; k < 8; k++) {
+	for (let n = 0; n < 256; n++) {
+		let c = n;
+		for (let k = 0; k < 8; k++) {
 			c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
 		}
 		table[n] = c >>> 0;
@@ -24,9 +24,9 @@ function crc_table() {
  * @returns {number} CRC-32 of the bytes
  */
 export function crc32(bytes) {
-	var t = crc_table();
-	var crc = 0xffffffff;
-	for (var i = 0; i < bytes.length; i++) {
+	const t = crc_table();
+	let crc = 0xffffffff;
+	for (let i = 0; i < bytes.length; i++) {
 		crc = t[(crc ^ bytes[i]) & 255] ^ (crc >>> 8);
 	}
 	return (crc ^ 0xffffffff) >>> 0;
@@ -49,16 +49,16 @@ function dos_time(date) {
  * @returns {Uint8Array} the ZIP file
  */
 export function build_zip(files, date) {
-	var stamp = dos_time(date || new Date());
-	var parts = [];
-	var central = [];
-	var offset = 0;
+	const stamp = dos_time(date || new Date());
+	const parts = [];
+	const central = [];
+	let offset = 0;
 
-	files.forEach(function (file) {
-		var name = utf8(file.name);
-		var crc = crc32(file.data);
-		var local = new Uint8Array(30 + name.length);
-		var view = new DataView(local.buffer);
+	files.forEach((file) => {
+		const name = utf8(file.name);
+		const crc = crc32(file.data);
+		const local = new Uint8Array(30 + name.length);
+		const view = new DataView(local.buffer);
 		view.setUint32(0, 0x04034b50, true);
 		view.setUint16(4, 20, true);
 		view.setUint16(6, 0x0800, true); //UTF-8 names
@@ -72,8 +72,8 @@ export function build_zip(files, date) {
 		local.set(name, 30);
 		parts.push(local, file.data);
 
-		var entry = new Uint8Array(46 + name.length);
-		var cv = new DataView(entry.buffer);
+		const entry = new Uint8Array(46 + name.length);
+		const cv = new DataView(entry.buffer);
 		cv.setUint32(0, 0x02014b50, true);
 		cv.setUint16(4, 20, true);
 		cv.setUint16(6, 20, true);
@@ -91,24 +91,24 @@ export function build_zip(files, date) {
 		offset += local.length + file.data.length;
 	});
 
-	var central_size = central.reduce(function (sum, entry) {
+	const central_size = central.reduce((sum, entry) => {
 		return sum + entry.length;
 	}, 0);
-	var end = new Uint8Array(22);
-	var ev = new DataView(end.buffer);
+	const end = new Uint8Array(22);
+	const ev = new DataView(end.buffer);
 	ev.setUint32(0, 0x06054b50, true);
 	ev.setUint16(8, files.length, true);
 	ev.setUint16(10, files.length, true);
 	ev.setUint32(12, central_size, true);
 	ev.setUint32(16, offset, true);
 
-	var all = parts.concat(central, [end]);
-	var total = all.reduce(function (sum, part) {
+	const all = parts.concat(central, [end]);
+	const total = all.reduce((sum, part) => {
 		return sum + part.length;
 	}, 0);
-	var result = new Uint8Array(total);
-	var position = 0;
-	all.forEach(function (part) {
+	const result = new Uint8Array(total);
+	let position = 0;
+	all.forEach((part) => {
 		result.set(part, position);
 		position += part.length;
 	});

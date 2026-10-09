@@ -1,5 +1,4 @@
 import app from '../app.js';
-import config from '../config.js';
 import { Base_action } from './base.js';
 
 export class Refresh_layers_gui_action extends Base_action {

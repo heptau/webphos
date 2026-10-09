@@ -1,13 +1,13 @@
 /**
  * user dialogs library
- * 
+ *
  * @author ViliusL
- * 
+ *
  * Usage:
- * 
+ *
  * import Dialog_class from './libs/popup.js';
  * var POP = new popup();
- * 
+ *
  * var settings = {
  *		title: 'Differences',
  *		comment: '',
@@ -24,7 +24,7 @@
  *		on_cancel: function(params){...},
  * };
  * this.POP.show(settings);
- * 
+ *
  * Params types:
  * - name		type				example
  * - ---------------------------------------------------------------
@@ -34,7 +34,7 @@
  * - value		string				'314'
  * - values		array fo strings	['one', 'two', 'three']
  * - range		numbers interval	[0, 255]
- * - step		int/float			1	
+ * - step		int/float			1
  * - placeholder	text			'enter number here'
  * - html		html text			'<b>bold</b>'
  * - function	function			'custom_function'
@@ -46,7 +46,7 @@ import Tools_translate_class, { t } from './../modules/tools/translate.js';
 import Helper_class from './../libs/helpers.js';
 import { is_replaying, next_replay_params, note_dialog_done, note_dialog_cancelled } from './../libs/actions.js';
 
-var template = `
+const template = `
 	<button type="button" class="close" data-id="popup_close" title="Close">&times;</button>
 	<div data-id="pretitle_area"></div>
 	<span class="text_muted right" data-id="popup_comment"></span>
@@ -101,7 +101,7 @@ class Dialog_class {
 
 	/**
 	 * shows dialog
-	 * 
+	 *
 	 * @param {array} config
 	 */
 	show(config) {
@@ -152,29 +152,29 @@ class Dialog_class {
 	 * focus returns to the previous element when the dialog closes
 	 */
 	set_accessibility() {
-		var title = this.el.querySelector('[data-id="popup_title"]');
+		const title = this.el.querySelector('[data-id="popup_title"]');
 		if (title) {
-			title.id = 'popup_title_' + this.id;
+			title.id = `popup_title_${  this.id}`;
 			this.el.setAttribute('aria-labelledby', title.id);
 		}
 		this.el.querySelector('.close').setAttribute('aria-label', 'Close');
 
-		var focusable = () => Array.from(this.el.querySelectorAll(
+		const focusable = () => Array.from(this.el.querySelectorAll(
 			'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 		)).filter((element) => element.getClientRects().length > 0 && element.hidden !== true);
 
 		//dialogs that focus their own field (e.g. Resize) keep it
 		setTimeout(() => {
 			if (this.el && this.el.contains(document.activeElement) == false) {
-				var first = this.el.querySelector('.dialog_content input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), .dialog_content select, .dialog_content textarea');
+				const first = this.el.querySelector('.dialog_content input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), .dialog_content select, .dialog_content textarea');
 				(first || this.el.querySelector('[data-id="popup_ok"]')).focus();
 			}
 		}, 0);
 
 		//information dialogs (no fields, no OK action) close with a click outside of them
-		var is_information = this.onfinish == false && this.parameters.every((parameter) => parameter.name == undefined);
+		const is_information = this.onfinish == false && this.parameters.every((parameter) => parameter.name == undefined);
 		if (is_information) {
-			var armed = false;
+			let armed = false;
 			setTimeout(() => {
 				armed = true;
 			}, 300);
@@ -190,12 +190,12 @@ class Dialog_class {
 			if (event.key != 'Tab') {
 				return;
 			}
-			var items = focusable();
+			const items = focusable();
 			if (items.length == 0) {
 				return;
 			}
-			var first = items[0];
-			var last = items[items.length - 1];
+			const first = items[0];
+			const last = items[items.length - 1];
 			if (event.shiftKey && document.activeElement === first) {
 				event.preventDefault();
 				last.focus();
@@ -209,13 +209,13 @@ class Dialog_class {
 
 	/**
 	 * hides dialog
-	 * 
+	 *
 	 * @param {boolean} success
 	 * @returns {undefined}
 	 */
 	hide(success) {
 		window.POP = this.previousPOP;
-		var params = this.get_params();
+		const params = this.get_params();
 
 		if (success === false && this.oncancel) {
 			this.oncancel(params);
@@ -224,7 +224,7 @@ class Dialog_class {
 			//an action that is being recorded: this command did nothing
 			note_dialog_cancelled();
 		}
-		var opener = this.opener;
+		const opener = this.opener;
 		this.opener = null;
 		if (this.el && this.el.parentNode) {
 			this.el.parentNode.removeChild(this.el);
@@ -269,7 +269,7 @@ class Dialog_class {
 
 	set_events() {
 		this.addEventListener(document, 'keydown', (event) => {
-			var code = event.code;
+			const code = event.code;
 
 			if (code == "Escape") {
 				//escape
@@ -285,19 +285,19 @@ class Dialog_class {
 			this.resize_clicked.x = event.pageX;
 			this.resize_clicked.y = event.pageY;
 
-			var target = this.el;
+			const target = this.el;
 			this.element_offset.x = target.offsetLeft;
 			this.element_offset.y = target.offsetTop;
 		}, false);
 
 		this.addEventListener(document, 'mousemove', (event) => {
 			if(this.resize_clicked.x != null){
-				var dx = this.resize_clicked.x - event.pageX;
-				var dy = this.resize_clicked.y - event.pageY;
+				const dx = this.resize_clicked.x - event.pageX;
+				const dy = this.resize_clicked.y - event.pageY;
 
-				var target = this.el;
-				target.style.left = (this.element_offset.x - dx) + "px";
-				target.style.top = (this.element_offset.y - dy) + "px";
+				const target = this.el;
+				target.style.left = `${this.element_offset.x - dx  }px`;
+				target.style.top = `${this.element_offset.y - dy  }px`;
 			}
 		}, false);
 
@@ -309,24 +309,24 @@ class Dialog_class {
 			this.resize_clicked.y = null;
 		}, false);
 
-		this.addEventListener(window, 'resize', (event) => {
-			var target = this.el;
+		this.addEventListener(window, 'resize', () => {
+			const target = this.el;
 			target.style.top = null;
 			target.style.left = null;
 		}, false);
 	}
 
 	remove_events() {
-		for (let handle of this.eventHandles) {
+		for (const handle of this.eventHandles) {
 			handle.remove();
 		}
 		this.eventHandles = [];
 	}
 
-	onChangeEvent(e) {
-		var params = this.get_params();
+	onChangeEvent() {
+		const params = this.get_params();
 
-		var hash = JSON.stringify(params);
+		const hash = JSON.stringify(params);
 		if (this.last_params_hash == hash && this.onchange == false) {
 			//nothing changed
 			return;
@@ -335,8 +335,8 @@ class Dialog_class {
 
 		if (this.onchange != false) {
 			if (this.preview != false) {
-				var canvas_right = this.el.querySelector('[data-id="pop_post"]');
-				var ctx_right = canvas_right.getContext("2d");
+				const canvas_right = this.el.querySelector('[data-id="pop_post"]');
+				const ctx_right = canvas_right.getContext("2d");
 
 				ctx_right.clearRect(0, 0, this.width_mini, this.height_mini);
 				ctx_right.drawImage(this.layer_active_small,
@@ -361,7 +361,7 @@ class Dialog_class {
 
 	//OK pressed - prepare data and call handlers
 	save() {
-		var params = this.get_params();
+		const params = this.get_params();
 		note_dialog_done(params);
 
 		if (this.onfinish) {
@@ -370,27 +370,28 @@ class Dialog_class {
 
 		this.hide(true);
 	}
-	
+
 	//"Cancel" pressed
 	cancel() {
 		if (this.oncancel) {
-			var params = this.get_params();
+			const params = this.get_params();
 			this.oncancel(params);
 		}
 	}
 
 	get_params() {
-		var response = {};
+		let i, key;
+		const response = {};
 		if(this.el == undefined){
 			return null;
 		}
-		var inputs = this.el.querySelectorAll('input');
-		for (var i = 0; i < inputs.length; i++) {
+		const inputs = this.el.querySelectorAll('input');
+		for (i = 0; i < inputs.length; i++) {
 			if (inputs[i].id.substr(0, 9) == 'pop_data_') {
-				var key = inputs[i].id.substr(9);
+				key = inputs[i].id.substr(9);
 				if (this.strpos(key, "_poptmp") != false)
 					key = key.substring(0, this.strpos(key, "_poptmp"));
-				var value = inputs[i].value;
+				const value = inputs[i].value;
 				if (inputs[i].type == 'radio') {
 					if (inputs[i].checked == true)
 						response[key] = value;
@@ -413,17 +414,17 @@ class Dialog_class {
 
 			}
 		}
-		var selects = this.el.querySelectorAll('select');
-		for (var i = 0; i < selects.length; i++) {
+		const selects = this.el.querySelectorAll('select');
+		for (i = 0; i < selects.length; i++) {
 			if (selects[i].id.substr(0, 9) == 'pop_data_') {
-				var key = selects[i].id.substr(9);
+				key = selects[i].id.substr(9);
 				response[key] = selects[i].value;
 			}
 		}
-		var textareas = this.el.querySelectorAll('textarea');
-		for (var i = 0; i < textareas.length; i++) {
+		const textareas = this.el.querySelectorAll('textarea');
+		for (i = 0; i < textareas.length; i++) {
 			if (textareas[i].id.substr(0, 9) == 'pop_data_') {
-				var key = textareas[i].id.substr(9);
+				key = textareas[i].id.substr(9);
 				response[key] = textareas[i].value;
 			}
 		}
@@ -444,25 +445,22 @@ class Dialog_class {
 		this.active = true;
 
 		//build content
-		var html_pretitle_area = '';
-		var html_preview_content = '';
-		var html_params = '';
+		const html_pretitle_area = '';
+		let html_preview_content = '';
+		let html_params = '';
 
 		//preview area - keeps the aspect ratio of the image
-		var preview_source = null;
+		let preview_source = null;
 		if (this.preview !== false) {
 			preview_source = this.Base_layers.convert_layer_to_canvas();
-			var fit = this.fit_preview_size(preview_source.width, preview_source.height);
+			const fit = this.fit_preview_size(preview_source.width, preview_source.height);
 			this.width_mini = fit.width;
 			this.height_mini = fit.height;
 			html_preview_content += '<div class="preview_container">';
-			html_preview_content += '<canvas class="preview_canvas_left" width="' + this.width_mini + '" height="'
-				+ this.height_mini + '" data-id="pop_pre"></canvas>';
+			html_preview_content += `<canvas class="preview_canvas_left" width="${this.width_mini}" height="${this.height_mini}" data-id="pop_pre"></canvas>`;
 			html_preview_content += '<div class="canvas_preview_container">';
-			html_preview_content += '	<canvas class="preview_canvas_post_back" width="' + this.width_mini
-				+ '" height="' + this.height_mini + '" data-id="pop_post_back"></canvas>';
-			html_preview_content += '	<canvas class="preview_canvas_post" width="' + this.width_mini + '" height="'
-				+ this.height_mini + '" data-id="pop_post"></canvas>';
+			html_preview_content += `	<canvas class="preview_canvas_post_back" width="${this.width_mini}" height="${this.height_mini}" data-id="pop_post_back"></canvas>`;
+			html_preview_content += `	<canvas class="preview_canvas_post" width="${this.width_mini}" height="${this.height_mini}" data-id="pop_post"></canvas>`;
 			html_preview_content += '</div>';
 			html_preview_content += '</div>';
 		}
@@ -513,7 +511,7 @@ class Dialog_class {
 		});
 
 		//events
-		this.el.querySelector('[data-id="popup_ok"]').addEventListener('click', (event) => {
+		this.el.querySelector('[data-id="popup_ok"]').addEventListener('click', () => {
 			this.save();
 		});
 		this.el.querySelector('[data-id="popup_cancel"]').addEventListener('click', (event) => {
@@ -523,11 +521,11 @@ class Dialog_class {
 			}
 			this.hide(false);
 		});
-		this.el.querySelector('[data-id="popup_close"]').addEventListener('click', (event) => {
+		this.el.querySelector('[data-id="popup_close"]').addEventListener('click', () => {
 			this.hide(false);
 		});
-		var targets = this.el.querySelectorAll('input');
-		for (var i = 0; i < targets.length; i++) {
+		const targets = this.el.querySelectorAll('input');
+		for (let i = 0; i < targets.length; i++) {
 			targets[i].addEventListener('keyup', (event) => {
 				this.onkeyup(event);
 			});
@@ -535,18 +533,18 @@ class Dialog_class {
 
 		//onload
 		if (this.onload) {
-			var params = this.get_params();
+			const params = this.get_params();
 			this.onload(params, this);
 		}
 
 		//load preview
 		if (this.preview !== false) {
 			//get canvas from layer
-			var canvas = preview_source;
+			const canvas = preview_source;
 
 			//draw original image
-			var canvas_left = this.el.querySelector('[data-id="pop_pre"]');
-			var pop_pre = canvas_left.getContext("2d");
+			const canvas_left = this.el.querySelector('[data-id="pop_pre"]');
+			const pop_pre = canvas_left.getContext("2d");
 			pop_pre.clearRect(0, 0, this.width_mini, this.height_mini);
 			pop_pre.rect(0, 0, this.width_mini, this.height_mini);
 			pop_pre.fillStyle = "#ffffff";
@@ -565,11 +563,11 @@ class Dialog_class {
 			this.layer_active_small_ctx.scale(1, 1);
 
 			//draw right background
-			var canvas_right_back = this.el.querySelector('[data-id="pop_post_back"]').getContext("2d");
+			const canvas_right_back = this.el.querySelector('[data-id="pop_post_back"]').getContext("2d");
 			this.draw_background(canvas_right_back, this.width_mini, this.height_mini, 10);
 
 			//copy to right side
-			var canvas_right = this.el.querySelector('[data-id="pop_post"]').getContext("2d");
+			const canvas_right = this.el.querySelector('[data-id="pop_post"]').getContext("2d");
 			canvas_right.clearRect(0, 0, this.width_mini, this.height_mini);
 			canvas_right.drawImage(canvas_left,
 				this.preview_padding, this.preview_padding,
@@ -580,7 +578,7 @@ class Dialog_class {
 		}
 
 		//call translation again to translate popup
-		var lang = this.Base_gui.get_language();
+		const lang = this.Base_gui.get_language();
 		this.Tools_translate.translate(lang);
 	}
 
@@ -588,10 +586,10 @@ class Dialog_class {
 	 * text of a drop-down item; "1920x1080 - Full HD" has a translated description part
 	 */
 	option_label(value) {
-		var text = String(value);
-		var parts = text.split(' - ');
+		const text = String(value);
+		const parts = text.split(' - ');
 		if (parts.length > 1) {
-			return parts[0] + ' - ' + t(parts.slice(1).join(' - '));
+			return `${parts[0]  } - ${  t(parts.slice(1).join(' - '))}`;
 		}
 		return t(text);
 	}
@@ -604,13 +602,13 @@ class Dialog_class {
 	 * @returns {{width: number, height: number}}
 	 */
 	fit_preview_size(width, height) {
-		var max_w = 260;
-		var max_h = 220;
+		const max_w = 260;
+		const max_h = 220;
 		if (!(width > 0) || !(height > 0)) {
 			return {width: this.width_mini, height: this.height_mini};
 		}
 		//small images are enlarged at most 4 times, so pixels stay recognizable
-		var scale = Math.min(max_w / width, max_h / height, 4);
+		const scale = Math.min(max_w / width, max_h / height, 4);
 		return {
 			width: Math.max(1, Math.round(width * scale)),
 			height: Math.max(1, Math.round(height * scale)),
@@ -618,17 +616,18 @@ class Dialog_class {
 	}
 
 	generateParamsHtml() {
-		var esc = (value) => this.Helper.escapeHtml(String(value));
-		var html = '<table>';
-		var title = null;
-		var tabs = [];
+		let j, k, result;
+		const esc = (value) => this.Helper.escapeHtml(String(value));
+		let html = '<table>';
+		let title = null;
+		const tabs = [];
 		//with tabs, headings become toolbar-like tab buttons and the rows after them form the panel
 		//the label column is only reserved for checkboxes when the same panel has some label to align with
-		var is_checkbox = (p) => p.name != undefined && typeof p.value == 'boolean' && p.values == undefined && p.range == undefined && p.type != 'color';
-		var group_has_labels = [];
-		var group = -1;
-		for (var j in this.parameters) {
-			var item = this.parameters[j];
+		const is_checkbox = (p) => p.name != undefined && typeof p.value == 'boolean' && p.values == undefined && p.range == undefined && p.type != 'color';
+		const group_has_labels = [];
+		let group = -1;
+		for (j in this.parameters) {
+			const item = this.parameters[j];
 			if (this.tabs && item.heading != undefined) {
 				group++;
 				continue;
@@ -636,40 +635,37 @@ class Dialog_class {
 			group_has_labels[group] = group_has_labels[group] || (item.title != undefined && item.title !== '' && !is_checkbox(item));
 		}
 		group = -1;
-		for (var i in this.parameters) {
-			var parameter = this.parameters[i];
-			var pname = parameter.name != undefined ? esc(parameter.name) : '';
+		for (const i in this.parameters) {
+			const parameter = this.parameters[i];
+			const pname = parameter.name != undefined ? esc(parameter.name) : '';
 
 			if (this.tabs && parameter.heading != undefined) {
 				group++;
-				html += (tabs.length ? '</tbody>' : '') + '<tbody class="tab_panel" data-tab="' + tabs.length + '"'
-					+ (tabs.length ? ' hidden' : '') + '>';
+				html += `${tabs.length ? '</tbody>' : ''  }<tbody class="tab_panel" data-tab="${tabs.length}"${tabs.length ? ' hidden' : ''}>`;
 				tabs.push(parameter);
 				continue;
 			}
-			html += '<tr id="popup-tr-' + pname + '">';
+			html += `<tr id="popup-tr-${pname}">`;
 			if (title != 'Error' && parameter.title != undefined && is_checkbox(parameter)) {
 				if (group_has_labels[group]) {
 					html += '<th></th>';
 				}
 			}
 			else if (title != 'Error' && parameter.title != undefined)
-				html += '<th class="trn">' + this.Helper.escapeHtml(parameter.title) + '</th>';
+				html += `<th class="trn">${this.Helper.escapeHtml(parameter.title)}</th>`;
 			if (parameter.name != undefined) {
 				if (parameter.values != undefined) {
 					if (parameter.values.length > 10 || parameter.type == 'select') {
 						//drop down
-						html += '<td colspan="2"><select onchange="POP.onChangeEvent();" id="pop_data_' + pname
-							+ '">';
-						var k = 0;
-						for (var j in parameter.values) {
-							var sel = '';
+						html += `<td colspan="2"><select onchange="POP.onChangeEvent();" id="pop_data_${pname}">`;
+						k = 0;
+						for (j in parameter.values) {
+							let sel = '';
 							if (parameter.value == parameter.values[j])
 								sel = 'selected="selected"';
 							if (parameter.value == undefined && k == 0)
 								sel = 'selected="selected"';
-							html += '<option ' + sel + ' value="' + esc(parameter.values[j]) + '">'
-								+ esc(this.option_label(parameter.values[j])) + '</option>';
+							html += `<option ${sel} value="${esc(parameter.values[j])}">${esc(this.option_label(parameter.values[j]))}</option>`;
 							k++;
 						}
 						html += '</select></td>';
@@ -678,26 +674,23 @@ class Dialog_class {
 					//radio
 					html += '<td class="radios" colspan="2">';
 					if (parameter.values.length > 2)
-						html += '<div class="group" id="popup-group-' + pname + '">';
-					var k = 0;
-					for (var j in parameter.values) {
-						var ch = '';
+						html += `<div class="group" id="popup-group-${pname}">`;
+					k = 0;
+					for (j in parameter.values) {
+						let ch = '';
 						if (parameter.value == parameter.values[j])
 							ch = 'checked="checked"';
 						if (parameter.value == undefined && k == 0)
 							ch = 'checked="checked"';
 
-						var title = esc(parameter.values[j]);
-						var parts = parameter.values[j].split(" - ");
+						title = esc(parameter.values[j]);
+						const parts = parameter.values[j].split(" - ");
 						if (parts.length > 1) {
-							title = esc(parts[0]) + ' - <span class="trn">' + esc(parts[1]) + '</span>';
+							title = `${esc(parts[0])  } - <span class="trn">${esc(parts[1])}</span>`;
 						}
 
-						html += '<input type="radio" onchange="POP.onChangeEvent();" ' + ch + ' name="'
-							+ pname + '" id="pop_data_' + pname + "_poptmp" + j + '" value="'
-							+ esc(parameter.values[j]) + '">';
-						html += '<label class="trn" for="pop_data_' + pname + "_poptmp" + j + '">' + title
-							+ '</label>';
+						html += `<input type="radio" onchange="POP.onChangeEvent();" ${ch} name="${pname}" id="pop_data_${pname}_poptmp${j}" value="${esc(parameter.values[j])}">`;
+						html += `<label class="trn" for="pop_data_${pname}_poptmp${j}">${title}</label>`;
 						if (parameter.values.length > 2)
 							html += '<br />';
 						k++;
@@ -709,33 +702,24 @@ class Dialog_class {
 				}
 				else if (parameter.value != undefined) {
 					//input, range, textarea, color
-					var step = 1;
+					let step = 1;
 					if (parameter.step != undefined)
 						step = parameter.step;
 				if (parameter.range != undefined) {
 					//range
-					html += '<td><input type="range" name="' + pname + '" id="pop_data_' + pname
-						+ '" value="' + esc(parameter.value) + '" min="' + parameter.range[0] + '" max="'
-						+ parameter.range[1] + '" step="' + step
-						+ '" oninput="POP.range_input(this);" '
-						+'onchange="POP.onChangeEvent();" /></td>';
-					html += '<td class="range_value"><input type="number" class="range_number" data-for="pop_data_' + pname
-						+ '" value="' + esc(parameter.value) + '" min="' + parameter.range[0] + '" max="'
-						+ parameter.range[1] + '" step="' + step
-						+ '" oninput="POP.range_number(this);" onchange="POP.range_number_commit(this);" /></td>';
+					html += `<td><input type="range" name="${pname}" id="pop_data_${pname}" value="${esc(parameter.value)}" min="${parameter.range[0]}" max="${parameter.range[1]}" step="${step}" oninput="POP.range_input(this);" `
+						+`onchange="POP.onChangeEvent();" /></td>`;
+					html += `<td class="range_value"><input type="number" class="range_number" data-for="pop_data_${pname}" value="${esc(parameter.value)}" min="${parameter.range[0]}" max="${parameter.range[1]}" step="${step}" oninput="POP.range_number(this);" onchange="POP.range_number_commit(this);" /></td>`;
 				}
 				else if (parameter.type == 'color') {
 					//color
-					html += '<td><input type="color" id="pop_data_' + pname + '" value="' + esc(parameter.value)
-						+ '" onchange="POP.onChangeEvent();" /></td>';
+					html += `<td><input type="color" id="pop_data_${pname}" value="${esc(parameter.value)}" onchange="POP.onChangeEvent();" /></td>`;
 				}
 				else if (typeof parameter.value == 'boolean') {
 					//macOS style: checkbox first, label after it (no separate title column)
-					var checked = parameter.value === true ? 'checked' : '';
-					var label = parameter.title != undefined ? t(parameter.title).replace(/:\s*$/, '') : '';
-					html += '<td class="checkbox" colspan="' + (group_has_labels[group] ? 2 : 3) + '"><input type="checkbox" id="pop_data_' + pname + '" '
-						+ checked + ' onclick="POP.onChangeEvent();" > <label for="pop_data_'
-						+ pname + '">' + this.Helper.escapeHtml(label) + '</label></td>';
+					const checked = parameter.value === true ? 'checked' : '';
+					const label = parameter.title != undefined ? t(parameter.title).replace(/:\s*$/, '') : '';
+					html += `<td class="checkbox" colspan="${group_has_labels[group] ? 2 : 3}"><input type="checkbox" id="pop_data_${pname}" ${checked} onclick="POP.onChangeEvent();" > <label for="pop_data_${pname}">${this.Helper.escapeHtml(label)}</label></td>`;
 				}
 				else {
 					//input or textarea
@@ -743,43 +727,38 @@ class Dialog_class {
 						parameter.placeholder = '';
 					if (parameter.type == 'textarea') {
 						//textarea
-						html += '<td><textarea rows="10" id="pop_data_' + pname
-							+ '" onchange="POP.onChangeEvent();" placeholder="' + esc(parameter.placeholder) + '" ' + (parameter.prevent_submission ? 'data-prevent-submission=""' : '' ) + '>'
-							+ esc(parameter.value) + '</textarea></td>';
+						html += `<td><textarea rows="10" id="pop_data_${pname}" onchange="POP.onChangeEvent();" placeholder="${esc(parameter.placeholder)}" ${parameter.prevent_submission ? 'data-prevent-submission=""' : ''}>${esc(parameter.value)}</textarea></td>`;
 					}
 					else {
 						//text or number
-						var input_type = "text";
+						let input_type = "text";
 						if (parameter.placeholder != '' && !isNaN(parameter.placeholder))
 							input_type = 'number';
 						if (parameter.value != undefined && typeof parameter.value == 'number')
 							input_type = 'number';
 
-var comment_html = '';
+let comment_html = '';
 					if (typeof parameter.comment !== 'undefined') {
-						comment_html = '<span class="field_comment trn">' + this.Helper.escapeHtml(parameter.comment) + '</span>';
+						comment_html = `<span class="field_comment trn">${this.Helper.escapeHtml(parameter.comment)}</span>`;
 					}
 
-						html += '<td colspan="2"><input type="' + input_type + '" id="pop_data_' + pname
-							+ '" onchange="POP.onChangeEvent();" value="' + esc(parameter.value) + '" placeholder="'
-							+ esc(parameter.placeholder) + '" ' + (parameter.prevent_submission ? 'data-prevent-submission=""' : '' ) + ' />'+comment_html+'</td>';
+						html += `<td colspan="2"><input type="${input_type}" id="pop_data_${pname}" onchange="POP.onChangeEvent();" value="${esc(parameter.value)}" placeholder="${esc(parameter.placeholder)}" ${parameter.prevent_submission ? 'data-prevent-submission=""' : ''} />${comment_html}</td>`;
 					}
 				}
 				}
 			}
 			else if (parameter.heading != undefined) {
 				//section heading
-				html += '<td class="heading trn" colspan="3">' + this.Helper.escapeHtml(parameter.heading) + '</td>';
+				html += `<td class="heading trn" colspan="3">${this.Helper.escapeHtml(parameter.heading)}</td>`;
 			}
 			else if (parameter.function != undefined) {
 				//custom function
-				var result;
 				result = parameter.function();
-				html += '<td colspan="3">' + result + '</td>';
+				html += `<td colspan="3">${result}</td>`;
 			}
 			else if (parameter.html != undefined) {
 				//html
-				html += '<td class="html_value" colspan="2">' + parameter.html + '</td>';
+				html += `<td class="html_value" colspan="2">${parameter.html}</td>`;
 			}
 			else if (parameter.title == undefined) {
 				//gap
@@ -787,15 +766,13 @@ var comment_html = '';
 			}
 			else {
 				//locked fields without name
-				var str = "" + parameter.value;
-				var id_tmp = parameter.title.toLowerCase().replace(/[^\w]+/g, '').replace(/ +/g, '-');
+				const str = `${  parameter.value}`;
+				let id_tmp = parameter.title.toLowerCase().replace(/[^\w]+/g, '').replace(/ +/g, '-');
 				id_tmp = id_tmp.substring(0, 10);
 				if (str.length < 40)
-					html += '<td colspan="2"><div class="trn" id="pop_data_' + id_tmp + '">' + this.Helper.escapeHtml(str)
-						+ '</div></td>';
+					html += `<td colspan="2"><div class="trn" id="pop_data_${id_tmp}">${this.Helper.escapeHtml(str)}</div></td>`;
 				else
-					html += '<td class="long_text_value" colspan="2"><textarea disabled="disabled">' + this.Helper.escapeHtml(str)
-						+ '</textarea></td>';
+					html += `<td class="long_text_value" colspan="2"><textarea disabled="disabled">${this.Helper.escapeHtml(str)}</textarea></td>`;
 			}
 			html += '</tr>';
 		}
@@ -804,13 +781,11 @@ var comment_html = '';
 		}
 		html += '</table>';
 		if (tabs.length) {
-			var bar = '<div class="tab_bar" role="tablist">';
-			for (var k = 0; k < tabs.length; k++) {
-				bar += '<button type="button" role="tab" class="tab_button" data-tab="' + k + '" aria-selected="' + (k == 0)
-					+ '"><span class="tab_icon" aria-hidden="true">' + (tabs[k].icon || '') + '</span><span>'
-					+ this.Helper.escapeHtml(t(tabs[k].heading)) + '</span></button>';
+			let bar = '<div class="tab_bar" role="tablist">';
+			for (k = 0; k < tabs.length; k++) {
+				bar += `<button type="button" role="tab" class="tab_button" data-tab="${k}" aria-selected="${k == 0}"><span class="tab_icon" aria-hidden="true">${tabs[k].icon || ''}</span><span>${this.Helper.escapeHtml(t(tabs[k].heading))}</span></button>`;
 			}
-			html = bar + '</div>' + html;
+			html = `${bar  }</div>${  html}`;
 		}
 
 		return html;
@@ -840,7 +815,7 @@ var comment_html = '';
 		if (!this.el) {
 			return;
 		}
-		var number = this.el.querySelector('.range_number[data-for="' + slider.id + '"]');
+		const number = this.el.querySelector(`.range_number[data-for="${slider.id}"]`);
 		if (number) {
 			number.value = Math.round(slider.value * 100) / 100;
 		}
@@ -852,8 +827,8 @@ var comment_html = '';
 		if (!this.el) {
 			return;
 		}
-		var slider = document.getElementById(number.dataset.for);
-		var value = parseFloat(number.value);
+		const slider = document.getElementById(number.dataset.for);
+		const value = parseFloat(number.value);
 		if (!slider || isNaN(value)) {
 			return;
 		}
@@ -866,7 +841,7 @@ var comment_html = '';
 		if (!this.el) {
 			return;
 		}
-		var slider = document.getElementById(number.dataset.for);
+		const slider = document.getElementById(number.dataset.for);
 		if (slider) {
 			number.value = Math.round(slider.value * 100) / 100;
 		}
@@ -874,13 +849,13 @@ var comment_html = '';
 	}
 
 	get_initial_values() {
-		var values = {};
-		for (var i in this.parameters) {
-			var parameter = this.parameters[i];
+		const values = {};
+		for (const i in this.parameters) {
+			const parameter = this.parameters[i];
 			if (parameter.name == undefined) {
 				continue;
 			}
-			var value = parameter.value;
+			let value = parameter.value;
 			if (value == undefined && parameter.values != undefined) {
 				value = parameter.values[0];
 			}
@@ -891,13 +866,13 @@ var comment_html = '';
 
 	//Alt + Cancel: restore values the dialog was opened with
 	reset_params() {
-		var fire = (element, type) => element.dispatchEvent(new Event(type, {bubbles: true}));
-		for (var name in this.initial_values) {
-			var value = this.initial_values[name];
-			var inputs = this.el.querySelectorAll('[id^="pop_data_' + name + '"]');
-			for (var i = 0; i < inputs.length; i++) {
-				var input = inputs[i];
-				if (input.id != 'pop_data_' + name && input.id.indexOf('pop_data_' + name + '_poptmp') != 0) {
+		const fire = (element, type) => element.dispatchEvent(new Event(type, {bubbles: true}));
+		for (const name in this.initial_values) {
+			const value = this.initial_values[name];
+			const inputs = this.el.querySelectorAll(`[id^="pop_data_${name}"]`);
+			for (let i = 0; i < inputs.length; i++) {
+				const input = inputs[i];
+				if (input.id != `pop_data_${  name}` && input.id.indexOf(`pop_data_${name}_poptmp`) != 0) {
 					continue;
 				}
 				if (input.type == 'radio') {
@@ -926,13 +901,13 @@ var comment_html = '';
 
 	set_comfort_events() {
 		//preview checkbox and press-and-hold on the preview shows the original image
-		var toggle = this.el.querySelector('[data-id="popup_preview_toggle"]');
+		const toggle = this.el.querySelector('[data-id="popup_preview_toggle"]');
 		toggle.addEventListener('change', () => {
 			this.el.classList.toggle('show_original', toggle.checked == false);
 		});
-		var preview = this.el.querySelector('.canvas_preview_container');
+		const preview = this.el.querySelector('.canvas_preview_container');
 		if (preview) {
-			var show = (flag) => {
+			const show = (flag) => {
 				this.el.classList.toggle('show_original', flag || toggle.checked == false);
 			};
 			preview.addEventListener('mousedown', () => show(true));
@@ -940,7 +915,7 @@ var comment_html = '';
 		}
 
 		//Alt turns "Cancel" into "Reset"
-		var alt = (event) => {
+		const alt = (event) => {
 			this.el.classList.toggle('alt_reset', event.altKey === true);
 		};
 		this.addEventListener(document, 'keydown', alt);
@@ -948,23 +923,23 @@ var comment_html = '';
 		this.addEventListener(window, 'blur', () => this.el.classList.remove('alt_reset'));
 
 		//drag over a label to change the slider next to it
-		var rows = this.el.querySelectorAll('tr');
-		for (var i = 0; i < rows.length; i++) {
+		const rows = this.el.querySelectorAll('tr');
+		for (let i = 0; i < rows.length; i++) {
 			if (rows[i].querySelector('input[type="range"]') && rows[i].querySelector('th')) {
 				rows[i].querySelector('th').classList.add('scrub');
 			}
 		}
-		var scrub = null;
+		let scrub = null;
 		this.el.addEventListener('mousedown', (event) => {
-			var th = event.target.closest ? event.target.closest('th.scrub') : null;
+			const th = event.target.closest ? event.target.closest('th.scrub') : null;
 			if (!th) {
 				return;
 			}
-			var slider = th.parentNode.querySelector('input[type="range"]');
+			const slider = th.parentNode.querySelector('input[type="range"]');
 			event.preventDefault();
 			scrub = {
 				x: event.pageX,
-				slider: slider,
+				slider,
 				start: parseFloat(slider.value),
 				min: parseFloat(slider.min),
 				max: parseFloat(slider.max),
@@ -975,7 +950,7 @@ var comment_html = '';
 			if (!scrub) {
 				return;
 			}
-			var value = scrub.start + (event.pageX - scrub.x) * (scrub.max - scrub.min) / 250;
+			let value = scrub.start + (event.pageX - scrub.x) * (scrub.max - scrub.min) / 250;
 			value = Math.round(value / scrub.step) * scrub.step;
 			scrub.slider.value = Math.min(scrub.max, Math.max(scrub.min, value));
 			this.range_input(scrub.slider);
@@ -1004,12 +979,12 @@ var comment_html = '';
 	}
 
 	strpos(haystack, needle, offset) {
-		var i = (haystack + '').indexOf(needle, (offset || 0));
+		const i = (`${haystack  }`).indexOf(needle, (offset || 0));
 		return i === -1 ? false : i;
 	}
 
 	draw_background(canvas, W, H, gap, force) {
-		var transparent = this.Base_gui.get_transparency_support();
+		const transparent = this.Base_gui.get_transparency_support();
 
 		if (transparent == false && force == undefined) {
 			canvas.beginPath();
@@ -1020,13 +995,13 @@ var comment_html = '';
 		}
 		if (gap == undefined)
 			gap = 10;
-		var fill = true;
-		for (var i = 0; i < W; i = i + gap) {
+		let fill;
+		for (let i = 0; i < W; i = i + gap) {
 			if (i % (gap * 2) == 0)
 				fill = true;
 			else
 				fill = false;
-			for (var j = 0; j < H; j = j + gap) {
+			for (let j = 0; j < H; j = j + gap) {
 				if (fill == true) {
 					canvas.fillStyle = '#eeeeee';
 					canvas.fillRect(i, j, gap, gap);

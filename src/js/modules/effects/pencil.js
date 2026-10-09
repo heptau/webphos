@@ -19,11 +19,11 @@ class Effects_pencil_class {
 		}
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var data = this.change(canvas, canvas.width, canvas.height);
+		const data = this.change(canvas, canvas.width, canvas.height);
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(data, 0, 0);
 
@@ -34,36 +34,35 @@ class Effects_pencil_class {
 	}
 
 	change(canvas, width, height) {
-		var offset = Math.min(width, height) / 1000;
+		let offset = Math.min(width, height) / 1000;
 		offset = Math.ceil(offset);
-		
+
 		//create second copy
-		var canvas2 = document.createElement('canvas');
-		var ctx2 = canvas2.getContext("2d");
+		const canvas2 = document.createElement('canvas');
+		const ctx2 = canvas2.getContext("2d");
 		canvas2.width = width;
 		canvas2.height = height;
 		ctx2.drawImage(canvas, -offset, -offset);
-		
+
 		//merge
 		ctx2.globalCompositeOperation = "difference";
 		ctx2.drawImage(canvas, 0, 0);
 		ctx2.globalCompositeOperation = "source-over";
-		
+
 		//apply more effects
 		ctx2.filter = 'brightness(2) invert(1) grayscale(1)';
 		ctx2.drawImage(canvas2, 0, 0);
 		ctx2.filter = 'none';
-		
+
 		return canvas2;
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//modify
-		var params = {};
-		var data = this.change(canvas_thumb, canvas_thumb.width, canvas_thumb.height);
+		const data = this.change(canvas_thumb, canvas_thumb.width, canvas_thumb.height);
 
 		//draw
 		ctx.drawImage(data, 0, 0);

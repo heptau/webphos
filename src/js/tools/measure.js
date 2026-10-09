@@ -20,7 +20,7 @@ class Measure_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -30,7 +30,7 @@ class Measure_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false || this.from == null) {
 			return;
 		}
@@ -43,7 +43,7 @@ class Measure_class extends Base_tools_class {
 	}
 
 	show() {
-		var item = document.getElementById('status_measure_item');
+		const item = document.getElementById('status_measure_item');
 		if (item) {
 			item.hidden = false;
 			document.getElementById('status_measure').textContent = format_measure(measure(this.from, this.to));
@@ -53,7 +53,7 @@ class Measure_class extends Base_tools_class {
 
 	on_leave() {
 		this.from = this.to = null;
-		var item = document.getElementById('status_measure_item');
+		const item = document.getElementById('status_measure_item');
 		if (item) {
 			item.hidden = true;
 		}
@@ -65,7 +65,7 @@ class Measure_class extends Base_tools_class {
 		if (this.from == null || this.to == null) {
 			return;
 		}
-		var scale = 1 / (config.ZOOM || 1);
+		const scale = 1 / (config.ZOOM || 1);
 		ctx.save();
 		ctx.lineWidth = 3 * scale;
 		ctx.strokeStyle = '#000000';

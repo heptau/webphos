@@ -11,13 +11,13 @@ export const NATIVE_MIME_TYPES = {
 	AVIF: 'image/avif',
 };
 
-var cache = {};
+const cache = {};
 
 function default_canvas() {
 	if (typeof document == 'undefined') {
 		return null;
 	}
-	var canvas = document.createElement('canvas');
+	const canvas = document.createElement('canvas');
 	canvas.width = 1;
 	canvas.height = 1;
 	return canvas;
@@ -32,15 +32,15 @@ export function can_encode_mime(mime, create_canvas) {
 	if (create_canvas == undefined && cache[mime] !== undefined) {
 		return cache[mime];
 	}
-	var result = false;
+	let result = false;
 	try {
-		var canvas = (create_canvas || default_canvas)();
+		const canvas = (create_canvas || default_canvas)();
 		if (canvas) {
-			var data = canvas.toDataURL(mime);
-			result = typeof data == 'string' && data.indexOf('data:' + mime) == 0;
+			const data = canvas.toDataURL(mime);
+			result = typeof data == 'string' && data.indexOf(`data:${  mime}`) == 0;
 		}
 	}
-	catch (e) {
+	catch {
 		result = false;
 	}
 	if (create_canvas == undefined) {
@@ -57,9 +57,9 @@ export function can_encode_mime(mime, create_canvas) {
  * @returns {object} filtered copy, order is kept
  */
 export function filter_supported_types(types, create_canvas) {
-	var result = {};
-	for (var key in types) {
-		var mime = NATIVE_MIME_TYPES[key];
+	const result = {};
+	for (const key in types) {
+		const mime = NATIVE_MIME_TYPES[key];
 		if (mime == undefined || can_encode_mime(mime, create_canvas)) {
 			result[key] = types[key];
 		}

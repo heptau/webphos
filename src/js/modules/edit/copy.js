@@ -6,7 +6,7 @@ import Helper_class from './../../libs/helpers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 class Copy_class {
 
@@ -23,8 +23,8 @@ class Copy_class {
 
 		//events
 		document.addEventListener('keydown', (event) => {
-			var code = event.key.toLowerCase();
-			var ctrlDown = event.ctrlKey || event.metaKey;
+			const code = event.key.toLowerCase();
+			const ctrlDown = event.ctrlKey || event.metaKey;
 			if (this.Helper.is_input(event.target))
 				return;
 
@@ -54,7 +54,7 @@ class Copy_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var copied = await this.copy_to_clipboard();
+		const copied = await this.copy_to_clipboard();
 		if (copied !== true) {
 			return; //never delete pixels that did not reach the clipboard
 		}
@@ -68,7 +68,6 @@ class Copy_class {
 	 * @returns {Promise<boolean>} true when the image is in the clipboard
 	 */
 	async copy_to_clipboard(mode){
-		var _this = this;
 
 		const canWriteToClipboard = await this.askWritePermission();
 		if (canWriteToClipboard) {
@@ -77,13 +76,13 @@ class Copy_class {
 			if (this.Edit_selection == null) {
 				this.Edit_selection = new Edit_selection_class();
 			}
-			var merged = mode === 'merged';
-			var part = this.Edit_selection.get_selection_canvas(config.layer, merged);
-			var canvas = part ? part.canvas : (merged ? this.Edit_selection.get_merged_canvas() : this.Base_layers.convert_layer_to_canvas());
-			var ctx = canvas.getContext("2d");
+			const merged = mode === 'merged';
+			const part = this.Edit_selection.get_selection_canvas(config.layer, merged);
+			const canvas = part ? part.canvas : (merged ? this.Edit_selection.get_merged_canvas() : this.Base_layers.convert_layer_to_canvas());
+			const ctx = canvas.getContext("2d");
 
 			//where the copied pixels were, for Paste in Place
-			var source = part || (merged ? {x: 0, y: 0} : config.layer);
+			const source = part || (merged ? {x: 0, y: 0} : config.layer);
 			this.last_copy_rect = {x: Math.round(source.x), y: Math.round(source.y), width: canvas.width, height: canvas.height};
 
 			if (config.TRANSPARENCY == false) {
@@ -95,13 +94,13 @@ class Copy_class {
 
 			//save using lib
 			try {
-				var blob = await new Promise(function (resolve) {
+				const blob = await new Promise((resolve) => {
 					canvas.toBlob(resolve);
 				});
-				await _this.setToClipboard(blob);
+				await this.setToClipboard(blob);
 				return true;
 			}
-			catch (error) {
+			catch {
 				alertify.error(t('Missing permissions to write to Clipboard.cc'));
 				return false;
 			}
@@ -124,7 +123,7 @@ class Copy_class {
 			const { state } = await navigator.permissions.query({ name: 'clipboard-write' })
 			return state === 'granted';
 		}
-		catch (error) {
+		catch {
 			// Browser compatibility / Security error (ONLY HTTPS) ...
 			return false;
 		}

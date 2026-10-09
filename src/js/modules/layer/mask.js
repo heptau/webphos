@@ -26,7 +26,7 @@ class Layer_mask_class {
 	 * @returns {object|null} the active layer when it can have a mask
 	 */
 	get_layer() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type == null || !(layer.width > 0) || !(layer.height > 0)) {
 			alertify.error(t('Layer is empty.'));
 			return null;
@@ -49,7 +49,7 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > Reveal All
 	 */
 	reveal_all() {
-		var layer = this.get_layer();
+		const layer = this.get_layer();
 		if (layer) {
 			return this.set_mask(layer, uniform_layer_mask(layer, 255), 'Reveal All');
 		}
@@ -59,7 +59,7 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > Hide All
 	 */
 	hide_all() {
-		var layer = this.get_layer();
+		const layer = this.get_layer();
 		if (layer) {
 			return this.set_mask(layer, uniform_layer_mask(layer, 0), 'Hide All');
 		}
@@ -69,7 +69,7 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > From Selection - the selected part stays visible, the rest is hidden
 	 */
 	from_selection() {
-		var layer = this.get_layer();
+		const layer = this.get_layer();
 		if (layer == null) {
 			return;
 		}
@@ -77,7 +77,7 @@ class Layer_mask_class {
 			alertify.error(t('Rotate is not supported on this type of object. Convert to raster?'));
 			return;
 		}
-		var current = this.get_edit_selection().get_mask();
+		const current = this.get_edit_selection().get_mask();
 		if (current == null) {
 			alertify.error(t('Empty selection'));
 			return;
@@ -89,7 +89,7 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > Remove Background - finds the object in front of a calm background and hides the background
 	 */
 	remove_background() {
-		var layer = this.get_layer();
+		const layer = this.get_layer();
 		if (layer == null) {
 			return;
 		}
@@ -97,8 +97,8 @@ class Layer_mask_class {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
-		var image = this.get_edit_selection().layer_on_canvas(layer);
-		var subject = select_subject_mask(image, 28, 2);
+		const image = this.get_edit_selection().layer_on_canvas(layer);
+		const subject = select_subject_mask(image, 28, 2);
 		return this.set_mask(layer, layer_mask_from_selection(subject, layer), 'Remove Background');
 	}
 
@@ -106,8 +106,8 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > To Selection - loads the visible part of the layer as the selection
 	 */
 	to_selection() {
-		var layer = this.get_layer();
-		var mask = layer ? deserialize_layer_mask(layer.mask) : null;
+		const layer = this.get_layer();
+		const mask = layer ? deserialize_layer_mask(layer.mask) : null;
 		if (mask == null) {
 			alertify.error(t('This layer has no mask.'));
 			return;
@@ -119,8 +119,8 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > Invert
 	 */
 	invert() {
-		var layer = this.get_layer();
-		var mask = layer ? deserialize_layer_mask(layer.mask) : null;
+		const layer = this.get_layer();
+		const mask = layer ? deserialize_layer_mask(layer.mask) : null;
 		if (mask == null) {
 			alertify.error(t('This layer has no mask.'));
 			return;
@@ -132,7 +132,7 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > Disable / Enable
 	 */
 	toggle() {
-		var layer = this.get_layer();
+		const layer = this.get_layer();
 		if (layer == null) {
 			return;
 		}
@@ -151,7 +151,7 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > Delete - removes the mask, the layer is shown without it
 	 */
 	remove() {
-		var layer = this.get_layer();
+		const layer = this.get_layer();
 		if (layer == null) {
 			return;
 		}
@@ -170,8 +170,8 @@ class Layer_mask_class {
 	 * Layer > Layer Mask > Apply - makes hidden pixels really transparent and removes the mask
 	 */
 	apply() {
-		var layer = this.get_layer();
-		var mask = layer ? deserialize_layer_mask(layer.mask) : null;
+		const layer = this.get_layer();
+		const mask = layer ? deserialize_layer_mask(layer.mask) : null;
 		if (mask == null) {
 			alertify.error(t('This layer has no mask.'));
 			return;
@@ -180,9 +180,9 @@ class Layer_mask_class {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
-		var canvas = this.Base_layers.convert_layer_to_canvas(layer.id, true);
-		var ctx = canvas.getContext('2d');
-		var image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const canvas = this.Base_layers.convert_layer_to_canvas(layer.id, true);
+		const ctx = canvas.getContext('2d');
+		const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
 		ctx.putImageData(apply_layer_mask(image, mask), 0, 0);
 		return app.State.do_action(
 			new app.Actions.Bundle_action('layer_mask', 'Apply Mask', [

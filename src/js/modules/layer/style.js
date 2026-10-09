@@ -14,7 +14,7 @@ class Layer_style_class {
 	}
 
 	copy() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || !layer.filters || layer.filters.length == 0) {
 			alertify.warning(t('This layer has no layer style.'));
 			return;
@@ -24,7 +24,7 @@ class Layer_style_class {
 	}
 
 	paste() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (this.copied == null) {
 			alertify.warning(t('Copy a layer style first.'));
 			return;
@@ -33,7 +33,7 @@ class Layer_style_class {
 			alertify.error(t('Layer is empty.'));
 			return;
 		}
-		var actions = (layer.filters || []).map((filter) => new app.Actions.Delete_layer_filter_action(layer.id, filter.id));
+		const actions = (layer.filters || []).map((filter) => new app.Actions.Delete_layer_filter_action(layer.id, filter.id));
 		this.copied.forEach((filter) => {
 			actions.push(new app.Actions.Add_layer_filter_action(layer.id, filter.name, JSON.parse(JSON.stringify(filter.params))));
 		});

@@ -23,26 +23,26 @@ class Layer_path_class {
 	}
 
 	edit_path() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'pen') {
 			alertify.error(t('Select a path layer first.'));
 			return;
 		}
-		var scale_x = layer.width / (layer.width_original || layer.width);
-		var scale_y = layer.height / (layer.height_original || layer.height);
-		var point = (p) => (p ? {x: layer.x + p.x * scale_x, y: layer.y + p.y * scale_y} : null);
-		var anchors = clean_anchors(layer.data).map((a) => ({x: layer.x + a.x * scale_x, y: layer.y + a.y * scale_y, in: point(a.in), out: point(a.out)}));
-		var params = layer.params || {};
-		return this.open_in_pen({anchors: anchors, closed: params.closed === true, layer_id: layer.id, size: params.size, mode: params.mode});
+		const scale_x = layer.width / (layer.width_original || layer.width);
+		const scale_y = layer.height / (layer.height_original || layer.height);
+		const point = (p) => (p ? {x: layer.x + p.x * scale_x, y: layer.y + p.y * scale_y} : null);
+		const anchors = clean_anchors(layer.data).map((a) => ({x: layer.x + a.x * scale_x, y: layer.y + a.y * scale_y, in: point(a.in), out: point(a.out)}));
+		const params = layer.params || {};
+		return this.open_in_pen({anchors, closed: params.closed === true, layer_id: layer.id, size: params.size, mode: params.mode});
 	}
 
 	make_path_from_selection() {
-		var current = new Edit_selection_class().get_mask();
+		const current = new Edit_selection_class().get_mask();
 		if (current == null) {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var outline = mask_outline(current.mask);
+		const outline = mask_outline(current.mask);
 		if (outline.length < 3) {
 			alertify.error(t('Empty selection'));
 			return;

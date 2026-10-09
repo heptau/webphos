@@ -16,7 +16,7 @@ export function fit_zoom_percent(space_width, space_height, width, height) {
 	if (!(width > 0) || !(height > 0)) {
 		return 100;
 	}
-	var best = Math.min(Math.max(0, space_width - FIT_MARGIN) / width, Math.max(0, space_height - FIT_MARGIN) / height);
+	const best = Math.min(Math.max(0, space_width - FIT_MARGIN) / width, Math.max(0, space_height - FIT_MARGIN) / height);
 	//a tiny amount is added so that 0.29 * 100 = 28.999999999999996 does not cost a whole percent
 	return Math.max(1, Math.floor(best * 100 + 1e-6));
 }

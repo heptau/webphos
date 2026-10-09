@@ -30,15 +30,15 @@ class Sharpen_class extends Base_tools_class {
 		this.mousemove(event);
 
 		//mouse cursor
-		var mouse = this.get_mouse_info(event);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(event);
+		const params = this.getParams();
 		this.show_mouse_cursor(mouse.x, mouse.y, params.size, 'circle');
 	}
 
 	mousedown(e) {
 		this.started = false;
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -68,8 +68,8 @@ class Sharpen_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.is_drag == false)
 			return;
 		if (mouse.click_valid == false) {
@@ -86,7 +86,7 @@ class Sharpen_class extends Base_tools_class {
 		config.need_render = true;
 	}
 
-	mouseup(e) {
+	mouseup() {
 		if (this.started == false) {
 			return;
 		}
@@ -106,19 +106,19 @@ class Sharpen_class extends Base_tools_class {
 	}
 
 	sharpen_general(type, mouse, size) {
-		var ctx = this.tmpCanvasCtx;
-		var mouse_x = Math.round(mouse.x) - config.layer.x;
-		var mouse_y = Math.round(mouse.y) - config.layer.y;
+		const ctx = this.tmpCanvasCtx;
+		let mouse_x = Math.round(mouse.x) - config.layer.x;
+		let mouse_y = Math.round(mouse.y) - config.layer.y;
 
 		//adapt to origin size
 		mouse_x = this.adaptSize(mouse_x, 'width');
 		mouse_y = this.adaptSize(mouse_y, 'height');
-		var size_w = this.adaptSize(size, 'width');
-		var size_h = this.adaptSize(size, 'height');
+		const size_w = this.adaptSize(size, 'width');
+		const size_h = this.adaptSize(size, 'height');
 
 		//find center
-		var center_x = mouse_x - Math.round(size_w / 2);
-		var center_y = mouse_y - Math.round(size_h / 2);
+		let center_x = mouse_x - Math.round(size_w / 2);
+		let center_y = mouse_y - Math.round(size_h / 2);
 
 		//convert float coords to integers
 		mouse_x = Math.round(mouse_x);
@@ -126,13 +126,13 @@ class Sharpen_class extends Base_tools_class {
 		center_x = Math.round(center_x);
 		center_y = Math.round(center_y);
 
-		var power = 0.5;
+		let power = 0.5;
 		if (type == 'move') {
 			power = power / 10;
 		}
 
-		var imageData = ctx.getImageData(center_x, center_y, size_w, size_h);
-		var filtered = ImageFilters.Sharpen(imageData, power); //add effect
+		const imageData = ctx.getImageData(center_x, center_y, size_w, size_h);
+		const filtered = ImageFilters.Sharpen(imageData, power); //add effect
 		this.Helper.image_round(this.tmpCanvasCtx, mouse_x, mouse_y, size_w, size_h, filtered);
 	}
 

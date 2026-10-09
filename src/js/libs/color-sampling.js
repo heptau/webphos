@@ -14,14 +14,14 @@ export function average_color(image, x, y, radius) {
 	x = Math.floor(x);
 	y = Math.floor(y);
 	radius = Math.max(0, Math.floor(radius) || 0);
-	var r = 0, g = 0, b = 0, a = 0, count = 0;
-	for (var yy = y - radius; yy <= y + radius; yy++) {
-		for (var xx = x - radius; xx <= x + radius; xx++) {
+	let r = 0, g = 0, b = 0, a = 0, count = 0;
+	for (let yy = y - radius; yy <= y + radius; yy++) {
+		for (let xx = x - radius; xx <= x + radius; xx++) {
 			if (xx < 0 || yy < 0 || xx >= image.width || yy >= image.height) {
 				continue;
 			}
-			var i = (yy * image.width + xx) * 4;
-			var alpha = image.data[i + 3];
+			const i = (yy * image.width + xx) * 4;
+			const alpha = image.data[i + 3];
 			r += image.data[i] * alpha;
 			g += image.data[i + 1] * alpha;
 			b += image.data[i + 2] * alpha;
@@ -42,7 +42,7 @@ export function average_color(image, x, y, radius) {
  * @returns {number}
  */
 export function sample_radius(option) {
-	var match = /^(\d+)\s*x\s*\1$/i.exec(String(option || ''));
+	const match = /^(\d+)\s*x\s*\1$/i.exec(String(option || ''));
 	if (!match) {
 		return 0;
 	}

@@ -12,7 +12,7 @@ function open_db() {
 			reject(new Error('IndexedDB not supported'));
 			return;
 		}
-		var request = indexedDB.open(DB_NAME, 1);
+		const request = indexedDB.open(DB_NAME, 1);
 		request.onerror = () => reject(request.error);
 		request.onsuccess = () => resolve(request.result);
 		request.onupgradeneeded = () => request.result.createObjectStore(STORE, {keyPath: 'name'});
@@ -21,8 +21,8 @@ function open_db() {
 
 function run(mode, action) {
 	return open_db().then((db) => new Promise((resolve, reject) => {
-		var transaction = db.transaction([STORE], mode);
-		var request = action(transaction.objectStore(STORE));
+		const transaction = db.transaction([STORE], mode);
+		const request = action(transaction.objectStore(STORE));
 		transaction.oncomplete = () => {
 			db.close();
 			resolve(request ? request.result : undefined);
@@ -53,14 +53,14 @@ export async function save_template(name, json) {
 		return false;
 	}
 	try {
-		var all = await list_templates();
+		const all = await list_templates();
 		if (all.length >= MAX_TEMPLATES && !all.some((item) => item.name == name)) {
 			return false;
 		}
-		await run('readwrite', (store) => store.put({name: name, json: json, time: Date.now()}));
+		await run('readwrite', (store) => store.put({name, json, time: Date.now()}));
 		return true;
 	}
-	catch (e) {
+	catch {
 		return false;
 	}
 }
@@ -70,10 +70,10 @@ export async function save_template(name, json) {
  */
 export async function list_templates() {
 	try {
-		var all = await run('readonly', (store) => store.getAll());
+		const all = await run('readonly', (store) => store.getAll());
 		return (all || []).map((item) => ({name: item.name, time: item.time})).sort((a, b) => b.time - a.time);
 	}
-	catch (e) {
+	catch {
 		return [];
 	}
 }
@@ -83,10 +83,10 @@ export async function list_templates() {
  */
 export async function load_template(name) {
 	try {
-		var item = await run('readonly', (store) => store.get(name));
+		const item = await run('readonly', (store) => store.get(name));
 		return item && typeof item.json == 'string' ? item.json : null;
 	}
-	catch (e) {
+	catch {
 		return null;
 	}
 }
@@ -95,7 +95,7 @@ export async function delete_template(name) {
 	try {
 		await run('readwrite', (store) => store.delete(name));
 	}
-	catch (e) {
+	catch {
 		//ignore
 	}
 }

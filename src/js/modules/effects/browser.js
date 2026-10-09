@@ -6,7 +6,7 @@ import { t } from '../tools/translate.js';
 
 class Effects_browser_class extends Base_tools_class {
 
-	constructor(ctx) {
+	constructor() {
 		super();
 		this.POP = new Dialog_class();
 		this.preview_width = 150;
@@ -14,48 +14,46 @@ class Effects_browser_class extends Base_tools_class {
 	}
 
 	async browser() {
-		var _this = this;
-		var html = '';
+		let i;
+		let html = '';
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var data = this.get_effects_list();
+		const data = this.get_effects_list();
 
-		for (var i in data) {
-			var title = data[i].title;
+		for (i in data) {
+			const title = data[i].title;
 
 			html += '<div class="item">';
-			html += '	<canvas id="c_' + data[i].key + '" width="' + this.preview_width + '" height="'
-				+ this.preview_height + '" class="effectsPreview" data-key="'
-				+ data[i].key + '"></canvas>';
-			html += '<div class="preview-item-title">' + title + '</div>';
+			html += `	<canvas id="c_${data[i].key}" width="${this.preview_width}" height="${this.preview_height}" class="effectsPreview" data-key="${data[i].key}"></canvas>`;
+			html += `<div class="preview-item-title">${title}</div>`;
 			html += '</div>';
 		}
-		for (var i = 0; i < 4; i++) {
+		for (i = 0; i < 4; i++) {
 			html += '<div class="item"></div>';
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Effects browser',
 			className: 'wide',
-			on_load: function (params, popup) {
-				var node = document.createElement("div");
+			on_load: (params, popup) => {
+				const node = document.createElement("div");
 				node.classList.add('flex-container');
 				node.innerHTML = html;
 				popup.el.querySelector('.dialog_content').appendChild(node);
 				//events
-				var targets = popup.el.querySelectorAll('.item canvas');
-				for (var i = 0; i < targets.length; i++) {
-					targets[i].addEventListener('click', function (event) {
+				const targets = popup.el.querySelectorAll('.item canvas');
+				for (let i = 0; i < targets.length; i++) {
+					targets[i].addEventListener('click', (event) => {
 						//we have click
-						var key = this.dataset.key;
-						for (var i in data) {
+						const key = event.currentTarget.dataset.key;
+						for (const i in data) {
 							if(data[i].key == key){
-								var function_name = _this.get_function_from_path(key);
-								_this.POP.hide();
+								const function_name = this.get_function_from_path(key);
+								this.POP.hide();
 								data[i].object[function_name]();
 							}
 						}
@@ -69,10 +67,10 @@ class Effects_browser_class extends Base_tools_class {
 		await new Promise(r => setTimeout(r, 10));
 
 		//generate thumb
-		var active_image = this.Base_layers.convert_layer_to_canvas();
+		const active_image = this.Base_layers.convert_layer_to_canvas();
 
-		var canvas = document.createElement('canvas');
-		var ctx = canvas.getContext("2d");
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext("2d");
 		canvas.width = this.preview_width;
 		canvas.height = this.preview_height;
 
@@ -81,19 +79,18 @@ class Effects_browser_class extends Base_tools_class {
 		ctx.scale(1, 1);
 
 		//draw demo thumbs
-		for (var i in data) {
-			var title = data[i].title;
-			var function_name = 'demo';
+		for (i in data) {
+			const function_name = 'demo';
 			if(typeof data[i].object[function_name] == "undefined")
 				continue;
-			data[i].object[function_name]('c_'+data[i].key, canvas);
+			data[i].object[function_name](`c_${data[i].key}`, canvas);
 		}
 	}
 
 	get_effects_list() {
-		var list = [];
+		const list = [];
 
-		for (var i in this.Base_gui.modules) {
+		for (const i in this.Base_gui.modules) {
 			if (i.indexOf("effects") == -1 || i.indexOf("abstract") > -1 || i.indexOf("browser") > -1)
 				continue;
 
@@ -104,9 +101,9 @@ class Effects_browser_class extends Base_tools_class {
 			});
 		}
 
-		list.sort(function(a, b) {
-			var nameA = a.title.toUpperCase();
-			var nameB = b.title.toUpperCase();
+		list.sort((a, b) => {
+			const nameA = a.title.toUpperCase();
+			const nameB = b.title.toUpperCase();
 			if (nameA < nameB) return -1;
 			if (nameA > nameB) return 1;
 			return 0;
@@ -116,8 +113,8 @@ class Effects_browser_class extends Base_tools_class {
 	}
 
 	get_filter_title(key) {
-		var parts = key.split("/");
-		var title = parts[parts.length - 1];
+		const parts = key.split("/");
+		let title = parts[parts.length - 1];
 
 		//exceptions
 		if (title == 'negative')
@@ -130,8 +127,8 @@ class Effects_browser_class extends Base_tools_class {
 	}
 
 	get_function_from_path(path){
-		var parts = path.split("/");
-		var result = parts[parts.length - 1];
+		const parts = path.split("/");
+		let result = parts[parts.length - 1];
 		result = result.replace(/-/, '_');
 
 		return result;

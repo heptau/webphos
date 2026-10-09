@@ -14,7 +14,7 @@ export class Stop_animation_action extends Base_action {
 	async do() {
 		super.do();
 		const animation_tool = app.GUI.GUI_tools.tools_modules.animation.object;
-		var params = animation_tool.getParams();
+		const params = animation_tool.getParams();
 		if (animation_tool.intervalID == null)
 			return;
 
@@ -25,7 +25,7 @@ export class Stop_animation_action extends Base_action {
 
 		// make all visible
 		if (this.reset_layer_visibility) {
-			for (let i in config.layers) {
+			for (const i in config.layers) {
 				config.layers[i].visible = true;
 			}
 		}
@@ -37,7 +37,7 @@ export class Stop_animation_action extends Base_action {
 	async undo() {
 		super.undo();
 		const animation_tool = app.GUI.GUI_tools.tools_modules.animation.object;
-		var params = animation_tool.getParams();
+		const params = animation_tool.getParams();
 		if (animation_tool.intervalID == null)
 			return;
 
@@ -48,7 +48,7 @@ export class Stop_animation_action extends Base_action {
 
 		// make all visible
 		if (this.reset_layer_visibility) {
-			for (let i in config.layers) {
+			for (const i in config.layers) {
 				config.layers[i].visible = true;
 			}
 		}

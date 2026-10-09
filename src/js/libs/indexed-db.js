@@ -1,7 +1,7 @@
 /**
  * IndexedDB wrapper for project storage
  * Provides persistent storage for large projects
- * 
+ *
  * @author ViliusL
  */
 
@@ -19,15 +19,15 @@ function open_db() {
 			reject(new Error('IndexedDB not supported'));
 			return;
 		}
-		
+
 		const request = indexedDB.open(DB_NAME, DB_VERSION);
-		
+
 		request.onerror = () => reject(new Error('Failed to open IndexedDB'));
 		request.onsuccess = () => resolve(request.result);
-		
+
 		request.onupgradeneeded = (event) => {
 			const db = event.target.result;
-			
+
 			if (!db.objectStoreNames.contains(STORE_NAME)) {
 				const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
 				store.createIndex('name', 'name', { unique: false });
@@ -45,16 +45,16 @@ function open_db() {
  */
 export async function save_project(project) {
 	const db = await open_db();
-	
+
 	return new Promise((resolve, reject) => {
 		const transaction = db.transaction([STORE_NAME], 'readwrite');
 		const store = transaction.objectStore(STORE_NAME);
-		
+
 		const projectData = {
 			...project,
 			modified: new Date().toISOString(),
 		};
-		
+
 		// If project has ID, update; otherwise add new
 		let request;
 		if (project.id) {
@@ -63,7 +63,7 @@ export async function save_project(project) {
 		} else {
 			request = store.add(projectData);
 		}
-		
+
 		request.onsuccess = () => resolve(request.result);
 		request.onerror = () => reject(new Error('Failed to save project'));
 	});
@@ -76,12 +76,12 @@ export async function save_project(project) {
  */
 export async function load_project(id) {
 	const db = await open_db();
-	
+
 	return new Promise((resolve, reject) => {
 		const transaction = db.transaction([STORE_NAME], 'readonly');
 		const store = transaction.objectStore(STORE_NAME);
 		const request = store.get(id);
-		
+
 		request.onsuccess = () => resolve(request.result || null);
 		request.onerror = () => reject(new Error('Failed to load project'));
 	});
@@ -93,12 +93,12 @@ export async function load_project(id) {
  */
 export async function load_all_projects() {
 	const db = await open_db();
-	
+
 	return new Promise((resolve, reject) => {
 		const transaction = db.transaction([STORE_NAME], 'readonly');
 		const store = transaction.objectStore(STORE_NAME);
 		const request = store.getAll();
-		
+
 		request.onsuccess = () => resolve(request.result || []);
 		request.onerror = () => reject(new Error('Failed to load projects'));
 	});
@@ -111,12 +111,12 @@ export async function load_all_projects() {
  */
 export async function delete_project(id) {
 	const db = await open_db();
-	
+
 	return new Promise((resolve, reject) => {
 		const transaction = db.transaction([STORE_NAME], 'readwrite');
 		const store = transaction.objectStore(STORE_NAME);
 		const request = store.delete(id);
-		
+
 		request.onsuccess = () => resolve();
 		request.onerror = () => reject(new Error('Failed to delete project'));
 	});
@@ -131,7 +131,7 @@ export function export_project(project, filename) {
 	const data = JSON.stringify(project, null, 2);
 	const blob = new Blob([data], { type: 'application/json' });
 	const url = URL.createObjectURL(blob);
-	
+
 	const a = document.createElement('a');
 	a.href = url;
 	a.download = filename || `minipaint_${project.name || 'project'}_${new Date().toISOString().slice(0, 10)}.json`;
@@ -152,7 +152,7 @@ export function import_project(file) {
 			reject(new Error('No file provided'));
 			return;
 		}
-		
+
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			try {
@@ -163,7 +163,7 @@ export function import_project(file) {
 				}
 				resolve(project);
 			} catch (err) {
-				reject(new Error('Invalid JSON file: ' + err.message));
+				reject(new Error(`Invalid JSON file: ${  err.message}`));
 			}
 		};
 		reader.onerror = () => reject(new Error('Failed to read file'));
@@ -178,7 +178,7 @@ export function import_project(file) {
 export function is_indexeddb_available() {
 	try {
 		return 'indexedDB' in window && window.indexedDB !== null;
-	} catch (e) {
+	} catch {
 		return false;
 	}
 }
@@ -205,12 +205,12 @@ export async function get_storage_estimate() {
  */
 export async function clear_all_projects() {
 	const db = await open_db();
-	
+
 	return new Promise((resolve, reject) => {
 		const transaction = db.transaction([STORE_NAME], 'readwrite');
 		const store = transaction.objectStore(STORE_NAME);
 		const request = store.clear();
-		
+
 		request.onsuccess = () => resolve();
 		request.onerror = () => reject(new Error('Failed to clear projects'));
 	});

@@ -1,6 +1,6 @@
 /**
  * Input validation utilities
- * 
+ *
  * @author ViliusL
  */
 
@@ -82,7 +82,7 @@ export async function validate_json_file(file) {
 
 		return { valid: true, error: null, data };
 	} catch (e) {
-		return { valid: false, error: 'Invalid JSON format: ' + e.message };
+		return { valid: false, error: `Invalid JSON format: ${  e.message}` };
 	}
 }
 
@@ -227,7 +227,7 @@ export function validate_image_url(url) {
 		if (!['http:', 'https:'].includes(parsed.protocol)) {
 			return { valid: false, error: 'Only HTTP/HTTPS URLs are allowed' };
 		}
-	} catch (e) {
+	} catch {
 		return { valid: false, error: 'Invalid URL format' };
 	}
 
@@ -284,7 +284,7 @@ export function sanitize_filename(filename) {
 	}
 
 	// Drop ".." path segments (path traversal) and replace slashes and backslashes
-	filename = filename.split(/[\/\\]/).filter(function (part) {
+	filename = filename.split(/[/\\]/).filter((part) => {
 		return part !== '..';
 	}).join('_');
 	// Remove any remaining multiple dots
@@ -322,15 +322,15 @@ function get_file_extension(filename) {
  */
 function format_bytes(bytes) {
 	if (bytes >= 1024 * 1024 * 1024) {
-		return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+		return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)  } GB`;
 	}
 	if (bytes >= 1024 * 1024) {
-		return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+		return `${(bytes / (1024 * 1024)).toFixed(2)  } MB`;
 	}
 	if (bytes >= 1024) {
-		return (bytes / 1024).toFixed(2) + ' KB';
+		return `${(bytes / 1024).toFixed(2)  } KB`;
 	}
-	return bytes + ' B';
+	return `${bytes  } B`;
 }
 
 /**
@@ -344,14 +344,14 @@ export function validate_layer_name(name) {
 	}
 
 	const sanitized = name.trim().substring(0, 200);
-	
+
 	if (sanitized.length === 0) {
 		return { valid: false, error: 'Layer name cannot be empty', sanitized: '' };
 	}
 
 	// Check for potentially dangerous characters
-	if (/[<>\"'&]/.test(sanitized)) {
-		return { valid: false, error: 'Layer name contains invalid characters', sanitized: sanitized.replace(/[<>\"'&]/g, '_') };
+	if (/[<>"'&]/.test(sanitized)) {
+		return { valid: false, error: 'Layer name contains invalid characters', sanitized: sanitized.replace(/[<>"'&]/g, '_') };
 	}
 
 	return { valid: true, error: null, sanitized };

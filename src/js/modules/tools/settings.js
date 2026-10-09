@@ -24,33 +24,32 @@ class Tools_settings_class {
 	}
 
 	settings() {
-		var _this = this;
-		var transparency_values = ['squares', 'green', 'grey'];
-		var resolutions_values = [72, 96, 150, 300, 600];
-		var default_units_all = Object.keys(this.default_units_config);
-		var transparency = this.get_setting('transparency');
-		var theme = this.get_setting('theme');
-		var snap = this.get_setting('snap');
-		var guides = this.get_setting('guides');
-		var safe_search = this.get_setting('safe_search');
-		var exit_confirm = this.get_setting('exit_confirm');
-		var default_units = this.get_setting('default_units', true);
-		var resolution = this.get_default_resolution();
-		var thick_guides = this.get_setting('thick_guides');
-		var enable_autoresize = this.get_setting('enable_autoresize');
-		var open_in_new_tab = this.get_setting('open_in_new_tab');
-		var use_file_picker = this.get_setting('use_file_picker');
-		var large_ui = this.get_setting('large_ui');
+		const transparency_values = ['squares', 'green', 'grey'];
+		const resolutions_values = [72, 96, 150, 300, 600];
+		const default_units_all = Object.keys(this.default_units_config);
+		const transparency = this.get_setting('transparency');
+		const theme = this.get_setting('theme');
+		const snap = this.get_setting('snap');
+		const guides = this.get_setting('guides');
+		const safe_search = this.get_setting('safe_search');
+		const exit_confirm = this.get_setting('exit_confirm');
+		const default_units = this.get_setting('default_units', true);
+		const resolution = this.get_default_resolution();
+		const thick_guides = this.get_setting('thick_guides');
+		const enable_autoresize = this.get_setting('enable_autoresize');
+		const open_in_new_tab = this.get_setting('open_in_new_tab');
+		const use_file_picker = this.get_setting('use_file_picker');
+		const large_ui = this.get_setting('large_ui');
 
 		//language: automatic (system) + own language names
-		var auto_name = t('Automatic (System)');
+		const auto_name = t('Automatic (System)');
 		//browser preferred languages first, then alphabetical order
-		var language_codes = order_languages(LANGUAGE_NAMES, get_system_languages(), config.LANG);
-		var language_names = [auto_name].concat(language_codes.map((code) => LANGUAGE_NAMES[code]));
-		var language_code = this.Tools_translate.get_language_setting();
-		var language_name = language_code == AUTO ? auto_name : (LANGUAGE_NAMES[language_code] || auto_name);
+		const language_codes = order_languages(LANGUAGE_NAMES, get_system_languages(), config.LANG);
+		const language_names = [auto_name].concat(language_codes.map((code) => LANGUAGE_NAMES[code]));
+		const language_code = this.Tools_translate.get_language_setting();
+		const language_name = language_code == AUTO ? auto_name : (LANGUAGE_NAMES[language_code] || auto_name);
 
-		var settings = {
+		const settings = {
 			title: 'Settings',
 			tabs: true,
 			params: [
@@ -76,43 +75,43 @@ class Tools_settings_class {
 				{name: "use_file_picker", title: "Ask where to save files:", value: use_file_picker},
 				{heading: "Keyboard", icon: '<svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>'},
 			],
-			on_load: function (params, popup) {
+			on_load: (params, popup) => {
 				//the shortcuts have a dialog of their own, the last tab of the settings leads there
-				var panel = popup.el.querySelector('tbody.tab_panel:last-of-type');
+				const panel = popup.el.querySelector('tbody.tab_panel:last-of-type');
 				if (!panel) {
 					return;
 				}
-				var row = document.createElement('tr');
-				var cell = document.createElement('td');
+				const row = document.createElement('tr');
+				const cell = document.createElement('td');
 				cell.colSpan = 3;
-				var button = document.createElement('button');
+				const button = document.createElement('button');
 				button.type = 'button';
 				button.className = 'button';
-				button.textContent = t('Keyboard Shortcuts') + '\u2026';
-				button.addEventListener('click', function () {
+				button.textContent = `${t('Keyboard Shortcuts')  }\u2026`;
+				button.addEventListener('click', () => {
 					popup.hide();
-					_this.Base_gui.run_target('tools/shortcuts_editor.open');
+					this.Base_gui.run_target('tools/shortcuts_editor.open');
 				});
 				cell.appendChild(button);
 				row.appendChild(cell);
 				panel.appendChild(row);
 			},
-			on_change: function (params) {
+			on_change (params) {
 				this.Base_gui.change_theme(params.theme);
 			},
-			on_cancel: function (params) {
+			on_cancel () {
 				this.Base_gui.change_theme(theme);
 			},
-			on_finish: function (params) {
-				_this.save_values(params);
+			on_finish: (params) => {
+				this.save_values(params);
 				if (params.language != language_name) {
-					var code = AUTO;
-					for (var key in LANGUAGE_NAMES) {
+					let code = AUTO;
+					for (const key in LANGUAGE_NAMES) {
 						if (LANGUAGE_NAMES[key] == params.language) {
 							code = key;
 						}
 					}
-					_this.Tools_translate.set_language(code);
+					this.Tools_translate.set_language(code);
 				}
 			},
 		};
@@ -159,7 +158,7 @@ class Tools_settings_class {
 		config.guides_enabled = this.get_setting('guides');
 		this.Base_gui.change_theme(this.get_setting('theme'));
 		this.Base_gui.GUI_information.update_units();
-		
+
 		//finish
 		this.Base_gui.prepare_canvas();
 		config.need_render = true;
@@ -197,7 +196,7 @@ class Tools_settings_class {
 	}
 
 	get_setting(key, raw) {
-		var default_values = {
+		const default_values = {
 			'theme': null,
 			'transparency': false,
 			'snap': true,
@@ -223,7 +222,7 @@ class Tools_settings_class {
 			return config.RESOLUTION;
 		}
 
-		var value = this.Helper.getCookie(key);
+		let value = this.Helper.getCookie(key);
 		if(value == null && default_values[key] != undefined){
 			//set default value
 			value = default_values[key];

@@ -6,7 +6,7 @@ import Helper_class from './../../libs/helpers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 class Image_autoAdjust_class {
 
@@ -34,12 +34,12 @@ class Image_autoAdjust_class {
 		}
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = this.get_adjust_data(img);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const data = this.get_adjust_data(img);
 		ctx.putImageData(data, 0, 0);
 
 		//save
@@ -50,44 +50,41 @@ class Image_autoAdjust_class {
 
 	get_adjust_data(data) {
 		//settings
-		var white = 240;	//white color min
-		var black = 30;		//black color max
-		var target_white = 1; 	//how much % white colors should take
-		var target_black = 0.5;	//how much % black colors should take
-		var modify = 1.1;	//color modify strength
-		var cycles_count = 10; //how much iteration to change colors
+		let i, j, c, x;
+		const white = 240;	//white color min
+		const black = 30;		//black color max
+		const target_white = 1; 	//how much % white colors should take
+		const target_black = 0.5;	//how much % black colors should take
+		const modify = 1.1;	//color modify strength
+		const cycles_count = 10; //how much iteration to change colors
 
-		var imgData = data.data;
-		var W = data.width;
-		var H = data.height;
+		const imgData = data.data;
 
-		var n = 0;	//pixels count without transparent
+		let n = 0;	//pixels count without transparent
 
 		//make sure we have white
-		var n_valid = 0;
-		for (var i = 0; i < imgData.length; i += 4) {
+		let n_valid = 0;
+		for (i = 0; i < imgData.length; i += 4) {
 			if (imgData[i + 3] == 0)
 				continue;	//transparent
 			if ((imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3 > white)
 				n_valid++;
 			n++;
 		}
-		var target = target_white;
-		var n_fix_white = 0;
-		var done = false;
-		for (var j = 0; j < cycles_count; j++) {
+		let target = target_white;
+		let done = false;
+		for (j = 0; j < cycles_count; j++) {
 			if (n_valid * 100 / n >= target)
 				done = true;
 			if (done == true)
 				break;
-			n_fix_white++;
 
 			//adjust
-			for (var i = 0; i < imgData.length; i += 4) {
+			for (i = 0; i < imgData.length; i += 4) {
 				if (imgData[i + 3] == 0)
 					continue;	//transparent
-				for (var c = 0; c < 3; c++) {
-					var x = i + c;
+				for (c = 0; c < 3; c++) {
+					x = i + c;
 					if (imgData[x] < 10)
 						continue;
 					//increase white
@@ -100,7 +97,7 @@ class Image_autoAdjust_class {
 
 			//recheck
 			n_valid = 0;
-			for (var i = 0; i < imgData.length; i += 4) {
+			for (i = 0; i < imgData.length; i += 4) {
 				if (imgData[i + 3] == 0)
 					continue;	//transparent
 				if ((imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3 > white)
@@ -110,28 +107,26 @@ class Image_autoAdjust_class {
 
 		//make sure we have black
 		n_valid = 0;
-		for (var i = 0; i < imgData.length; i += 4) {
+		for (i = 0; i < imgData.length; i += 4) {
 			if (imgData[i + 3] == 0)
 				continue;	//transparent
 			if ((imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3 < black)
 				n_valid++;
 		}
 		target = target_black;
-		var n_fix_black = 0;
-		var done = false;
-		for (var j = 0; j < cycles_count; j++) {
+		done = false;
+		for (j = 0; j < cycles_count; j++) {
 			if (n_valid * 100 / n >= target)
 				done = true;
 			if (done == true)
 				break;
-			n_fix_black++;
 
 			//adjust
-			for (var i = 0; i < imgData.length; i += 4) {
+			for (i = 0; i < imgData.length; i += 4) {
 				if (imgData[i + 3] == 0)
 					continue;	//transparent
-				for (var c = 0; c < 3; c++) {
-					var x = i + c;
+				for (c = 0; c < 3; c++) {
+					x = i + c;
 					if (imgData[x] > 240)
 						continue;
 					//increase black
@@ -142,7 +137,7 @@ class Image_autoAdjust_class {
 
 			//recheck
 			n_valid = 0;
-			for (var i = 0; i < imgData.length; i += 4) {
+			for (i = 0; i < imgData.length; i += 4) {
 				if (imgData[i + 3] == 0)
 					continue;	//transparent
 				if ((imgData[i] + imgData[i + 1] + imgData[i + 2]) / 3 < black)

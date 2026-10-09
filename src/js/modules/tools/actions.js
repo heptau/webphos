@@ -11,7 +11,7 @@ import shortcutsDefinition from './../../config-shortcuts.js';
 import { save_blob } from './../../libs/file-save.js';
 import { t } from './translate.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * Window > Actions - record menu commands with the settings of their dialogs and play them again, also as a file
@@ -35,18 +35,18 @@ class Tools_actions_class {
 		try {
 			return window.localStorage;
 		}
-		catch (error) {
+		catch {
 			return null;
 		}
 	}
 
 	list() {
-		var storage = this.storage();
+		const storage = this.storage();
 		return storage ? load_actions(storage, this.allowed) : [];
 	}
 
 	store(actions) {
-		var storage = this.storage();
+		const storage = this.storage();
 		if (!storage || save_actions(storage, actions) == false) {
 			alertify.error(t('The actions could not be saved in this browser.'));
 		}
@@ -64,22 +64,22 @@ class Tools_actions_class {
 	}
 
 	build_list(popup) {
-		var box = document.createElement('div');
+		const box = document.createElement('div');
 		box.style.cssText = 'min-width:360px;max-width:520px;margin:8px auto;display:flex;flex-direction:column;gap:10px;';
 		popup.el.querySelector('.dialog_content').appendChild(box);
-		var close = () => {
-			var cancel = popup.el.querySelector('[data-id="popup_cancel"]');
+		const close = () => {
+			const cancel = popup.el.querySelector('[data-id="popup_cancel"]');
 			if (cancel) {
 				cancel.click();
 			}
 		};
 
-		var list = document.createElement('div');
+		const list = document.createElement('div');
 		list.style.cssText = 'display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;';
 		box.appendChild(list);
 
-		var button = (text, handler, title) => {
-			var element = document.createElement('button');
+		const button = (text, handler, title) => {
+			const element = document.createElement('button');
 			element.type = 'button';
 			element.textContent = t(text);
 			if (title) {
@@ -89,20 +89,20 @@ class Tools_actions_class {
 			return element;
 		};
 
-		var render = () => {
+		const render = () => {
 			list.innerHTML = '';
-			var actions = this.list();
+			const actions = this.list();
 			if (actions.length == 0) {
-				var empty = document.createElement('small');
+				const empty = document.createElement('small');
 				empty.textContent = t('There are no actions yet. Record one below.');
 				list.appendChild(empty);
 			}
 			actions.forEach((action) => {
-				var row = document.createElement('div');
+				const row = document.createElement('div');
 				row.style.cssText = 'display:flex;gap:6px;align-items:center;';
-				var name = document.createElement('span');
+				const name = document.createElement('span');
 				name.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-				name.textContent = action.name + ' (' + action.steps.length + ')';
+				name.textContent = `${action.name  } (${action.steps.length})`;
 				name.title = action.steps.map(describe_step).join(' > ');
 				row.appendChild(name);
 				row.appendChild(button('Play', () => {
@@ -120,13 +120,13 @@ class Tools_actions_class {
 		render();
 
 		//a new action
-		var record_row = document.createElement('div');
+		const record_row = document.createElement('div');
 		record_row.style.cssText = 'display:flex;gap:6px;align-items:center;';
-		var name_input = document.createElement('input');
+		const name_input = document.createElement('input');
 		name_input.type = 'text';
 		name_input.maxLength = 60;
 		name_input.style.flex = '1';
-		name_input.value = t('Action') + ' ' + (this.list().length + 1);
+		name_input.value = `${t('Action')  } ${  this.list().length + 1}`;
 		name_input.setAttribute('aria-label', t('Name of the action'));
 		record_row.appendChild(name_input);
 		record_row.appendChild(button('Record', () => {
@@ -136,7 +136,7 @@ class Tools_actions_class {
 		box.appendChild(record_row);
 
 		//from a file
-		var file = document.createElement('input');
+		const file = document.createElement('input');
 		file.type = 'file';
 		file.accept = '.json,application/json';
 		file.style.display = 'none';
@@ -150,7 +150,7 @@ class Tools_actions_class {
 		box.appendChild(file);
 		box.appendChild(button('Import', () => file.click(), 'Open an action from a file'));
 
-		var hint = document.createElement('small');
+		const hint = document.createElement('small');
 		hint.textContent = t('Menu commands are recorded with the settings of their dialogs. Strokes of the tools are not.');
 		box.appendChild(hint);
 	}
@@ -163,13 +163,13 @@ class Tools_actions_class {
 	}
 
 	stop() {
-		var action = stop_recording();
+		const action = stop_recording();
 		if (action == null) {
 			alertify.warning(t('Nothing was recorded.'));
 			return;
 		}
 		this.store(this.list().concat([action]));
-		alertify.success(t('Action saved:') + ' ' + action.name);
+		alertify.success(`${t('Action saved:')  } ${  action.name}`);
 	}
 
 	cancel() {
@@ -185,14 +185,14 @@ class Tools_actions_class {
 		}
 		this.playing = true;
 		try {
-			for (var i = 0; i < action.steps.length; i++) {
-				var step = action.steps[i];
+			for (let i = 0; i < action.steps.length; i++) {
+				const step = action.steps[i];
 				begin_replay(step);
 				try {
 					await app.GUI.run_target(step.target, step.parameter);
 				}
-				catch (error) {
-					alertify.error(t('The action stopped at:') + ' ' + describe_step(step));
+				catch {
+					alertify.error(`${t('The action stopped at:')  } ${  describe_step(step)}`);
 					return;
 				}
 				finally {
@@ -201,7 +201,7 @@ class Tools_actions_class {
 				//the change has to be done before the next command looks at the picture
 				await new Promise((resolve) => setTimeout(resolve, 60));
 			}
-			alertify.success(t('Action played:') + ' ' + action.name);
+			alertify.success(`${t('Action played:')  } ${  action.name}`);
 		}
 		finally {
 			end_replay();
@@ -210,12 +210,12 @@ class Tools_actions_class {
 	}
 
 	async export(action) {
-		var blob = new Blob([export_action(action)], {type: 'application/json'});
-		var name = String(action.name).replace(/[^\w\-]+/g, '-').slice(0, 40) || 'action';
+		const blob = new Blob([export_action(action)], {type: 'application/json'});
+		const name = String(action.name).replace(/[^\w-]+/g, '-').slice(0, 40) || 'action';
 		try {
-			await save_blob(blob, name + '.webphos-action.json', false);
+			await save_blob(blob, `${name  }.lumifex-action.json`, false);
 		}
-		catch (error) {
+		catch {
 			alertify.error(t('Export failed.'));
 		}
 	}
@@ -225,14 +225,14 @@ class Tools_actions_class {
 			alertify.error(t('The file is too big.'));
 			return;
 		}
-		var action = import_action(await file.text(), this.allowed);
+		const action = import_action(await file.text(), this.allowed);
 		if (action == null) {
 			alertify.error(t('This is not an action file.'));
 			return;
 		}
 		action.id = make_id();
 		this.store(this.list().concat([sanitize_action(action, this.allowed)]));
-		alertify.success(t('Action saved:') + ' ' + action.name);
+		alertify.success(`${t('Action saved:')  } ${  action.name}`);
 	}
 
 	/**
@@ -247,17 +247,17 @@ class Tools_actions_class {
 			return;
 		}
 		if (this.panel == null) {
-			var panel = document.createElement('div');
+			const panel = document.createElement('div');
 			panel.id = 'action_recorder';
 			panel.className = 'action_recorder';
 			panel.setAttribute('role', 'status');
-			var label = document.createElement('span');
+			const label = document.createElement('span');
 			label.className = 'action_recorder_label';
-			var stop = document.createElement('button');
+			const stop = document.createElement('button');
 			stop.type = 'button';
 			stop.textContent = t('Stop');
 			stop.addEventListener('click', () => this.stop());
-			var cancel = document.createElement('button');
+			const cancel = document.createElement('button');
 			cancel.type = 'button';
 			cancel.textContent = t('Cancel');
 			cancel.addEventListener('click', () => this.cancel());
@@ -267,7 +267,7 @@ class Tools_actions_class {
 			document.body.appendChild(panel);
 			this.panel = panel;
 		}
-		this.panel.querySelector('.action_recorder_label').textContent = '● ' + t('Recording') + ': ' + recording.name + ' (' + recording.steps.length + ')';
+		this.panel.querySelector('.action_recorder_label').textContent = `● ${t('Recording')}: ${recording.name} (${recording.steps.length})`;
 	}
 }
 

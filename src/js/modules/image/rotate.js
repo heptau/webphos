@@ -3,12 +3,11 @@ import Dialog_class from './../../libs/popup.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Base_gui_class from './../../core/base-gui.js';
 import Helper_class from './../../libs/helpers.js';
-import { has_modifier } from './../../libs/shortcuts.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import app from '../../app.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 class Image_rotate_class {
 
@@ -31,30 +30,29 @@ class Image_rotate_class {
 	}
 
 	rotate() {
-		var _this = this;
 
 		if (config.layer.rotate === null) {
 			alertify.error(t('Rotate is not supported on this type of object. Convert to raster?'));
 			return;
 		}
 
-		var angles = ['Custom', '0', '90', '180', '270'];
-		var initial_angle = config.layer.rotate;
+		const angles = ['Custom', '0', '90', '180', '270'];
+		const initial_angle = config.layer.rotate;
 
-		var settings = {
+		const settings = {
 			title: 'Rotate',
 			params: [
 				{name: "rotate", title: "Rotate:", value: config.layer.rotate, range: [0, 360]},
 				{name: "right_angle", title: "Right angle:", values: angles},
 			],
-			on_change: function (params, canvas_preview, w, h) {
-				_this.rotate_handler(params, false);
+			on_change: (params) => {
+				this.rotate_handler(params, false);
 			},
-			on_finish: function (params) {
+			on_finish: (params) => {
 				config.layer.rotate = initial_angle;
-				_this.rotate_handler(params);
+				this.rotate_handler(params);
 			},
-			on_cancel: function (params) {
+			on_cancel () {
 				config.layer.rotate = initial_angle;
 				config.need_render = true;
 			},
@@ -63,7 +61,7 @@ class Image_rotate_class {
 	}
 
 	rotate_handler(data, can_resize = true) {
-		var value = parseInt(data.rotate);
+		let value = parseInt(data.rotate);
 		if (data.right_angle != 'Custom') {
 			value = parseInt(data.right_angle);
 		}
@@ -72,7 +70,7 @@ class Image_rotate_class {
 			value = 360 + value;
 		if (value >= 360)
 			value = value - 360;
-		let new_rotate = value;
+		const new_rotate = value;
 
 		if (can_resize == true) {
 			app.State.do_action(
@@ -106,7 +104,7 @@ class Image_rotate_class {
 	}
 
 	rotate_180() {
-		let new_rotate = (config.layer.rotate + 180) % 360;
+		const new_rotate = (config.layer.rotate + 180) % 360;
 
 		app.State.do_action(
 			new app.Actions.Bundle_action('rotate_layer', 'Rotate Layer', [
@@ -139,21 +137,21 @@ class Image_rotate_class {
 	 * @returns {array} actions to perform
 	 */
 	check_sizes(new_rotate) {
-		let actions = [];
-		var w = config.layer.width;
-		var h = config.layer.height;
+		const actions = [];
+		const w = config.layer.width;
+		const h = config.layer.height;
 
-		var o = new_rotate * Math.PI / 180;
-		var new_x = w * Math.abs(Math.cos(o)) + h * Math.abs(Math.sin(o));
-		var new_y = w * Math.abs(Math.sin(o)) + h * Math.abs(Math.cos(o));
+		const o = new_rotate * Math.PI / 180;
+		let new_x = w * Math.abs(Math.cos(o)) + h * Math.abs(Math.sin(o));
+		let new_y = w * Math.abs(Math.sin(o)) + h * Math.abs(Math.cos(o));
 
 		//round values
 		new_x = Math.ceil(Math.round(new_x * 1000) / 1000);
 		new_y = Math.ceil(Math.round(new_y * 1000) / 1000);
 
 		if (new_x > config.WIDTH || new_y > config.HEIGHT) {
-			var dx = 0;
-			var dy = 0;
+			let dx = 0;
+			let dy = 0;
 			let new_width = config.WIDTH;
 			let new_height = config.HEIGHT;
 			if (new_x > config.WIDTH) {

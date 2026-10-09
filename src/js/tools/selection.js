@@ -15,7 +15,7 @@ import Edit_selection_move_class from './../modules/edit/selection_move.js';
 import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../modules/tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 class Selection_class extends Base_tools_class {
 
@@ -28,7 +28,6 @@ class Selection_class extends Base_tools_class {
 		}
 		instance = this;
 
-		var _this = this;
 
 		this.Base_layers = new Base_layers_class();
 		this.Helper = new Helper_class();
@@ -45,7 +44,7 @@ class Selection_class extends Base_tools_class {
 			height: null,
 		};
 
-		var sel_config = {
+		const sel_config = {
 			ants: true,
 			enable_background: true,
 			enable_borders: true,
@@ -53,8 +52,8 @@ class Selection_class extends Base_tools_class {
 			enable_controls: true,
 			enable_rotation: false,
 			enable_move: true,
-			data_function: function () {
-				return _this.selection;
+			data_function: () => {
+				return this.selection;
 			},
 		};
 		this.sel_config = sel_config;
@@ -66,32 +65,31 @@ class Selection_class extends Base_tools_class {
 	}
 
 	load() {
-		var _this = this;
 
 		//mouse events
-		document.addEventListener('mousedown', function (event) {
-			_this.dragStart(event);
+		document.addEventListener('mousedown', (event) => {
+			this.dragStart(event);
 		});
-		document.addEventListener('mousemove', function (event) {
-			_this.dragMove(event);
+		document.addEventListener('mousemove', (event) => {
+			this.dragMove(event);
 		});
-		document.addEventListener('mouseup', function (event) {
-			_this.dragEnd(event);
+		document.addEventListener('mouseup', (event) => {
+			this.dragEnd(event);
 		});
 
 		// collect touch events
-		document.addEventListener('touchstart', function (event) {
-			_this.dragStart(event);
+		document.addEventListener('touchstart', (event) => {
+			this.dragStart(event);
 		});
-		document.addEventListener('touchmove', function (event) {
-			_this.dragMove(event);
+		document.addEventListener('touchmove', (event) => {
+			this.dragMove(event);
 		});
-		document.addEventListener('touchend', function (event) {
-			_this.dragEnd(event);
+		document.addEventListener('touchend', (event) => {
+			this.dragEnd(event);
 		});
 
 		document.addEventListener('keydown', (e) => {
-			var code = e.keyCode;
+			const code = e.keyCode;
 			if (this.Helper.is_input(e.target))
 				return;
 
@@ -109,29 +107,25 @@ class Selection_class extends Base_tools_class {
 	}
 
 	dragStart(event) {
-		var _this = this;
-		if (config.TOOL.name != _this.name)
+		if (config.TOOL.name != this.name)
 			return;
-		_this.mousedown(event);
+		this.mousedown(event);
 	}
 
 	dragMove(event) {
-		var _this = this;
-		if (config.TOOL.name != _this.name)
+		if (config.TOOL.name != this.name)
 			return;
-		_this.mousemove(event);
+		this.mousemove(event);
 	}
 
 	dragEnd(event) {
-		var _this = this;
-		if (config.TOOL.name != _this.name)
+		if (config.TOOL.name != this.name)
 			return;
-		_this.mouseup(event);
+		this.mouseup(event);
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
-		var layer = config.layer;
+		const mouse = this.get_mouse_info(e);
 		if (this.Base_selection.is_drag == false || mouse.click_valid == false)
 			return;
 
@@ -169,7 +163,7 @@ class Selection_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (this.Base_selection.is_drag == false || mouse.is_drag == false)
 			return;
 		if (e.type == 'mousedown' && (mouse.click_valid == false)) {
@@ -190,7 +184,7 @@ class Selection_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 
 		if (!this.Base_selection.is_drag) {
 			return;
@@ -217,9 +211,9 @@ class Selection_class extends Base_tools_class {
 
 		if (this.selection.width != null && this.selection.height != null) {
 			//make sure coords not negative
-			var details = this.selection;
-			var x = details.x;
-			var y = details.y;
+			const details = this.selection;
+			let x = details.x;
+			let y = details.y;
 			if (details.width < 0) {
 				x = x + details.width;
 				this.selection_coords_from.x = x;
@@ -229,16 +223,16 @@ class Selection_class extends Base_tools_class {
 				this.selection_coords_from.y = y;
 			}
 			this.selection = {
-				x: x,
-				y: y,
+				x,
+				y,
 				width: Math.abs(details.width),
 				height: Math.abs(details.height),
 			};
-			var shape = this.getParams().shape;
-			var is_ellipse = shape && (shape.value || shape) == 'Ellipse';
+			const shape = this.getParams().shape;
+			const is_ellipse = shape && (shape.value || shape) == 'Ellipse';
 			app.State.do_action(
 				new app.Actions.Set_selection_action(this.selection.x, this.selection.y, this.selection.width, this.selection.height, this.mousedown_selection)
-			).then(function () {
+			).then(() => {
 				if (is_ellipse) {
 					//the elliptical marquee is the rectangle turned into an ellipse mask
 					app.GUI.run_target('edit/selection.to_ellipse');
@@ -252,9 +246,9 @@ class Selection_class extends Base_tools_class {
 	 * is set in one step of the history
 	 */
 	finish_resize() {
-		var rect = this.round_rect(this.selection);
-		var original = this.mousedown_selection;
-		var mask_before = this.mousedown_mask;
+		const rect = this.round_rect(this.selection);
+		const original = this.mousedown_selection;
+		const mask_before = this.mousedown_mask;
 		//back to the old rectangle first, so Undo brings it back
 		this.selection = original;
 		if (!rect.width || !rect.height || (rect.x == original.x && rect.y == original.y && rect.width == original.width && rect.height == original.height)) {
@@ -275,8 +269,8 @@ class Selection_class extends Base_tools_class {
 	 * Marquee options from the tool settings and the keys held right now
 	 */
 	marquee_options(e) {
-		var params = this.getParams();
-		var value = (item) => (item && item.value !== undefined ? item.value : item);
+		const params = this.getParams();
+		const value = (item) => (item && item.value !== undefined ? item.value : item);
 		return {
 			style: value(params.style),
 			fixed_width: params.fixed_width,
@@ -287,7 +281,7 @@ class Selection_class extends Base_tools_class {
 	}
 
 	select_all() {
-		let actions = [];
+		const actions = [];
 
 		if (config.TOOL.name != this.name) {
 			actions.push(
@@ -302,7 +296,7 @@ class Selection_class extends Base_tools_class {
 		);
 	}
 
-	render(ctx, layer) {
+	render() {
 		//nothing
 	}
 
@@ -310,9 +304,9 @@ class Selection_class extends Base_tools_class {
 	 * Custom masks (feathered, inverted, elliptical...) are shown as a green tint instead of the rectangle fill.
 	 */
 	render_overlay(ctx) {
-		var current = this.Selection_mask.get();
-		var preview = this.Selection_mask.get_preview();
-		var custom = preview != null || (current != null && current.kind == 'custom');
+		const current = this.Selection_mask.get();
+		const preview = this.Selection_mask.get_preview();
+		const custom = preview != null || (current != null && current.kind == 'custom');
 		if (this.sel_config.enable_background === custom) {
 			this.sel_config.enable_background = !custom;
 			setTimeout(() => {
@@ -345,8 +339,8 @@ class Selection_class extends Base_tools_class {
 	}
 
 	delete_selection() {
-		var selection = this.selection;
-		var layer = config.layer;
+		const selection = this.selection;
+		const layer = config.layer;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
@@ -358,7 +352,7 @@ class Selection_class extends Base_tools_class {
 			return;
 		}
 
-		var current = this.Selection_mask.get();
+		const current = this.Selection_mask.get();
 		if (current != null && current.kind == 'custom') {
 			this.delete_masked(current.mask);
 			return;
@@ -366,8 +360,8 @@ class Selection_class extends Base_tools_class {
 
 		this.init_tmp_canvas();
 
-		var mouse_x = selection.x - layer.x;
-		var mouse_y = selection.y - layer.y;
+		let mouse_x = selection.x - layer.x;
+		let mouse_y = selection.y - layer.y;
 
 		//adapt to origin size
 		mouse_x = this.adaptSize(mouse_x, 'width');
@@ -394,9 +388,9 @@ class Selection_class extends Base_tools_class {
 	 * Erases pixels according to a custom selection mask (soft edges erase partially)
 	 */
 	delete_masked(mask) {
-		var layer = config.layer;
+		const layer = config.layer;
 		this.init_tmp_canvas();
-		var image = this.tmpCanvasCtx.getImageData(0, 0, this.tmpCanvas.width, this.tmpCanvas.height);
+		const image = this.tmpCanvasCtx.getImageData(0, 0, this.tmpCanvas.width, this.tmpCanvas.height);
 		erase_with_mask(image, mask, layer);
 		this.tmpCanvasCtx.putImageData(image, 0, 0);
 
@@ -425,7 +419,7 @@ class Selection_class extends Base_tools_class {
 			//app is still starting (the saved tool is being activated), nothing to reset
 			return [];
 		}
-		let actions = [
+		const actions = [
 			new app.Actions.Reset_selection_action(this.selection)
 		];
 		if (config.layer) {

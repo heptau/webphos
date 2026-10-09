@@ -24,7 +24,7 @@ class Edit_paste_place_class {
 	}
 
 	async paste(into) {
-		var selection = null;
+		let selection = null;
 		if (into) {
 			selection = new Edit_selection_class().get_mask();
 			if (selection == null) {
@@ -33,7 +33,7 @@ class Edit_paste_place_class {
 			}
 		}
 
-		var canvas;
+		let canvas;
 		try {
 			canvas = await read_clipboard_canvas();
 		}
@@ -42,9 +42,9 @@ class Edit_paste_place_class {
 			return;
 		}
 
-		var position = this.position_for(canvas);
-		var geometry = {x: position.x, y: position.y, width: canvas.width, height: canvas.height};
-		var settings = {
+		const position = this.position_for(canvas);
+		const geometry = {x: position.x, y: position.y, width: canvas.width, height: canvas.height};
+		const settings = {
 			name: t(into ? 'Pasted Into' : 'Pasted'),
 			type: 'image',
 			x: geometry.x,
@@ -55,7 +55,7 @@ class Edit_paste_place_class {
 			height_original: geometry.height,
 			data: canvas.toDataURL('image/png'),
 		};
-		var actions = [new app.Actions.Insert_layer_action(settings, false)];
+		const actions = [new app.Actions.Insert_layer_action(settings, false)];
 		if (into) {
 			//the new layer gets the next free id
 			actions.push(new app.Actions.Update_layer_action(app.Layers.auto_increment, {
@@ -72,7 +72,7 @@ class Edit_paste_place_class {
 	 * Where the picture goes: the place it was copied from, else the center of the canvas
 	 */
 	position_for(canvas) {
-		var copied = new Copy_class().last_copy_rect;
+		const copied = new Copy_class().last_copy_rect;
 		if (copied && copied.width == canvas.width && copied.height == canvas.height) {
 			return {x: copied.x, y: copied.y};
 		}

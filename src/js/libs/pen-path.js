@@ -32,9 +32,9 @@ export function clean_anchors(data) {
 		return [];
 	}
 	/** @type {Anchor[]} */
-	var result = [];
-	for (var i = 0; i < data.length && result.length < MAX_ANCHORS; i++) {
-		var point = clean_point(data[i]);
+	const result = [];
+	for (let i = 0; i < data.length && result.length < MAX_ANCHORS; i++) {
+		const point = clean_point(data[i]);
 		if (point) {
 			result.push({x: point.x, y: point.y, in: clean_point(data[i].in), out: clean_point(data[i].out)});
 		}
@@ -62,31 +62,31 @@ export function drag_smooth(anchor, to) {
  * @returns {Point[]}
  */
 export function flatten_path(anchors, closed, steps) {
-	var n = Math.min(64, Math.max(2, steps || 16));
+	const n = Math.min(64, Math.max(2, steps || 16));
 	/** @type {Point[]} */
-	var points = [];
+	const points = [];
 	if (anchors.length == 0) {
 		return points;
 	}
 	points.push({x: anchors[0].x, y: anchors[0].y});
-	var count = closed ? anchors.length : anchors.length - 1;
-	for (var i = 0; i < count; i++) {
-		var a = anchors[i];
-		var b = anchors[(i + 1) % anchors.length];
-		var p1 = a.out || a;
-		var p2 = b.in || b;
+	const count = closed ? anchors.length : anchors.length - 1;
+	for (let i = 0; i < count; i++) {
+		const a = anchors[i];
+		const b = anchors[(i + 1) % anchors.length];
+		const p1 = a.out || a;
+		const p2 = b.in || b;
 		if (a.out == null && b.in == null) {
 			if (!(closed && i == count - 1)) {
 				points.push({x: b.x, y: b.y});
 			}
 			continue;
 		}
-		for (var s = 1; s <= n; s++) {
+		for (let s = 1; s <= n; s++) {
 			if (closed && i == count - 1 && s == n) {
 				break; //back at the first point
 			}
-			var t = s / n;
-			var u = 1 - t;
+			const t = s / n;
+			const u = 1 - t;
 			points.push({
 				x: u * u * u * a.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * b.x,
 				y: u * u * u * a.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * b.y,
@@ -104,8 +104,8 @@ export function bounds_of(points) {
 	if (points.length == 0) {
 		return null;
 	}
-	var min_x = Infinity, min_y = Infinity, max_x = -Infinity, max_y = -Infinity;
-	points.forEach(function (p) {
+	let min_x = Infinity, min_y = Infinity, max_x = -Infinity, max_y = -Infinity;
+	points.forEach((p) => {
 		min_x = Math.min(min_x, p.x);
 		min_y = Math.min(min_y, p.y);
 		max_x = Math.max(max_x, p.x);
@@ -123,10 +123,10 @@ export function bounds_of(points) {
  * @returns {Hit|null}
  */
 export function hit_path(anchors, point, radius) {
-	var near = function (p) {
+	const near = function (p) {
 		return p != null && Math.hypot(p.x - point.x, p.y - point.y) <= radius;
 	};
-	for (var i = anchors.length - 1; i >= 0; i--) {
+	for (let i = anchors.length - 1; i >= 0; i--) {
 		if (near(anchors[i].out)) {
 			return {index: i, part: 'out'};
 		}
@@ -134,7 +134,7 @@ export function hit_path(anchors, point, radius) {
 			return {index: i, part: 'in'};
 		}
 	}
-	for (var j = anchors.length - 1; j >= 0; j--) {
+	for (let j = anchors.length - 1; j >= 0; j--) {
 		if (near(anchors[j])) {
 			return {index: j, part: 'anchor'};
 		}
@@ -153,8 +153,8 @@ export function hit_path(anchors, point, radius) {
  */
 export function move_part(anchor, part, to, independent) {
 	if (part == 'anchor') {
-		var dx = to.x - anchor.x;
-		var dy = to.y - anchor.y;
+		const dx = to.x - anchor.x;
+		const dy = to.y - anchor.y;
 		anchor.x = to.x;
 		anchor.y = to.y;
 		if (anchor.in) {
@@ -165,16 +165,16 @@ export function move_part(anchor, part, to, independent) {
 		}
 		return;
 	}
-	var other = part == 'in' ? 'out' : 'in';
-	var old_other = anchor[other];
+	const other = part == 'in' ? 'out' : 'in';
+	const old_other = anchor[other];
 	anchor[part] = {x: to.x, y: to.y};
 	if (independent || old_other == null) {
 		return;
 	}
-	var length = Math.hypot(old_other.x - anchor.x, old_other.y - anchor.y);
-	var vx = anchor.x - to.x;
-	var vy = anchor.y - to.y;
-	var size = Math.hypot(vx, vy);
+	const length = Math.hypot(old_other.x - anchor.x, old_other.y - anchor.y);
+	const vx = anchor.x - to.x;
+	const vy = anchor.y - to.y;
+	const size = Math.hypot(vx, vy);
 	if (size > 0) {
 		anchor[other] = {x: anchor.x + vx / size * length, y: anchor.y + vy / size * length};
 	}

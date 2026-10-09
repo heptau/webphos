@@ -32,11 +32,11 @@ class Quick_select_class extends Base_mask_tool_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false || mouse.valid == false) {
 			return;
 		}
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
@@ -53,7 +53,7 @@ class Quick_select_class extends Base_mask_tool_class {
 			alertify.error(t('The image is too large for this tool.'));
 			return;
 		}
-		var current = this.Selection_mask.get();
+		const current = this.Selection_mask.get();
 		this.work = current
 			? {width: current.mask.width, height: current.mask.height, data: new Uint8ClampedArray(current.mask.data)}
 			: create_mask(this.image.width, this.image.height);
@@ -65,15 +65,15 @@ class Quick_select_class extends Base_mask_tool_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		config.need_render = true; //brush cursor
 		if (this.painting == false || mouse.is_drag == false) {
 			return;
 		}
-		var point = {x: mouse.x, y: mouse.y};
-		var radius = this.radius();
-		var steps = Math.floor(Math.hypot(point.x - this.last.x, point.y - this.last.y) / Math.max(2, radius / 2));
-		for (var s = 1; s <= steps; s++) {
+		const point = {x: mouse.x, y: mouse.y};
+		const radius = this.radius();
+		const steps = Math.floor(Math.hypot(point.x - this.last.x, point.y - this.last.y) / Math.max(2, radius / 2));
+		for (let s = 1; s <= steps; s++) {
 			this.grow({
 				x: this.last.x + (point.x - this.last.x) * s / steps,
 				y: this.last.y + (point.y - this.last.y) * s / steps,
@@ -91,10 +91,10 @@ class Quick_select_class extends Base_mask_tool_class {
 		}
 		this.painting = false;
 		this.Selection_mask.clear_preview();
-		var work = this.work;
+		const work = this.work;
 		this.work = null;
 		this.image = null;
-		var any = work.data.some((value) => value > 0);
+		const any = work.data.some((value) => value > 0);
 		if (any == false) {
 			this.Edit_selection.deselect();
 			return;
@@ -110,14 +110,14 @@ class Quick_select_class extends Base_mask_tool_class {
 	 * adds (or removes) the region of similar colors that is connected to the point, but only close to the brush
 	 */
 	grow(point) {
-		var radius = this.radius();
-		var tolerance = (parseFloat(this.getParams().tolerance) || 25) * 2.55;
-		var region = magic_wand_mask(this.image, point.x, point.y, tolerance, true);
-		var w = this.work.width;
-		var h = this.work.height;
-		var limit = radius * 1.5;
-		for (var y = Math.max(0, Math.floor(point.y - limit)); y <= Math.min(h - 1, Math.ceil(point.y + limit)); y++) {
-			for (var x = Math.max(0, Math.floor(point.x - limit)); x <= Math.min(w - 1, Math.ceil(point.x + limit)); x++) {
+		const radius = this.radius();
+		const tolerance = (parseFloat(this.getParams().tolerance) || 25) * 2.55;
+		const region = magic_wand_mask(this.image, point.x, point.y, tolerance, true);
+		const w = this.work.width;
+		const h = this.work.height;
+		const limit = radius * 1.5;
+		for (let y = Math.max(0, Math.floor(point.y - limit)); y <= Math.min(h - 1, Math.ceil(point.y + limit)); y++) {
+			for (let x = Math.max(0, Math.floor(point.x - limit)); x <= Math.min(w - 1, Math.ceil(point.x + limit)); x++) {
 				if (Math.hypot(x - point.x, y - point.y) > limit || region.data[y * w + x] == 0) {
 					continue;
 				}
@@ -127,7 +127,7 @@ class Quick_select_class extends Base_mask_tool_class {
 	}
 
 	update_preview(force) {
-		var now = Date.now();
+		const now = Date.now();
 		if (force !== true && now - this.last_preview < 60) {
 			return;
 		}
@@ -138,9 +138,9 @@ class Quick_select_class extends Base_mask_tool_class {
 
 	render_overlay(ctx) {
 		this.render_mask_overlay(ctx);
-		var mouse = config.mouse;
+		const mouse = config.mouse;
 		if (mouse && mouse.valid) {
-			var radius = this.radius();
+			const radius = this.radius();
 			ctx.save();
 			ctx.lineWidth = 2 / config.ZOOM;
 			ctx.strokeStyle = 'rgb(255, 255, 255)';

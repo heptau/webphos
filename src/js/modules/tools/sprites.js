@@ -17,21 +17,21 @@ class Tools_sprites_class {
 	}
 
 	sprites() {
-		var _this = this;
 
-		var settings = {
+		const settings = {
 			title: 'Sprites',
 			params: [
 				{name: "gap", title: "Gap:", value: "50", values: ["0", "10", "50", "100"]},
 			],
-			on_finish: function (params) {
-				_this.generate_sprites(params.gap);
+			on_finish: (params) => {
+				this.generate_sprites(params.gap);
 			},
 		};
 		this.POP.show(settings);
 	}
 
-	generate_sprites(gap, sprite_width) {
+	generate_sprites(gap) {
+		let i, layer;
 		gap = parseInt(gap);
 
 		if (config.layers.length == 1) {
@@ -39,17 +39,17 @@ class Tools_sprites_class {
 			return false;
 		}
 
-		var xx = 0;
-		var yy = 0;
-		var max_height = 0;
-		let actions = [];
+		let xx = 0;
+		let yy = 0;
+		let max_height = 0;
+		const actions = [];
 		let new_height = config.HEIGHT;
-		let new_width = config.WIDTH;
+		const new_width = config.WIDTH;
 
 		//collect trim info
-		var trim_details_array = [];
-		for (var i = 0; i < config.layers.length; i++) {
-			var layer = config.layers[i];
+		const trim_details_array = [];
+		for (i = 0; i < config.layers.length; i++) {
+			layer = config.layers[i];
 			if (layer.visible == false)
 				continue;
 
@@ -57,18 +57,18 @@ class Tools_sprites_class {
 		}
 
 		//move layers
-		for (var i = 0; i < config.layers.length; i++) {
-			var layer = config.layers[i];
+		for (i = 0; i < config.layers.length; i++) {
+			layer = config.layers[i];
 			if (layer.visible == false)
 				continue;
 
-			var trim_details = trim_details_array[layer.id];
+			const trim_details = trim_details_array[layer.id];
 			if (new_width == trim_details.left) {
 				//empty layer
 				continue;
 			}
-			var width = new_width - trim_details.left - trim_details.right;
-			var height = config.HEIGHT - trim_details.top - trim_details.bottom;
+			const width = new_width - trim_details.left - trim_details.right;
+			const height = config.HEIGHT - trim_details.top - trim_details.bottom;
 
 			if (xx + width > new_width) {
 				xx = 0;

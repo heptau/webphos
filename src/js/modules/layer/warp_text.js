@@ -12,14 +12,14 @@ import { t } from '../tools/translate.js';
 class Layer_warp_text_class {
 
 	warp_text() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'text') {
 			alertify.error(t('Warp Text works only on a text layer.'));
 			return;
 		}
-		var initial = warp_settings(layer.params);
-		var original = {warp_style: layer.params.warp_style, warp_bend: layer.params.warp_bend};
-		var restore = () => {
+		const initial = warp_settings(layer.params);
+		const original = {warp_style: layer.params.warp_style, warp_bend: layer.params.warp_bend};
+		const restore = () => {
 			layer.params.warp_style = original.warp_style;
 			layer.params.warp_bend = original.warp_bend;
 			config.need_render = true;
@@ -39,7 +39,7 @@ class Layer_warp_text_class {
 			},
 			on_finish: (params) => {
 				restore();
-				var next = Object.assign({}, layer.params, {warp_style: params.style, warp_bend: parseFloat(params.bend) || 0});
+				const next = Object.assign({}, layer.params, {warp_style: params.style, warp_bend: parseFloat(params.bend) || 0});
 				return app.State.do_action(
 					new app.Actions.Bundle_action('warp_text', 'Warp Text', [
 						new app.Actions.Update_layer_action(layer.id, {params: next}),

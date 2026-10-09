@@ -5,7 +5,7 @@
  */
 
 export function clamp_int(value, min, max, fallback) {
-	var number = parseInt(value);
+	let number = parseInt(value);
 	if (isNaN(number)) {
 		number = fallback;
 	}
@@ -27,7 +27,7 @@ export function safe_color(color) {
  * @returns {number[]}
  */
 export function parse_color(color) {
-	var hex = safe_color(color).slice(1);
+	let hex = safe_color(color).slice(1);
 	if (hex.length <= 4) {
 		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
 	}
@@ -45,12 +45,12 @@ export function parse_color(color) {
  * @returns {Uint8ClampedArray} width * height values, source pixels are 255
  */
 function distance_coverage(is_source, width, height, size) {
-	var INF = 0x3fffffff;
-	var distance = new Int32Array(width * height);
-	for (var i = 0; i < distance.length; i++) {
+	const INF = 0x3fffffff;
+	const distance = new Int32Array(width * height);
+	for (let i = 0; i < distance.length; i++) {
 		distance[i] = is_source(i) ? 0 : INF;
 	}
-	var x, y, p, best;
+	let x, y, p, best;
 	//forward pass
 	for (y = 0; y < height; y++) {
 		for (x = 0; x < width; x++) {
@@ -79,10 +79,10 @@ function distance_coverage(is_source, width, height, size) {
 			distance[p] = best;
 		}
 	}
-	var limit = size * 3;
-	var result = new Uint8ClampedArray(width * height);
-	for (var k = 0; k < result.length; k++) {
-		var d = distance[k];
+	const limit = size * 3;
+	const result = new Uint8ClampedArray(width * height);
+	for (let k = 0; k < result.length; k++) {
+		const d = distance[k];
 		result[k] = d <= limit ? 255 : (d < limit + 3 ? Math.round(255 * (limit + 3 - d) / 3) : 0);
 	}
 	return result;
@@ -99,7 +99,7 @@ function distance_coverage(is_source, width, height, size) {
  */
 export function outline_alpha(alpha, width, height, size) {
 	size = clamp_int(size, 1, 100, 1);
-	return distance_coverage(function (i) { return alpha[i] >= 64; }, width, height, size);
+	return distance_coverage((i) => { return alpha[i] >= 64; }, width, height, size);
 }
 
 /**
@@ -115,8 +115,8 @@ export function outline_alpha(alpha, width, height, size) {
  */
 export function inner_outline_alpha(alpha, width, height, size) {
 	size = clamp_int(size, 1, 100, 1);
-	var band = distance_coverage(function (i) { return alpha[i] < 64; }, width, height, size);
-	for (var i = 0; i < band.length; i++) {
+	const band = distance_coverage((i) => { return alpha[i] < 64; }, width, height, size);
+	for (let i = 0; i < band.length; i++) {
 		band[i] = alpha[i] >= 64 ? band[i] : 0;
 	}
 	return band;
@@ -134,9 +134,9 @@ export function glow_filter(size, strength, color) {
 	size = clamp_int(size, 1, 100, 10);
 	strength = clamp_int(strength, 1, 5, 2);
 	color = safe_color(color);
-	var parts = [];
-	for (var i = 0; i < strength; i++) {
-		parts.push('drop-shadow(0px 0px ' + size + 'px ' + color + ')');
+	const parts = [];
+	for (let i = 0; i < strength; i++) {
+		parts.push(`drop-shadow(0px 0px ${size}px ${color})`);
 	}
 	return parts.join(' ');
 }
@@ -151,12 +151,12 @@ export function glow_filter(size, strength, color) {
  * @returns {{x0: number, y0: number, x1: number, y1: number}}
  */
 export function gradient_line(width, height, angle) {
-	var radians = (parseFloat(angle) || 0) * Math.PI / 180;
-	var dx = Math.cos(radians);
-	var dy = Math.sin(radians);
-	var half = (Math.abs(width * dx) + Math.abs(height * dy)) / 2;
-	var cx = width / 2;
-	var cy = height / 2;
+	const radians = (parseFloat(angle) || 0) * Math.PI / 180;
+	const dx = Math.cos(radians);
+	const dy = Math.sin(radians);
+	const half = (Math.abs(width * dx) + Math.abs(height * dy)) / 2;
+	const cx = width / 2;
+	const cy = height / 2;
 	return {x0: cx - dx * half, y0: cy - dy * half, x1: cx + dx * half, y1: cy + dy * half};
 }
 
@@ -167,11 +167,11 @@ export function gradient_line(width, height, angle) {
  * @returns {{x: number, y: number, width: number, height: number}|null} null for an empty image
  */
 export function alpha_bounds(image) {
-	var w = image.width;
-	var h = image.height;
-	var min_x = w, min_y = h, max_x = -1, max_y = -1;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
+	const w = image.width;
+	const h = image.height;
+	let min_x = w, min_y = h, max_x = -1, max_y = -1;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
 			if (image.data[(y * w + x) * 4 + 3] > 0) {
 				if (x < min_x) min_x = x;
 				if (x > max_x) max_x = x;
@@ -183,7 +183,7 @@ export function alpha_bounds(image) {
 	return max_x < 0 ? null : {x: min_x, y: min_y, width: max_x - min_x + 1, height: max_y - min_y + 1};
 }
 
-export var BLEND_MODES = [
+export const BLEND_MODES = [
 	'normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn',
 	'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity',
 ];
@@ -209,9 +209,9 @@ export function parse_gradient_stops(text) {
 	if (typeof text !== 'string' || text.trim() === '') {
 		return null;
 	}
-	var stops = [];
-	text.split(',').slice(0, 20).forEach(function (part) {
-		var match = /^\s*(#[0-9a-f]{3}|#[0-9a-f]{6})\s+(\d{1,3}(?:\.\d+)?)\s*%?\s*$/i.exec(part);
+	const stops = [];
+	text.split(',').slice(0, 20).forEach((part) => {
+		const match = /^\s*(#[0-9a-f]{3}|#[0-9a-f]{6})\s+(\d{1,3}(?:\.\d+)?)\s*%?\s*$/i.exec(part);
 		if (match) {
 			stops.push({color: safe_color(match[1]), position: Math.min(1, Math.max(0, parseFloat(match[2]) / 100))});
 		}
@@ -219,5 +219,5 @@ export function parse_gradient_stops(text) {
 	if (stops.length < 2) {
 		return null;
 	}
-	return stops.sort(function (a, b) { return a.position - b.position; });
+	return stops.sort((a, b) => { return a.position - b.position; });
 }

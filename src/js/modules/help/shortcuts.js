@@ -10,7 +10,7 @@ class Help_shortcuts_class {
 
 	//shortcuts
 	shortcuts() {
-		var params = [
+		const params = [
 			{title: "F", value: 'Auto Adjust Colors'},
 			{title: "F3 / ⌘ + F", value: 'Search'},
 			{title: "Ctrl + C", value: 'Copy to Clipboard'},
@@ -39,7 +39,7 @@ class Help_shortcuts_class {
 			{title: "Z", value: 'Zoom'},
 		];
 		//Photoshop-like shortcuts
-		for (var i in shortcutsDefinition) {
+		for (const i in shortcutsDefinition) {
 			params.push({title: shortcutsDefinition[i].title, value: shortcutsDefinition[i].name});
 		}
 
@@ -52,20 +52,20 @@ class Help_shortcuts_class {
 			});
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Keyboard Shortcuts',
 			className: 'shortcuts',
-			params: params,
+			params,
 			on_load: (values, popup) => {
 				//search field above the list
-				var content = popup.el.querySelector('[data-id="params_content"]');
-				var search = document.createElement('input');
+				const content = popup.el.querySelector('[data-id="params_content"]');
+				const search = document.createElement('input');
 				search.type = 'search';
 				search.className = 'shortcuts_search';
 				search.setAttribute('aria-label', 'Search');
 				search.placeholder = '⌕';
 				search.addEventListener('input', () => {
-					var query = search.value.trim().toLowerCase();
+					const query = search.value.trim().toLowerCase();
 					content.querySelectorAll('tr').forEach((row) => {
 						row.style.display = query == '' || row.textContent.toLowerCase().indexOf(query) >= 0 ? '' : 'none';
 					});

@@ -15,12 +15,12 @@ const STORE_NAME = 'selections';
  * @returns {{values: Uint8Array, counts: Uint32Array}}
  */
 export function rle_encode(data) {
-	var values = [];
-	var counts = [];
-	var i = 0;
+	const values = [];
+	const counts = [];
+	let i = 0;
 	while (i < data.length) {
-		var value = data[i];
-		var run = 1;
+		const value = data[i];
+		let run = 1;
 		while (i + run < data.length && data[i + run] === value) {
 			run++;
 		}
@@ -41,9 +41,9 @@ export function rle_decode(values, counts, length) {
 	if (!values || !counts || values.length !== counts.length) {
 		return null;
 	}
-	var data = new Uint8ClampedArray(length);
-	var position = 0;
-	for (var i = 0; i < values.length; i++) {
+	const data = new Uint8ClampedArray(length);
+	let position = 0;
+	for (let i = 0; i < values.length; i++) {
 		if (position + counts[i] > length) {
 			return null;
 		}
@@ -61,8 +61,8 @@ export function rle_decode(values, counts, length) {
  * @returns {any}
  */
 export function encode_selection(name, mask) {
-	var record = {name: name, width: mask.width, height: mask.height, saved: new Date().toISOString()};
-	var rle = rle_encode(mask.data);
+	const record = {name, width: mask.width, height: mask.height, saved: new Date().toISOString()};
+	const rle = rle_encode(mask.data);
 	if (rle.values.length * 5 < mask.data.length) {
 		record.encoding = 'rle';
 		record.values = rle.values;
@@ -83,15 +83,15 @@ export function decode_selection(record) {
 	if (!record || typeof record.name !== 'string' || !(record.width > 0) || !(record.height > 0)) {
 		return null;
 	}
-	var length = record.width * record.height;
-	var data = null;
+	const length = record.width * record.height;
+	let data = null;
 	if (record.encoding === 'rle') {
 		data = rle_decode(record.values, record.counts, length);
 	}
 	else if (record.encoding === 'raw' && record.data && record.data.length === length) {
 		data = new Uint8ClampedArray(record.data);
 	}
-	return data ? {name: record.name, mask: {width: record.width, height: record.height, data: data}} : null;
+	return data ? {name: record.name, mask: {width: record.width, height: record.height, data}} : null;
 }
 
 function open_db() {
@@ -100,11 +100,11 @@ function open_db() {
 			reject(new Error('IndexedDB not supported'));
 			return;
 		}
-		var request = window.indexedDB.open(DB_NAME, DB_VERSION);
+		const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 		request.onerror = () => reject(new Error('Failed to open IndexedDB'));
 		request.onsuccess = () => resolve(request.result);
 		request.onupgradeneeded = (event) => {
-			var db = event.target.result;
+			const db = event.target.result;
 			if (!db.objectStoreNames.contains(STORE_NAME)) {
 				db.createObjectStore(STORE_NAME, {keyPath: 'name'});
 			}
@@ -114,8 +114,8 @@ function open_db() {
 
 function run(mode, action) {
 	return open_db().then((db) => new Promise((resolve, reject) => {
-		var transaction = db.transaction([STORE_NAME], mode);
-		var request = action(transaction.objectStore(STORE_NAME));
+		const transaction = db.transaction([STORE_NAME], mode);
+		const request = action(transaction.objectStore(STORE_NAME));
 		transaction.oncomplete = () => {
 			db.close();
 			resolve(request.result);
@@ -149,13 +149,13 @@ export async function save_selection(name, mask) {
  */
 export async function load_all_selections() {
 	try {
-		var records = await run('readonly', (store) => store.getAll());
+		const records = await run('readonly', (store) => store.getAll());
 		return (records || [])
 			.sort((a, b) => String(a.saved).localeCompare(String(b.saved)))
 			.map(decode_selection)
 			.filter(Boolean);
 	}
-	catch (error) {
+	catch {
 		return [];
 	}
 }

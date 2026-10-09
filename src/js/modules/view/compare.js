@@ -15,7 +15,7 @@ class View_compare_class {
 	}
 
 	async compare() {
-		var state = app.State;
+		const state = app.State;
 		if (this.saved_index === null) {
 			if (state.action_history_index == 0) {
 				alertify.warning(t('There are no changes to compare.'));
@@ -26,7 +26,7 @@ class View_compare_class {
 			alertify.message(t('Showing the original. Choose Compare with Original again to return.'), 4);
 		}
 		else {
-			var index = this.saved_index;
+			const index = this.saved_index;
 			this.saved_index = null;
 			//only when nothing was done in the meantime (a new action would have removed the redo steps)
 			if (index <= state.action_history.length) {

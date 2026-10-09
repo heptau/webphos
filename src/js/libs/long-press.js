@@ -39,20 +39,20 @@ export function moved_too_far(start, point, tolerance) {
  * @param {{delay?: number, tolerance?: number, allowed?: function(): boolean}} [options]
  */
 export function attach_long_press(element, on_press, options) {
-	var settings = options || {};
-	var timer = null;
-	var start = null;
-	var target = null;
-	var fired = false;
+	const settings = options || {};
+	let timer = null;
+	let start = null;
+	let target = null;
+	let fired = false;
 
-	var cancel = function () {
+	const cancel = function () {
 		if (timer !== null) {
 			clearTimeout(timer);
 			timer = null;
 		}
 	};
 
-	element.addEventListener('touchstart', function (event) {
+	element.addEventListener('touchstart', (event) => {
 		cancel();
 		fired = false;
 		if (event.touches.length != 1 || (settings.allowed && settings.allowed() === false)) {
@@ -60,21 +60,21 @@ export function attach_long_press(element, on_press, options) {
 		}
 		start = {x: event.touches[0].clientX, y: event.touches[0].clientY};
 		target = event.target;
-		timer = setTimeout(function () {
+		timer = setTimeout(() => {
 			timer = null;
 			fired = true;
-			on_press({clientX: start.x, clientY: start.y, target: target});
+			on_press({clientX: start.x, clientY: start.y, target});
 		}, settings.delay === undefined ? LONG_PRESS_DELAY : settings.delay);
 	}, {passive: true});
 
-	element.addEventListener('touchmove', function (event) {
+	element.addEventListener('touchmove', (event) => {
 		if (timer !== null && event.touches.length > 0
 			&& moved_too_far(start, {x: event.touches[0].clientX, y: event.touches[0].clientY}, settings.tolerance)) {
 			cancel();
 		}
 	}, {passive: true});
 
-	var end = function (event) {
+	const end = function (event) {
 		cancel();
 		if (fired) {
 			fired = false;

@@ -4,7 +4,7 @@ import { read_config, write_config, read_cookie_value } from "./cookie-config.js
 
 /**
  * various helpers
- * 
+ *
  * @author ViliusL
  */
 class Helper_class {
@@ -14,9 +14,9 @@ class Helper_class {
 	}
 
 	get_url_parameters() {
-		var queryDict = {};
+		const queryDict = {};
 		location.search.substr(1).split("&").forEach(
-			function (item) {
+			(item) => {
 				queryDict[item.split("=")[0]] = item.split("=")[1];
 			}
 		);
@@ -33,17 +33,17 @@ class Helper_class {
 
 	/**
 	 * calculates time between two calls.
-	 * 
+	 *
 	 * @param {string} name Optional
 	 * @param {boolean} echo Default is true.
 	 */
 	timer_end(name, echo) {
-		var text = (Math.round(Date.now() - this.time) / 1000) + " s";
+		let text = `${Math.round(Date.now() - this.time) / 1000  } s`;
 		if (echo != undefined && echo === false)
 			return text;
 		if (name != undefined)
-			text += ' (' + name + ')';
-		console.log(text);
+			text += ` (${name})`;
+		console.warn(text);
 	}
 
 	//format time
@@ -53,25 +53,25 @@ class Helper_class {
 
 	/**
 	 * Find the position of the first occurrence of string or false.
-	 * 
+	 *
 	 * @param {string} haystack
 	 * @param {string} needle
 	 * @param {int} offset
 	 * @returns {Boolean|String}
 	 */
 	strpos(haystack, needle, offset = 0) {
-		var i = (haystack + '').indexOf(needle, (offset || 0));
+		const i = (`${haystack  }`).indexOf(needle, (offset || 0));
 		return i === -1 ? false : i;
 	}
 
 	/**
 	 * return cookie value from global cookie
-	 * 
+	 *
 	 * @param {string} name
 	 * @returns {object|string}
 	 */
 	getCookie(name) {
-		var cookie = read_config();
+		const cookie = read_config();
 
 		if (cookie[name] != undefined)
 			return cookie[name];
@@ -81,22 +81,22 @@ class Helper_class {
 
 	/**
 	 * sets cookie value to global cookie
-	 * 
+	 *
 	 * @param {string} name
 	 * @param {string|number} value
 	 */
 	setCookie(name, value) {
-		var cookie = read_config();
+		const cookie = read_config();
 		cookie[name] = value;
 		write_config(cookie);
 	}
 
 	_getCookie(NameOfCookie) {
-		var value = read_cookie_value(document.cookie, NameOfCookie) || '';
+		const value = read_cookie_value(document.cookie, NameOfCookie) || '';
 		try {
 			return decodeURIComponent(value);
 		}
-		catch (error) {
+		catch {
 			return value;
 		}
 	}
@@ -104,10 +104,9 @@ class Helper_class {
 	_setCookie(NameOfCookie, value, expire_days) {
 		if (expire_days == undefined)
 			expire_days = 180;
-		var ExpireDate = new Date();
+		const ExpireDate = new Date();
 		ExpireDate.setTime(ExpireDate.getTime() + (expire_days * 24 * 3600 * 1000));
-		document.cookie = NameOfCookie + "=" + encodeURIComponent(value) +
-			((expire_days == null) ? "" : "; expires=" + ExpireDate.toUTCString()) + "; SameSite=Lax";
+		document.cookie = `${NameOfCookie  }=${encodeURIComponent(value)}${(expire_days == null) ? "" : `; expires=${  ExpireDate.toUTCString()}`  }; SameSite=Lax`;
 	}
 
 	/**
@@ -116,7 +115,7 @@ class Helper_class {
 	 * @param {string} name
 	 */
 	delCookie(name) {
-		var cookie = read_config();
+		const cookie = read_config();
 		if (cookie[name] !== undefined) {
 			delete cookie[name];
 			write_config(cookie);
@@ -133,7 +132,7 @@ class Helper_class {
 
 	hex(x) {
 		x = parseInt(x);
-		return ("0" + x.toString(16)).slice(-2);
+		return (`0${  x.toString(16)}`).slice(-2);
 	}
 
 	hex_set_hsl(hex, newHsl) {
@@ -154,22 +153,22 @@ class Helper_class {
 	rgbToHex(r, g, b) {
 		if (r > 255 || g > 255 || b > 255)
 			throw "Invalid color component";
-		var tmp = ((r << 16) | (g << 8) | b).toString(16);
+		const tmp = ((r << 16) | (g << 8) | b).toString(16);
 
-		return "#" + ("000000" + tmp).slice(-6);
+		return `#${  (`000000${  tmp}`).slice(-6)}`;
 	}
 
 	hexToRgb(hex) {
 		if (hex[0] == "#")
 			hex = hex.substr(1);
 		if (hex.length == 3) {
-			var temp = hex;
+			let temp = hex;
 			hex = '';
 			temp = /^([a-f0-9])([a-f0-9])([a-f0-9])$/i.exec(temp).slice(1);
-			for (var i = 0; i < 3; i++)
+			for (let i = 0; i < 3; i++)
 				hex += temp[i] + temp[i];
 		}
-		var triplets = /^([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})/i.exec(hex).slice(1);
+		const triplets = /^([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})/i.exec(hex).slice(1);
 		return {
 			r: parseInt(triplets[0], 16),
 			g: parseInt(triplets[1], 16),
@@ -203,10 +202,10 @@ class Helper_class {
 	}
 
 	/**
-	 * Converts an HSL color value to RGB. 
+	 * Converts an HSL color value to RGB.
 	 * Assumes h, s, and l are contained in the set [0, 1]
 	 * Returns r, g, and b in the set [0, 255].
-	 * 
+	 *
 	 * Credit: https://gist.github.com/mjackson/5311256
 	 *
 	 * @param {number} h The hue
@@ -215,14 +214,14 @@ class Helper_class {
 	 * @return {Object} The RGB representation, r,g,b as keys.
 	 */
 	hslToRgb(h, s, l) {
-		var r, g, b;
+		let r, g, b;
 
 		if (s == 0) {
 			r = g = b = l; // achromatic
 		}
 		else {
-			var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-			var p = 2 * l - q;
+			const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+			const p = 2 * l - q;
 			r = this.hueToRgb(p, q, h + 1 / 3);
 			g = this.hueToRgb(p, q, h);
 			b = this.hueToRgb(p, q, h - 1 / 3);
@@ -232,11 +231,11 @@ class Helper_class {
 	}
 
 	/**
-	 * Converts an RGB color value to HSL. Values are in range 0-1. 
+	 * Converts an RGB color value to HSL. Values are in range 0-1.
 	 * But real ranges are 0-360, 0-100%, 0-100%
-	 * 
+	 *
 	 * Credit: https://gist.github.com/mjackson/5311256
-	 * 
+	 *
 	 * @param {number} r red color value
 	 * @param {number} g green color value
 	 * @param {number} b blue color value
@@ -246,14 +245,15 @@ class Helper_class {
 		r /= 255;
 		g /= 255;
 		b /= 255;
-		var max = Math.max(r, g, b), min = Math.min(r, g, b);
-		var h, s, l = (max + min) / 2;
+		const max = Math.max(r, g, b), min = Math.min(r, g, b);
+		let h, s;
+		const l = (max + min) / 2;
 
 		if (max == min) {
 			h = s = 0; // achromatic
 		}
 		else {
-			var d = max - min;
+			const d = max - min;
 			s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
 			switch (max) {
 				case r:
@@ -268,7 +268,7 @@ class Helper_class {
 			}
 			h /= 6;
 		}
-		
+
 		return { h, s, l };
 	}
 
@@ -276,7 +276,7 @@ class Helper_class {
 	 * Converts an RGB color value to HSV.
 	 * Assumes r, g, and b are contained in the set [0, 255] and
 	 * returns h, s, and v in the set [0, 1].
-	 * 
+	 *
 	 * Credit: https://gist.github.com/mjackson/5311256
 	 *
 	 * @param Number r The red color value
@@ -285,11 +285,14 @@ class Helper_class {
 	 * @return {object} The HSL representation
 	 */
 	rgbToHsv(r, g, b) {
-		r /= 255, g /= 255, b /= 255;
-		var max = Math.max(r, g, b), min = Math.min(r, g, b);
-		var h, s, v = max;
-		var d = max - min;
-		s = max == 0 ? 0 : d / max;
+		r /= 255;
+		g /= 255;
+		b /= 255;
+		const max = Math.max(r, g, b), min = Math.min(r, g, b);
+		let h;
+		const v = max;
+		const d = max - min;
+		const s = max == 0 ? 0 : d / max;
 		if (max == min) {
 			h = 0; // achromatic
 		} else {
@@ -316,23 +319,23 @@ class Helper_class {
 	 * @return {object} The RGB representation
 	 */
 	hsvToRgb(h, s, v) {
-		var r, g, b;
-	
-		var i = Math.floor(h * 6);
-		var f = h * 6 - i;
-		var p = v * (1 - s);
-		var q = v * (1 - f * s);
-		var t = v * (1 - (1 - f) * s);
-	
+		let r, g, b;
+
+		const i = Math.floor(h * 6);
+		const f = h * 6 - i;
+		const p = v * (1 - s);
+		const q = v * (1 - f * s);
+		const t = v * (1 - (1 - f) * s);
+
 		switch (i % 6) {
-		case 0: r = v, g = t, b = p; break;
-		case 1: r = q, g = v, b = p; break;
-		case 2: r = p, g = v, b = t; break;
-		case 3: r = p, g = q, b = v; break;
-		case 4: r = t, g = p, b = v; break;
-		case 5: r = v, g = p, b = q; break;
+		case 0: r = v; g = t; b = p; break;
+		case 1: r = q; g = v; b = p; break;
+		case 2: r = p; g = v; b = t; break;
+		case 3: r = p; g = q; b = v; break;
+		case 4: r = t; g = p; b = v; break;
+		case 5: r = v; g = p; b = q; break;
 		}
-	
+
 		return { r: r * 255, g: g * 255, b: b * 255 };
 	}
 
@@ -349,7 +352,7 @@ class Helper_class {
 	hsvToHsl(h, s, v) {
 		return {
 			h,
-			s: s * v / Math.max(0.00000001, ((h = (2 - s) * v) < 1 ? h : 2 - h)), 
+			s: s * v / Math.max(0.00000001, ((h = (2 - s) * v) < 1 ? h : 2 - h)),
 			l: h / 2
 		};
 	}
@@ -389,38 +392,38 @@ class Helper_class {
 		if (color.length > 6) {
 			color = color.substring(1, color.length);
 		}
-		var rgb = parseInt(color, 16);
-		var r = Math.abs(((rgb >> 16) & 0xFF) + v);
+		const rgb = parseInt(color, 16);
+		let r = Math.abs(((rgb >> 16) & 0xFF) + v);
 		if (r > 255)
 			r = r - (r - 255);
-		var g = Math.abs(((rgb >> 8) & 0xFF) + v);
+		let g = Math.abs(((rgb >> 8) & 0xFF) + v);
 		if (g > 255)
 			g = g - (g - 255);
-		var b = Math.abs((rgb & 0xFF) + v);
+		let b = Math.abs((rgb & 0xFF) + v);
 		if (b > 255)
 			b = b - (b - 255);
 		r = Number(r < 0 || isNaN(r)) ? 0 : ((r > 255) ? 255 : r).toString(16);
 		if (r.length == 1)
-			r = '0' + r;
+			r = `0${  r}`;
 		g = Number(g < 0 || isNaN(g)) ? 0 : ((g > 255) ? 255 : g).toString(16);
 		if (g.length == 1)
-			g = '0' + g;
+			g = `0${  g}`;
 		b = Number(b < 0 || isNaN(b)) ? 0 : ((b > 255) ? 255 : b).toString(16);
 		if (b.length == 1)
-			b = '0' + b;
-		return "#" + r + g + b;
+			b = `0${  b}`;
+		return `#${r}${g  }${b}`;
 	}
 
 	/**
 	 * JavaScript Number Formatter, author: KPL, KHL
-	 * 
+	 *
 	 * @param {int} n
 	 * @param {int} maximumFractionDigits
 	 * @returns {string}
 	 */
 	number_format(n, maximumFractionDigits) {
-		let x = parseFloat(n);
-		var number = x.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: maximumFractionDigits});
+		const x = parseFloat(n);
+		let number = x.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits});
 		number = number.replaceAll(',', '');
 		number = parseFloat(number);
 
@@ -428,7 +431,7 @@ class Helper_class {
 	}
 
 	check_input_color_support() {
-		var i = document.createElement("input");
+		const i = document.createElement("input");
 		i.setAttribute("type", "color");
 		return i.type !== "text";
 	}
@@ -437,23 +440,23 @@ class Helper_class {
 		contentType = contentType || '';
 		sliceSize = sliceSize || 512;
 
-		var byteCharacters = atob(b64Data);
-		var byteArrays = [];
+		const byteCharacters = atob(b64Data);
+		const byteArrays = [];
 
-		for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-			var slice = byteCharacters.slice(offset, offset + sliceSize);
+		for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+			const slice = byteCharacters.slice(offset, offset + sliceSize);
 
-			var byteNumbers = new Array(slice.length);
-			for (var i = 0; i < slice.length; i++) {
+			const byteNumbers = new Array(slice.length);
+			for (let i = 0; i < slice.length; i++) {
 				byteNumbers[i] = slice.charCodeAt(i);
 			}
 
-			var byteArray = new Uint8Array(byteNumbers);
+			const byteArray = new Uint8Array(byteNumbers);
 
 			byteArrays.push(byteArray);
 		}
 
-		var blob = new Blob(byteArrays, {type: contentType});
+		const blob = new Blob(byteArrays, {type: contentType});
 		return blob;
 	}
 
@@ -476,7 +479,7 @@ class Helper_class {
 
 	/**
 	 * change canvas size without loosing data
-	 * 
+	 *
 	 * @param {canvas} canvas
 	 * @param {int} width
 	 * @param {int} height
@@ -490,8 +493,8 @@ class Helper_class {
 			offset_y = 0;
 
 		//copy data;
-		var tmp = document.createElement('canvas');
-		var ctx = tmp.getContext("2d");
+		const tmp = document.createElement('canvas');
+		const ctx = tmp.getContext("2d");
 		tmp.width = canvas.width;
 		tmp.height = canvas.height;
 		ctx.drawImage(canvas, 0, 0);
@@ -505,17 +508,17 @@ class Helper_class {
 
 	image_round(ctx_main, mouse_x, mouse_y, size_w, size_h, img_data, anti_aliasing = false) {
 		//create tmp canvas
-		var canvasTmp = document.createElement('canvas');
+		const canvasTmp = document.createElement('canvas');
 		canvasTmp.width = size_w;
 		canvasTmp.height = size_h;
 
-		var size_half_w = Math.round(size_w / 2);
-		var size_half_h = Math.round(size_h / 2);
-		var ctx = canvasTmp.getContext("2d");
-		var width = canvasTmp.width;
-		var height = canvasTmp.height;
-		var xx = mouse_x - size_half_w;
-		var yy = mouse_y - size_half_h;
+		const size_half_w = Math.round(size_w / 2);
+		const size_half_h = Math.round(size_h / 2);
+		const ctx = canvasTmp.getContext("2d");
+		const width = canvasTmp.width;
+		const height = canvasTmp.height;
+		const xx = mouse_x - size_half_w;
+		const yy = mouse_y - size_half_h;
 
 		ctx.clearRect(0, 0, width, height);
 		ctx.save();
@@ -524,7 +527,7 @@ class Helper_class {
 		ctx.globalCompositeOperation = 'destination-in';
 
 		//create form
-		var gradient = ctx.createRadialGradient(size_half_w, size_half_h, 0, size_half_w, size_half_h, size_half_w);
+		const gradient = ctx.createRadialGradient(size_half_w, size_half_h, 0, size_half_w, size_half_h, size_half_w);
 		gradient.addColorStop(0, '#ffffff');
 		if (anti_aliasing == true)
 			gradient.addColorStop(0.8, '#ffffff');
@@ -541,7 +544,7 @@ class Helper_class {
 		ctx.restore();
 		ctx.clearRect(0, 0, width, height);
 	}
-	
+
 	is_input(element) {
 		if (!element || typeof element.closest != 'function') {
 			return false;
@@ -566,20 +569,20 @@ class Helper_class {
 
 	// Credit: https://stackoverflow.com/questions/27078285/simple-throttle-in-js
 	throttle(func, wait, options) {
-		var context, args, result;
-		var timeout = null;
-		var previous = 0;
+		let context, args, result;
+		let timeout = null;
+		let previous = 0;
 		if (!options) options = {};
-		var later = function() {
+		const later = function() {
 			previous = options.leading === false ? 0 : Date.now();
 			timeout = null;
 			result = func.apply(context, args);
 			if (!timeout) context = args = null;
 		};
 		return function() {
-			var now = Date.now();
+			const now = Date.now();
 			if (!previous && options.leading === false) previous = now;
-			var remaining = wait - (now - previous);
+			const remaining = wait - (now - previous);
 			context = this;
 			args = arguments;
 			if (remaining <= 0 || remaining > wait) {
@@ -634,9 +637,9 @@ class Helper_class {
 	 * @returns {Path2D}
 	 */
 	draw_control_point(ctx, x, y) {
-		var dx = 0;
-		var dy = 0;
-		var block_size = 12 / config.ZOOM;
+		const dx = 0;
+		const dy = 0;
+		const block_size = 12 / config.ZOOM;
 		const wholeLineWidth = 2 / config.ZOOM;
 
 		ctx.strokeStyle = "#000000";
@@ -669,7 +672,7 @@ class Helper_class {
 			//no conversion
 			return parseInt(data);
 		}
-		var value = from_pixels(data, type, resolution);
+		const value = from_pixels(data, type, resolution);
 		return isNaN(value) ? undefined : this.number_format(value, 3);
 	}
 
@@ -687,7 +690,7 @@ class Helper_class {
 			//no conversion
 			return parseInt(data);
 		}
-		var value = to_pixels(data, type, resolution);
+		const value = to_pixels(data, type, resolution);
 		return isNaN(value) ? undefined : value;
 	}
 

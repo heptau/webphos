@@ -31,14 +31,14 @@ const SHIFT_FLEXIBLE = ['=', '-'];
  * @returns {string} the key in its canonical form, '' when it is not a key
  */
 function normalize_key(key) {
-	var upper = String(key).trim().toUpperCase();
+	const upper = String(key).trim().toUpperCase();
 	if (upper === 'PLUS') {
 		return '=';
 	}
 	if (/^[A-Z0-9]$/.test(upper) || /^F([1-9]|1[0-2])$/.test(upper) || NAMED_KEYS.indexOf(upper) >= 0 || PUNCTUATION.indexOf(upper) >= 0) {
 		return upper;
 	}
-	var aliases = {DEL: 'DELETE', ESC: 'ESCAPE', RETURN: 'ENTER', UP: 'ARROWUP', DOWN: 'ARROWDOWN', LEFT: 'ARROWLEFT', RIGHT: 'ARROWRIGHT', PGUP: 'PAGEUP', PGDN: 'PAGEDOWN', ' ': 'SPACE'};
+	const aliases = {DEL: 'DELETE', ESC: 'ESCAPE', RETURN: 'ENTER', UP: 'ARROWUP', DOWN: 'ARROWDOWN', LEFT: 'ARROWLEFT', RIGHT: 'ARROWRIGHT', PGUP: 'PAGEUP', PGDN: 'PAGEDOWN', ' ': 'SPACE'};
 	return aliases[upper] || '';
 }
 
@@ -50,16 +50,16 @@ export function parse_spec(spec) {
 	if (typeof spec !== 'string' || spec.trim() === '') {
 		return null;
 	}
-	var text = spec.trim();
+	const text = spec.trim();
 	//a key that is a plus sign: "Mod++" or "Mod+Plus"
-	var parts = text.endsWith('++') ? text.slice(0, -2).split('+').concat(['PLUS']) : text.split('+');
-	var key = normalize_key(parts.pop());
+	const parts = text.endsWith('++') ? text.slice(0, -2).split('+').concat(['PLUS']) : text.split('+');
+	const key = normalize_key(parts.pop());
 	if (key === '') {
 		return null;
 	}
-	var combo = {mod: false, shift: false, alt: false, key: key};
-	for (var i = 0; i < parts.length; i++) {
-		var name = parts[i].trim().toLowerCase();
+	const combo = {mod: false, shift: false, alt: false, key};
+	for (let i = 0; i < parts.length; i++) {
+		const name = parts[i].trim().toLowerCase();
 		if (name === 'mod' || name === 'ctrl' || name === 'cmd' || name === 'meta') {
 			combo.mod = true;
 		}
@@ -81,7 +81,7 @@ export function parse_spec(spec) {
  * @returns {string} the spec in the form that is stored ("Mod+Alt+Shift+Key"), '' when it is invalid
  */
 export function normalize_spec(spec) {
-	var combo = parse_spec(spec);
+	const combo = parse_spec(spec);
 	if (combo === null) {
 		return '';
 	}
@@ -111,7 +111,7 @@ const MENU_KEY_NAMES = {DELETE: 'Del', BACKSPACE: 'Backspace', ESCAPE: 'Esc', EN
  * @returns {string} '' for an empty spec
  */
 export function menu_text(spec) {
-	var combo = parse_spec(spec);
+	const combo = parse_spec(spec);
 	if (combo === null) {
 		return '';
 	}
@@ -127,15 +127,15 @@ export function menu_text(spec) {
  * @returns {string} canonical key name, '' when unknown
  */
 export function event_key(event) {
-	var key = typeof event.key === 'string' ? event.key : '';
-	var code = typeof event.code === 'string' ? event.code : '';
+	const key = typeof event.key === 'string' ? event.key : '';
+	const code = typeof event.code === 'string' ? event.code : '';
 	if (/^[a-zA-Z]$/.test(key)) {
 		return key.toUpperCase();
 	}
 	if (/^[0-9]$/.test(key) && !/^Numpad/.test(code)) {
 		return key;
 	}
-	var match = /^Key([A-Z])$/.exec(code) || /^(?:Digit|Numpad)(\d)$/.exec(code);
+	const match = /^Key([A-Z])$/.exec(code) || /^(?:Digit|Numpad)(\d)$/.exec(code);
 	if (match) {
 		return match[1];
 	}
@@ -173,11 +173,11 @@ export function matches(event, combo) {
  * @returns {string} '' when only a modifier key was pressed or the key is not usable
  */
 export function event_spec(event) {
-	var key = event_key(event);
+	const key = event_key(event);
 	if (key === '' || ['SHIFT', 'CONTROL', 'ALT', 'META', 'ALTGRAPH', 'OS'].indexOf(key) >= 0) {
 		return '';
 	}
-	var combo = {mod: Boolean(event.ctrlKey || event.metaKey), shift: Boolean(event.shiftKey), alt: Boolean(event.altKey), key: key};
+	const combo = {mod: Boolean(event.ctrlKey || event.metaKey), shift: Boolean(event.shiftKey), alt: Boolean(event.altKey), key};
 	//shift is not told apart for + and -, so it is not part of the spec
 	if (SHIFT_FLEXIBLE.indexOf(key) >= 0) {
 		combo.shift = false;
@@ -192,7 +192,7 @@ export function event_spec(event) {
  * @returns {boolean}
  */
 export function has_modifier_or_function_key(spec) {
-	var combo = parse_spec(spec);
+	const combo = parse_spec(spec);
 	return combo !== null && (combo.mod || combo.alt || /^F\d+$/.test(combo.key));
 }
 
@@ -205,8 +205,8 @@ export function has_modifier_or_function_key(spec) {
  */
 export function effective_specs(registry, overrides) {
 	/** @type {Object<string, string>} */
-	var result = {};
-	registry.forEach(function (entry) {
+	const result = {};
+	registry.forEach((entry) => {
 		result[entry.id] = overrides && Object.prototype.hasOwnProperty.call(overrides, entry.id) ? overrides[entry.id] : entry.spec;
 	});
 	return result;
@@ -221,15 +221,15 @@ export function effective_specs(registry, overrides) {
  */
 export function clean_overrides(stored, registry) {
 	/** @type {Object<string, string>} */
-	var result = {};
+	const result = {};
 	if (stored === null || typeof stored !== 'object' || Array.isArray(stored)) {
 		return result;
 	}
-	registry.forEach(function (entry) {
+	registry.forEach((entry) => {
 		if (entry.fixed || !Object.prototype.hasOwnProperty.call(stored, entry.id)) {
 			return;
 		}
-		var value = stored[entry.id];
+		const value = stored[entry.id];
 		if (value === '') {
 			result[entry.id] = '';
 		}
@@ -249,8 +249,8 @@ export function clean_overrides(stored, registry) {
  */
 export function overrides_from(registry, specs) {
 	/** @type {Object<string, string>} */
-	var result = {};
-	registry.forEach(function (entry) {
+	const result = {};
+	registry.forEach((entry) => {
 		if (!entry.fixed && specs[entry.id] !== undefined && normalize_spec(specs[entry.id]) !== normalize_spec(entry.spec)) {
 			result[entry.id] = normalize_spec(specs[entry.id]);
 		}
@@ -268,22 +268,22 @@ export function overrides_from(registry, specs) {
  * @returns {Shortcut_entry|null}
  */
 export function find_conflict(registry, specs, id, spec) {
-	var wanted = parse_spec(spec);
+	const wanted = parse_spec(spec);
 	if (wanted === null) {
 		return null;
 	}
-	var wanted_text = normalize_spec(spec);
-	for (var i = 0; i < registry.length; i++) {
-		var entry = registry[i];
+	const wanted_text = normalize_spec(spec);
+	for (let i = 0; i < registry.length; i++) {
+		const entry = registry[i];
 		if (entry.id === id) {
 			continue;
 		}
-		var used = normalize_spec(entry.fixed ? entry.spec : (specs[entry.id] !== undefined ? specs[entry.id] : entry.spec));
+		const used = normalize_spec(entry.fixed ? entry.spec : (specs[entry.id] !== undefined ? specs[entry.id] : entry.spec));
 		if (used === wanted_text) {
 			return entry;
 		}
 		//+ and - ignore Shift, so Shift+= is the same shortcut as =
-		var other = parse_spec(used);
+		const other = parse_spec(used);
 		if (other !== null && other.key === wanted.key && SHIFT_FLEXIBLE.indexOf(wanted.key) >= 0 && other.mod === wanted.mod && other.alt === wanted.alt) {
 			return entry;
 		}
@@ -300,8 +300,8 @@ export function find_conflict(registry, specs, id, spec) {
  * @returns {Shortcut_entry|null}
  */
 export function find_entry(registry, specs, event) {
-	for (var i = 0; i < registry.length; i++) {
-		var entry = registry[i];
+	for (let i = 0; i < registry.length; i++) {
+		const entry = registry[i];
 		if (entry.fixed) {
 			continue;
 		}
@@ -318,7 +318,7 @@ export function find_entry(registry, specs, event) {
  * @returns {string} id of a command of the menu
  */
 export function command_id(target, parameter) {
-	return target + (parameter === undefined || parameter === null ? '' : '|' + JSON.stringify(parameter));
+	return target + (parameter === undefined || parameter === null ? '' : `|${  JSON.stringify(parameter)}`);
 }
 
 /**
@@ -334,25 +334,25 @@ export function command_id(target, parameter) {
  */
 export function build_registry(menu, explicit, extras, replaced) {
 	/** @type {Shortcut_entry[]} */
-	var entries = [];
-	var seen = {};
-	var add = function (entry) {
+	const entries = [];
+	const seen = {};
+	const add = function (entry) {
 		if (seen[entry.id]) {
 			return;
 		}
 		seen[entry.id] = true;
 		entries.push(entry);
 	};
-	var group_of = {};
-	var names = {};
-	var walk = function (items, group) {
-		items.forEach(function (item) {
+	const group_of = {};
+	const names = {};
+	const walk = function (items, group) {
+		items.forEach((item) => {
 			if (item.divider || !item.name) {
 				return;
 			}
-			var top = group || item.name;
+			const top = group || item.name;
 			if (item.target) {
-				var id = command_id(item.target, item.parameter);
+				const id = command_id(item.target, item.parameter);
 				if (!group_of[id]) {
 					group_of[id] = top;
 					names[id] = item.name;
@@ -365,25 +365,25 @@ export function build_registry(menu, explicit, extras, replaced) {
 	};
 	walk(menu, null);
 
-	explicit.forEach(function (definition) {
-		var key = Array.isArray(definition.key) ? definition.key[0] : definition.key;
-		var combo = (definition.ctrl ? 'Mod+' : '') + (definition.alt ? 'Alt+' : '') + (definition.shift === true ? 'Shift+' : '') + (key === '=' || key === '+' ? 'PLUS' : key);
-		var id = command_id(definition.target, definition.parameter);
+	explicit.forEach((definition) => {
+		const key = Array.isArray(definition.key) ? definition.key[0] : definition.key;
+		const combo = (definition.ctrl ? 'Mod+' : '') + (definition.alt ? 'Alt+' : '') + (definition.shift === true ? 'Shift+' : '') + (key === '=' || key === '+' ? 'PLUS' : key);
+		const id = command_id(definition.target, definition.parameter);
 		add({
-			id: id, group: definition.group || group_of[id] || 'Other', name: names[id] || definition.name, spec: normalize_spec(combo),
+			id, group: definition.group || group_of[id] || 'Other', name: names[id] || definition.name, spec: normalize_spec(combo),
 			target: definition.target, parameter: definition.parameter,
 		});
 	});
 
-	var collect = function (items) {
-		items.forEach(function (item) {
+	const collect = function (items) {
+		items.forEach((item) => {
 			if (item.divider) {
 				return;
 			}
 			if (item.target && item.shortcut) {
-				var id = command_id(item.target, item.parameter);
-				var spec = Object.prototype.hasOwnProperty.call(replaced, item.shortcut) ? replaced[item.shortcut] : parse_menu_shortcut(item.shortcut);
-				add({id: id, group: group_of[id] || 'Other', name: item.name, spec: spec, target: item.target, parameter: item.parameter});
+				const id = command_id(item.target, item.parameter);
+				const spec = Object.prototype.hasOwnProperty.call(replaced, item.shortcut) ? replaced[item.shortcut] : parse_menu_shortcut(item.shortcut);
+				add({id, group: group_of[id] || 'Other', name: item.name, spec, target: item.target, parameter: item.parameter});
 			}
 			if (item.children) {
 				collect(item.children);
@@ -392,13 +392,13 @@ export function build_registry(menu, explicit, extras, replaced) {
 	};
 	collect(menu);
 
-	extras.forEach(function (entry) {
+	extras.forEach((entry) => {
 		add(Object.assign({}, entry, {spec: entry.spec === '' ? '' : normalize_spec(entry.spec)}));
 	});
 	return entries;
 }
 
-export const EXPORT_FORMAT = 'webphos-shortcuts';
+export const EXPORT_FORMAT = 'lumifex-shortcuts';
 export const MAX_IMPORT_SIZE = 200 * 1000;
 
 /**
@@ -424,33 +424,33 @@ export function import_shortcuts(registry, text) {
 	if (typeof text !== 'string' || text.length > MAX_IMPORT_SIZE) {
 		return {ok: false, error: 'The file is too big.'};
 	}
-	var data;
+	let data;
 	try {
 		data = JSON.parse(text);
 	}
-	catch (error) {
+	catch {
 		return {ok: false, error: 'The file is not a list of shortcuts.'};
 	}
 	if (data === null || typeof data !== 'object' || data.format !== EXPORT_FORMAT || data.version !== 1
 		|| data.shortcuts === null || typeof data.shortcuts !== 'object' || Array.isArray(data.shortcuts)) {
 		return {ok: false, error: 'The file is not a list of shortcuts.'};
 	}
-	var wanted = clean_overrides(data.shortcuts, registry);
-	var asked = Object.keys(data.shortcuts).filter(function (id) {
-		return registry.some(function (entry) { return entry.id === id && !entry.fixed; });
+	const wanted = clean_overrides(data.shortcuts, registry);
+	const asked = Object.keys(data.shortcuts).filter((id) => {
+		return registry.some((entry) => { return entry.id === id && !entry.fixed; });
 	}).length;
 	//everything starts as the default, the file changes what it mentions
-	var specs = effective_specs(registry, {});
-	var applied = 0;
-	Object.keys(wanted).forEach(function (id) {
+	const specs = effective_specs(registry, {});
+	let applied = 0;
+	Object.keys(wanted).forEach((id) => {
 		//a command that is moved gives its place up first, so the shortcut can be taken over by another one in the file
-		var spec = wanted[id];
+		const spec = wanted[id];
 		if (spec === '' || find_conflict(registry, specs, id, spec) === null) {
 			specs[id] = spec;
 			applied++;
 		}
 	});
-	return {ok: true, specs: specs, applied: applied, skipped: asked - applied};
+	return {ok: true, specs, applied, skipped: asked - applied};
 }
 
 /**

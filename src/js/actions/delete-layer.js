@@ -25,7 +25,7 @@ export class Delete_layer_action extends Base_action {
 		const force = this.force;
 
 		// Determine if there is a layer to delete, abort if not
-		for (var i in config.layers) {
+		for (const i in config.layers) {
 			if (config.layers[i].id == id) {
 				this.delete_index = i;
 			}
@@ -53,7 +53,7 @@ export class Delete_layer_action extends Base_action {
 				const select_action = new app.Actions.Select_next_layer_action(id);
 				await select_action.do();
 				this.select_layer_action = select_action;
-			} catch (error) {
+			} catch {
 				const select_action = new app.Actions.Select_previous_layer_action(id);
 				await select_action.do();
 				this.select_layer_action = select_action;

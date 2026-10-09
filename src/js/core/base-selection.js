@@ -7,8 +7,8 @@ import { is_ratio_modifier, keeps_ratio, constrain_ratio } from './../libs/resiz
 import { draw_rect_ants, ant_phase } from './../libs/marching-ants.js';
 import config from './../config.js';
 
-var instance = null;
-var settings_all = [];
+let instance = null;
+const settings_all = [];
 
 const handle_size = 12;
 
@@ -20,7 +20,7 @@ const DRAG_TYPE_RIGHT = 8;
 /**
  * Selection class - draws rectangular selection on canvas, can be resized.
  */
-var ants_timer = null;
+let ants_timer = null;
 
 /**
  * the marching ants move, so the canvas is redrawn a few times a second while a selection is shown
@@ -45,7 +45,7 @@ class Base_selection_class {
 	 * - enable_rotation
 	 * - enable_move
 	 * - keep_ratio
-	 * 
+	 *
 	 * @param {ctx} ctx
 	 * @param {object} settings
 	 * @param {string|null} key
@@ -114,7 +114,7 @@ class Base_selection_class {
 	}
 
 	set_selection(x, y, width, height) {
-		var settings = this.find_settings();
+		const settings = this.find_settings();
 
 		if (x != null)
 			settings.data.x = x;
@@ -128,7 +128,7 @@ class Base_selection_class {
 	}
 
 	reset_selection() {
-		var settings = this.find_settings();
+		const settings = this.find_settings();
 
 		settings.data = {
 			x: null,
@@ -140,7 +140,7 @@ class Base_selection_class {
 	}
 
 	get_selection() {
-		var settings = this.find_settings();
+		const settings = this.find_settings();
 
 		return settings.data;
 	}
@@ -149,10 +149,10 @@ class Base_selection_class {
 	 * @param {string} [tool_name] the tool whose settings are wanted, the active tool by default
 	 */
 	find_settings(tool_name) {
-		var current_key = tool_name || config.TOOL.name;
-		var settings = null;
+		const current_key = tool_name || config.TOOL.name;
+		let settings = null;
 
-		for (var i in settings_all) {
+		for (const i in settings_all) {
 			if (i == current_key)
 				settings = settings_all[i];
 		}
@@ -170,7 +170,7 @@ class Base_selection_class {
 
 	calcRotateDistanceFromX(layerW) {
 		const block_size = handle_size / config.ZOOM;
-	
+
 		return Math.max(
 		  Math.min(layerW * 0.9, Math.abs(layerW - 2 * block_size)),
 		  layerW / 2 - block_size / 2
@@ -180,25 +180,25 @@ class Base_selection_class {
 	 * marks object as selected, and draws corners
 	 */
 	draw_selection() {
-		var settings = this.find_settings();
-		var data = settings.data;
+		const settings = this.find_settings();
+		const data = settings.data;
 
 		if (settings.data === null || settings.data.status == 'draft'
 			|| (settings.data.hide_selection_if_active === true && settings.data.type == config.TOOL.name)) {
 			return;
 		}
 
-		var x = settings.data.x;
-		var y = settings.data.y;
-		var w = settings.data.width;
-		var h = settings.data.height;
+		let x = settings.data.x;
+		let y = settings.data.y;
+		let w = settings.data.width;
+		let h = settings.data.height;
 
 		if (x == null || y == null || w == null || h == null) {
-			//not supported 
+			//not supported
 			return;
 		}
 
-		var block_size_default = handle_size / config.ZOOM;
+		const block_size_default = handle_size / config.ZOOM;
 
 		if (config.ZOOM != 1) {
 			x = Math.round(x);
@@ -206,9 +206,9 @@ class Base_selection_class {
 			w = Math.round(w);
 			h = Math.round(h);
 		}
-		var block_size = block_size_default;
-		var corner_offset = (block_size / 2.4);
-		var middle_offset = (block_size / 1.9);
+		const block_size = block_size_default;
+		const corner_offset = (block_size / 2.4);
+		const middle_offset = (block_size / 1.9);
 
 		this.ctx.save();
 		this.ctx.globalAlpha = 1;
@@ -253,7 +253,7 @@ class Base_selection_class {
 			}
 			else {
 				//thin light line with a faint dark one around it, visible on any background
-				var thin = 1 / config.ZOOM;
+				const thin = 1 / config.ZOOM;
 				this.ctx.lineWidth = thin;
 				this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
 				this.ctx.strokeRect(x - thin, y - thin, w + thin * 2, h + thin * 2);
@@ -265,7 +265,8 @@ class Base_selection_class {
 		//show crop lines
 		if(settings.crop_lines === true){
 
-			for(var part = 1; part < 3; part++) {
+			let part;
+			for(part = 1; part < 3; part++) {
 				this.ctx.lineWidth = 1 / config.ZOOM;
 				this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
 				this.ctx.beginPath();
@@ -281,7 +282,7 @@ class Base_selection_class {
 				this.ctx.stroke();
 			}
 
-			for(var part = 1; part < 3; part++) {
+			for(part = 1; part < 3; part++) {
 				this.ctx.lineWidth = 1 / config.ZOOM;
 				this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
 				this.ctx.beginPath();
@@ -304,8 +305,8 @@ class Base_selection_class {
 		const hitsBottomEdge = isRotated ? false : y + h > config.HEIGHT - handle_size;
 
 		//draw corners
-		var corner = (x, y, dx, dy, drag_type, cursor) => {
-			var angle = 0;
+		const corner = (x, y, dx, dy, drag_type, cursor) => {
+			let angle = 0;
 			if (settings.data.rotate != null && settings.data.rotate != 0) {
 				angle = settings.data.rotate;
 			}
@@ -330,14 +331,14 @@ class Base_selection_class {
 
 			//register position
 			this.selected_obj_positions[drag_type] = {
-				cursor: cursor,
+				cursor,
 				path: circle,
 			};
 		};
 
 		//draw rotation
-		var draw_rotation = () => {
-			var settings = this.find_settings();
+		const draw_rotation = () => {
+			const settings = this.find_settings();
 
 			if (settings.data === null
 				|| settings.data.status == 'draft'
@@ -345,11 +346,11 @@ class Base_selection_class {
 				|| (settings.data.hide_selection_if_active === true && settings.data.type == config.TOOL.name)) {
 				return;
 			}
-			
-			var r_x = x + this.calcRotateDistanceFromX(w) + corner_offset + wholeLineWidth;
-			var r_y = y - corner_offset - wholeLineWidth;
-			var r_dx =  hitsRightEdge ? -0.5 : 0;
-			var r_dy = hitsTopEdge ? 0.5 : 0;
+
+			const r_x = x + this.calcRotateDistanceFromX(w) + corner_offset + wholeLineWidth;
+			const r_y = y - corner_offset - wholeLineWidth;
+			const r_dx =  hitsRightEdge ? -0.5 : 0;
+			const r_dy = hitsTopEdge ? 0.5 : 0;
 
 			this.ctx.strokeStyle = "#000000";
 			this.ctx.fillStyle = "#d0d62a";
@@ -398,8 +399,8 @@ class Base_selection_class {
 	}
 
 	selected_object_actions(e) {
-		var settings = this.find_settings();
-		var data = settings.data;
+		const settings = this.find_settings();
+		const data = settings.data;
 
 		if(data == null){
 			return;
@@ -411,13 +412,13 @@ class Base_selection_class {
 			this.ctx.rotate(data.rotate * Math.PI / 180);
 		}
 
-		var x = settings.data.x;
-		var y = settings.data.y;
-		var w = settings.data.width;
-		var h = settings.data.height;
+		const x = settings.data.x;
+		const y = settings.data.y;
+		const w = settings.data.width;
+		const h = settings.data.height;
 
 		//simplify checks
-		var event_type = e.type;
+		let event_type = e.type;
 		if(event_type == 'touchstart') event_type = 'mousedown';
 		if(event_type == 'touchmove') event_type = 'mousemove';
 		if(event_type == 'touchend') event_type = 'mouseup';
@@ -434,7 +435,7 @@ class Base_selection_class {
 			return;
 		}
 
-		var mouse = config.mouse;
+		const mouse = config.mouse;
 		const drag_type = this.selected_object_drag_type;
 
 		if(event_type == 'mousedown' && settings.data !== null){
@@ -448,13 +449,14 @@ class Base_selection_class {
 		}
 		if (event_type == 'mousemove' && this.mouse_lock == 'selected_object_actions' && this.is_drag) {
 
+			let dx, dy;
 			const allowNegativeDimensions = settings.data.render_function
 				&& ['line', 'arrow', 'gradient'].includes(settings.data.render_function[0]);
 
 			mainWrapper.style.cursor = "pointer";
-			
+
 			//Shift, Option or Ctrl / Cmd turn the proportions on or off (see libs/resize-ratio.js)
-			var ratio_modifier = is_ratio_modifier(e);
+			const ratio_modifier = is_ratio_modifier(e);
 
 			const is_drag_type_left = Math.floor(drag_type / DRAG_TYPE_LEFT) % 2 === 1;
 			const is_drag_type_right = Math.floor(drag_type / DRAG_TYPE_RIGHT) % 2 === 1;
@@ -472,13 +474,13 @@ class Base_selection_class {
 
 			if(drag_type == 'rotate'){
 				//rotate
-				var dx = x + this.calcRotateDistanceFromX(w) - (x + w / 2);
-				var dy = h / 2;
-				var original_angle = Math.atan2(dy, dx) / Math.PI * 180; //compensate rotation icon angle
+				dx = x + this.calcRotateDistanceFromX(w) - (x + w / 2);
+				dy = h / 2;
+				const original_angle = Math.atan2(dy, dx) / Math.PI * 180; //compensate rotation icon angle
 
-				var dx = mouse.x - (x + w / 2);
-				var dy = mouse.y - (y + h / 2);
-				var angle = Math.atan2(dy, dx) / Math.PI * 180 + original_angle;
+				dx = mouse.x - (x + w / 2);
+				dy = mouse.y - (y + h / 2);
+				const angle = Math.atan2(dy, dx) / Math.PI * 180 + original_angle;
 
 				//settings.data.rotate = angle;
 				this.current_angle = angle;
@@ -487,10 +489,10 @@ class Base_selection_class {
 			}
 			else if (e.buttons == 1 || typeof e.buttons == "undefined") {
 				// Do transformations
-				var dx = Math.round(mouse.x - mouse.click_x);
-				var dy = Math.round(mouse.y - mouse.click_y);
-				var width = this.click_details.width + dx;
-				var height = this.click_details.height + dy;
+				dx = Math.round(mouse.x - mouse.click_x);
+				dy = Math.round(mouse.y - mouse.click_y);
+				let width = this.click_details.width + dx;
+				let height = this.click_details.height + dy;
 				if (is_drag_type_top)
 					height = this.click_details.height - dy;
 				if (is_drag_type_left)
@@ -498,7 +500,7 @@ class Base_selection_class {
 
 				// Keep ratio - (if drag_type power of 2, only dragging on single axis)
 				if (drag_type && (drag_type & (drag_type - 1)) !== 0 && keeps_ratio(settings.keep_ratio === true, ratio_modifier)) {
-					var constrained = constrain_ratio(width, height, this.click_details.width / this.click_details.height);
+					const constrained = constrain_ratio(width, height, this.click_details.width / this.click_details.height);
 					width = constrained.width;
 					height = constrained.height;
 				}
@@ -549,7 +551,7 @@ class Base_selection_class {
 				mainWrapper.style.cursor = "move";
 			}
 
-			for (let current_drag_type in this.selected_obj_positions) {
+			for (const current_drag_type in this.selected_obj_positions) {
 				const position = this.selected_obj_positions[current_drag_type];
 				if (position.path && this.ctx.isPointInPath(position.path, mouse.x, mouse.y)) {
 					// match

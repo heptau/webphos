@@ -26,9 +26,9 @@ class Effects_glow_class extends Effects_common_class {
 			return;
 		}
 
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'glow');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'glow');
 
-		var params = [
+		const params = [
 			{name: "size", title: "Size:", value: filter.size ??= 12, range: [1, 100]},
 			{name: "strength", title: "Strength:", value: filter.strength ??= 2, range: [1, 5]},
 			{name: "color", title: "Color:", value: filter.color ??= "#ffee00", type: 'color'},
@@ -37,20 +37,20 @@ class Effects_glow_class extends Effects_common_class {
 	}
 
 	css(params, type) {
-		var size = params.size;
+		let size = params.size;
 		if (type == 'preview') {
 			size = Math.max(1, Math.round(size * this.POP.width_mini / config.WIDTH));
 		}
 		return glow_filter(size, params.strength, params.color);
 	}
 
-	preview(params, type) {
+	preview(params) {
 		return this.css(params, 'preview');
 	}
 
 	demo(canvas_id, canvas_thumb) {
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		ctx.filter = glow_filter(5, 2, '#ffee00');
 		ctx.drawImage(canvas_thumb,
@@ -60,17 +60,17 @@ class Effects_glow_class extends Effects_common_class {
 	}
 
 	render_pre(ctx, data) {
-		var filter = this.css(data.params, 'save');
+		const filter = this.css(data.params, 'save');
 
 		if (ctx.filter == 'none') {
 			ctx.filter = filter;
 		}
 		else {
-			ctx.filter += ' ' + filter;
+			ctx.filter += ` ${  filter}`;
 		}
 	}
 
-	render_post(ctx, data) {
+	render_post(ctx) {
 		ctx.filter = 'none';
 	}
 

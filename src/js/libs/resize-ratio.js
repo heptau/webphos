@@ -31,15 +31,15 @@ export function keeps_ratio(keeps_by_default, modifier) {
  */
 export function constrain_ratio(width, height, ratio) {
 	if (!(ratio > 0) || !isFinite(ratio)) {
-		return {width: width, height: height};
+		return {width, height};
 	}
-	var width_new = Math.round(height * ratio);
-	var height_new = Math.round(width / ratio);
+	const width_new = Math.round(height * ratio);
+	const height_new = Math.round(width / ratio);
 	if (width_new === 0 || height_new === 0) {
-		return {width: width, height: height};
+		return {width, height};
 	}
 	if (Math.abs(width * 100 / width_new) > Math.abs(height * 100 / height_new)) {
-		return {width: width, height: height_new};
+		return {width, height: height_new};
 	}
-	return {width: width_new, height: height};
+	return {width: width_new, height};
 }

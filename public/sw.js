@@ -5,10 +5,9 @@ const CACHE_NAME = 'minipaint-v4.14.5-mac';
 const STATIC_ASSETS = [
 	'./index.html',
 	'./manifest.webmanifest',
-	'./images/favicon.png',
-	'./images/apple-touch-icon.png',
 	'./images/manifest/192x192.png',
 	'./images/manifest/512x512.png',
+	'./images/manifest/192x192-maskable.png',
 	'./images/manifest/512x512-maskable.png',
 ];
 
@@ -51,20 +50,20 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
 	const { request } = event;
 	const url = new URL(request.url);
-	
+
 	// Skip non-GET requests
 	if (request.method !== 'GET') {
 		return;
 	}
-	
+
 	// Skip cross-origin requests (except for allowed domains)
 	if (url.origin !== location.origin && !is_allowed_origin(url.origin)) {
 		return;
 	}
-	
+
 	// Determine cache strategy based on request type
 	const strategy = get_strategy(request, url);
-	
+
 	event.respondWith(handle_request(request, strategy));
 });
 
@@ -83,27 +82,27 @@ function is_allowed_origin(origin) {
 // Determine caching strategy
 function get_strategy(request, url) {
 	// Static assets (JS, CSS, fonts)
-	if (request.destination === 'script' || 
-		request.destination === 'style' || 
+	if (request.destination === 'script' ||
+		request.destination === 'style' ||
 		request.destination === 'font') {
 		return CACHE_STRATEGIES.static;
 	}
-	
+
 	// Images
 	if (request.destination === 'image') {
 		return CACHE_STRATEGIES.images;
 	}
-	
+
 	// API calls
 	if (url.origin !== location.origin) {
 		return CACHE_STRATEGIES.api;
 	}
-	
+
 	// HTML documents - network first for fresh content
 	if (request.destination === 'document') {
 		return CACHE_STRATEGIES.api;
 	}
-	
+
 	// Default: network first
 	return CACHE_STRATEGIES.api;
 }
@@ -111,7 +110,7 @@ function get_strategy(request, url) {
 // Handle request with specified strategy
 async function handle_request(request, strategy) {
 	const cache = await caches.open(CACHE_NAME);
-	
+
 	switch (strategy) {
 		case 'cache-first':
 			return cache_first(request, cache);
@@ -130,7 +129,7 @@ async function cache_first(request, cache) {
 	if (cachedResponse) {
 		return cachedResponse;
 	}
-	
+
 	try {
 		const networkResponse = await fetch(request);
 		if (networkResponse.ok) {
@@ -172,7 +171,7 @@ async function network_first(request, cache) {
 // Stale while revalidate strategy
 async function stale_while_revalidate(request, cache) {
 	const cachedResponse = await cache.match(request);
-	
+
 	// Fetch in background
 	const fetchPromise = fetch(request).then((networkResponse) => {
 		if (networkResponse.ok) {
@@ -182,14 +181,13 @@ async function stale_while_revalidate(request, cache) {
 	}).catch(() => {
 		// Ignore network errors, return cached
 	});
-	
+
 	// Return cached immediately if available
 	if (cachedResponse) {
-		// Trigger background update
-		fetchPromise;
+		// The background update (fetchPromise) keeps running
 		return cachedResponse;
 	}
-	
+
 	// No cache, wait for network
 	return await fetchPromise;
 }
@@ -199,7 +197,7 @@ self.addEventListener('message', (event) => {
 	if (event.data && event.data.type === 'SKIP_WAITING') {
 		self.skipWaiting();
 	}
-	
+
 	if (event.data && event.data.type === 'CLEAR_CACHE') {
 		event.waitUntil(
 			caches.keys().then((cacheNames) => {
@@ -209,7 +207,7 @@ self.addEventListener('message', (event) => {
 			})
 		);
 	}
-	
+
 	if (event.data && event.data.type === 'GET_CACHE_STATUS') {
 		event.waitUntil(
 			caches.open(CACHE_NAME).then((cache) => {
@@ -243,8 +241,8 @@ self.addEventListener('push', (event) => {
 		const data = event.data.json();
 		const options = {
 			body: data.body,
-			icon: '/images/favicon.png',
-			badge: '/images/favicon.png',
+			icon: '/images/manifest/192x192.png',
+			badge: '/images/manifest/192x192.png',
 			data: data.url,
 		};
 		event.waitUntil(self.registration.showNotification(data.title, options));

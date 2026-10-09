@@ -11,12 +11,12 @@ class Layer_fill_class {
 	 * @param {string} kind "solid" or "gradient"
 	 */
 	fill_layer(kind) {
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		if (kind == 'gradient') {
-			var gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+			const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
 			gradient.addColorStop(0, config.COLOR);
 			gradient.addColorStop(1, config.COLOR_BG);
 			ctx.fillStyle = gradient;

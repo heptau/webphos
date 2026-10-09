@@ -4,7 +4,6 @@ import Helper_class from './../../libs/helpers.js';
 import Base_layers_class from './../../core/base-layers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Tools_settings_class from './../tools/settings.js';
-import app from './../../app.js';
 import { t } from '../tools/translate.js';
 
 class View_guides_class {
@@ -18,45 +17,44 @@ class View_guides_class {
 	}
 
 	insert() {
-		var _this = this;
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
 		//convert units
-		var position = 20;
-		var position = this.Helper.get_user_unit(position, units, resolution);
+		let position = 20;
+		position = this.Helper.get_user_unit(position, units, resolution);
 
-		var settings = {
+		const settings = {
 			title: 'Insert guides',
 			params: [
 				{name: "type", title: "Type:", values: ["Vertical", "Horizontal"], value :"Vertical"},
 				{name: "position", title: "Position:",  value: position},
 			],
-			on_finish: function (params) {
-				_this.insert_handler(params);
+			on_finish: (params) => {
+				this.insert_handler(params);
 			},
 		};
 		this.POP.show(settings);
 	}
 
 	insert_handler(data){
-		var type = data.type;
-		var position = parseFloat(data.position);
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		const type = data.type;
+		let position = parseFloat(data.position);
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
 		//convert units
 		position = this.Helper.get_internal_unit(position, units, resolution);
 
-		var x = null;
-		var y = null;
+		let x = null;
+		let y = null;
 		if(type == 'Vertical')
 			x = position;
 		if(type == 'Horizontal')
 			y = position;
 
 		//update
-		config.guides.push({x: x, y: y});
+		config.guides.push({x, y});
 
 		if(config.guides_enabled == false){
 			//was disabled
@@ -69,52 +67,53 @@ class View_guides_class {
 	}
 
 	update(){
-		var _this = this;
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		let i, guide, value;
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
-		var params = [];
-		for(var i in config.guides){
-			var guide = config.guides[i];
+		const params = [];
+		for(i in config.guides){
+			guide = config.guides[i];
 
 			//convert units
-			var value = guide.x;
-			var value = this.Helper.get_user_unit(value, units, resolution);
+			value = guide.x;
+			value = this.Helper.get_user_unit(value, units, resolution);
 
 			if(guide.y === null) {
-				params.push({name: i, title: "Vertical:", value: value});
+				params.push({name: i, title: "Vertical:", value});
 			}
 		}
-		for(var i in config.guides){
-			var guide = config.guides[i];
+		for(i in config.guides){
+			guide = config.guides[i];
 
 			//convert units
-			var value = guide.y;
-			var value = this.Helper.get_user_unit(value, units, resolution);
+			value = guide.y;
+			value = this.Helper.get_user_unit(value, units, resolution);
 
 			if(guide.x === null) {
-				params.push({name: i, title: "Horizontal:", value: value});
+				params.push({name: i, title: "Horizontal:", value});
 			}
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Update guides',
-			params: params,
-			on_finish: function (params) {
-				_this.update_handler(params);
+			params,
+			on_finish: (params) => {
+				this.update_handler(params);
 			},
 		};
 		this.POP.show(settings);
 	}
 
 	update_handler(data){
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		let i;
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
 		//update
-		for (var i in data) {
-			var key = parseInt(i);
-			var value = parseFloat(data[i]);
+		for (i in data) {
+			const key = parseInt(i);
+			let value = parseFloat(data[i]);
 
 			//convert units
 			value = this.Helper.get_internal_unit(value, units, resolution);
@@ -126,7 +125,7 @@ class View_guides_class {
 		}
 
 		//remove empty
-		for (var i = 0; i < config.guides.length; i++) {
+		for (i = 0; i < config.guides.length; i++) {
 			if(config.guides[i].x === 0 || config.guides[i].y === 0
 				|| isNaN(config.guides[i].x) || isNaN( config.guides[i].y)){
 				config.guides.splice(i, 1);
@@ -150,13 +149,13 @@ class View_guides_class {
 	 * View > Snap (Shift+Ctrl+;)
 	 */
 	toggle_snap() {
-		var snap = !this.Tools_settings.get_setting('snap');
+		const snap = !this.Tools_settings.get_setting('snap');
 		this.Tools_settings.save_setting('snap', snap);
 		config.SNAP = snap;
 		alertify.warning(t(snap ? 'Snap enabled.' : 'Snap disabled.'));
 	}
 
-	remove(params) {
+	remove() {
 		config.guides = [];
 		config.need_render = true;
 	}

@@ -16,9 +16,9 @@ class Effects_colorOverlay_class extends Effects_layer_style_class {
 			return;
 		}
 
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'color-overlay');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'color-overlay');
 
-		var params = [
+		const params = [
 			{name: "color", title: "Color:", value: filter.color ??= "#ff0000", type: 'color'},
 			{name: "opacity", title: "Opacity:", value: filter.opacity ??= 50, range: [1, 100]},
 			{name: "blend", title: "Blend mode:", value: filter.blend ??= 'normal', values: BLEND_MODES},
@@ -36,10 +36,10 @@ class Effects_colorOverlay_class extends Effects_layer_style_class {
 	 * @returns {HTMLCanvasElement}
 	 */
 	build_overlay(source, width, height, color) {
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = Math.max(1, Math.round(width));
 		canvas.height = Math.max(1, Math.round(height));
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
 		ctx.globalCompositeOperation = 'source-in';
 		ctx.fillStyle = safe_color(color);
@@ -57,10 +57,10 @@ class Effects_colorOverlay_class extends Effects_layer_style_class {
 	}
 
 	demo(canvas_id, canvas_thumb) {
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
-		var width = this.Effects_browser.preview_width - 20;
-		var height = this.Effects_browser.preview_height - 20;
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
+		const width = this.Effects_browser.preview_width - 20;
+		const height = this.Effects_browser.preview_height - 20;
 
 		ctx.drawImage(canvas_thumb, 10, 10, width, height);
 		ctx.globalAlpha = 0.5;
@@ -72,10 +72,10 @@ class Effects_colorOverlay_class extends Effects_layer_style_class {
 		if (!layer || layer.type != 'image') {
 			return;
 		}
-		var color = safe_color(data.params.color);
-		var overlay = this.cached(layer, color, (source) => this.build_overlay(source, layer.width, layer.height, color));
+		const color = safe_color(data.params.color);
+		const overlay = this.cached(layer, color, (source) => this.build_overlay(source, layer.width, layer.height, color));
 
-		var previous_filter = ctx.filter;
+		const previous_filter = ctx.filter;
 		ctx.filter = 'none';
 		ctx.save();
 		ctx.globalAlpha = ctx.globalAlpha * clamp_int(data.params.opacity, 1, 100, 50) / 100;

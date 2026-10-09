@@ -20,13 +20,13 @@ export function normalize_lang_code(code) {
 	if (typeof code != 'string') {
 		return null;
 	}
-	var parts = code.trim().replace(/_/g, '-').split('-');
+	const parts = code.trim().replace(/_/g, '-').split('-');
 	if (/^[a-z]{2,3}$/i.test(parts[0]) == false) {
 		return null;
 	}
-	var result = [parts[0].toLowerCase()];
-	for (var i = 1; i < parts.length; i++) {
-		var part = parts[i];
+	const result = [parts[0].toLowerCase()];
+	for (let i = 1; i < parts.length; i++) {
+		const part = parts[i];
 		if (/^[a-z]{2}$/i.test(part) || /^[0-9]{3}$/.test(part)) {
 			//region - ISO 3166-1
 			result.push(part.toUpperCase());
@@ -42,7 +42,7 @@ export function normalize_lang_code(code) {
 			return null;
 		}
 	}
-	var normalized = result.join('-');
+	const normalized = result.join('-');
 	return LEGACY_LANG_CODES[normalized] || normalized;
 }
 
@@ -57,16 +57,16 @@ export function detect_system_language(preferred, available) {
 	if (!Array.isArray(preferred)) {
 		preferred = preferred ? [preferred] : [];
 	}
-	for (var i in preferred) {
+	for (const i in preferred) {
 		//do not use normalize_lang_code() here - browser "uk" really means Ukrainian
 		if (typeof preferred[i] != 'string' || preferred[i] == '') {
 			continue;
 		}
-		var tag = preferred[i].toLowerCase().replace(/_/g, '-');
-		var primary = tag.split('-')[0];
+		const tag = preferred[i].toLowerCase().replace(/_/g, '-');
+		const primary = tag.split('-')[0];
 
 		//exact match first (e.g. en-GB), then primary language (e.g. cs-CZ -> cs)
-		for (var j in available) {
+		for (const j in available) {
 			if (available[j].toLowerCase() == tag) {
 				return available[j];
 			}
@@ -74,7 +74,7 @@ export function detect_system_language(preferred, available) {
 		if (tag == 'en-ie' && available.includes('en-GB')) {
 			return 'en-GB';
 		}
-		for (var k in available) {
+		for (const k in available) {
 			if (available[k].toLowerCase() == primary) {
 				return available[k];
 			}
@@ -110,7 +110,7 @@ export function resolve_theme(setting, prefers_dark, themes) {
 	if (setting != null && setting != AUTO && themes.includes(setting)) {
 		return setting;
 	}
-	var wanted = prefers_dark ? 'dark' : 'light';
+	const wanted = prefers_dark ? 'dark' : 'light';
 	if (themes.includes(wanted)) {
 		return wanted;
 	}
@@ -136,8 +136,8 @@ export function on_system_theme_change(callback) {
 	if (typeof window == 'undefined' || typeof window.matchMedia != 'function') {
 		return;
 	}
-	var query = window.matchMedia('(prefers-color-scheme: dark)');
-	var handler = (event) => callback(event.matches);
+	const query = window.matchMedia('(prefers-color-scheme: dark)');
+	const handler = (event) => callback(event.matches);
 	if (typeof query.addEventListener == 'function') {
 		query.addEventListener('change', handler);
 	}
@@ -155,15 +155,15 @@ export function on_system_theme_change(callback) {
  * @returns {string[]} e.g. ['cs', 'en'] - unsupported preferences (sk) are skipped, no duplicates
  */
 export function match_preferred_languages(preferred, available) {
-	var result = [];
-	for (var i in preferred) {
+	const result = [];
+	for (const i in preferred) {
 		if (typeof preferred[i] != 'string' || preferred[i] == '') {
 			continue;
 		}
-		var tag = preferred[i].toLowerCase().replace(/_/g, '-');
-		var primary = tag.split('-')[0];
-		var found = null;
-		for (var j in available) {
+		const tag = preferred[i].toLowerCase().replace(/_/g, '-');
+		const primary = tag.split('-')[0];
+		let found = null;
+		for (const j in available) {
 			if (available[j].toLowerCase() == tag) {
 				found = available[j];
 				break;
@@ -173,7 +173,7 @@ export function match_preferred_languages(preferred, available) {
 			found = 'en-GB';
 		}
 		if (found == null) {
-			for (var k in available) {
+			for (const k in available) {
 				if (available[k].toLowerCase() == primary) {
 					found = available[k];
 					break;
@@ -197,10 +197,10 @@ export function match_preferred_languages(preferred, available) {
  * @returns {string[]} language codes
  */
 export function order_languages(names, preferred, locale) {
-	var codes = Object.keys(names);
-	var first = match_preferred_languages(preferred, codes);
-	var rest = codes.filter((code) => first.includes(code) == false);
-	var collator = new Intl.Collator(locale || undefined);
+	const codes = Object.keys(names);
+	const first = match_preferred_languages(preferred, codes);
+	const rest = codes.filter((code) => first.includes(code) == false);
+	const collator = new Intl.Collator(locale || undefined);
 	rest.sort((a, b) => collator.compare(names[a], names[b]));
 	return first.concat(rest);
 }

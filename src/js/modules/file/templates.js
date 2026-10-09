@@ -32,12 +32,12 @@ class File_templates_class {
 	}
 
 	async new_from_template() {
-		var templates = await list_templates();
+		const templates = await list_templates();
 		if (templates.length == 0) {
 			alertify.warning(t('There are no templates yet. Use File > Save as Template.'));
 			return;
 		}
-		var names = templates.map((item) => item.name);
+		const names = templates.map((item) => item.name);
 		this.POP.show({
 			title: 'New from Template',
 			params: [
@@ -50,7 +50,7 @@ class File_templates_class {
 					alertify.success(t('Template deleted.'));
 					return;
 				}
-				var json = await load_template(params.name);
+				const json = await load_template(params.name);
 				if (!json) {
 					alertify.error(t('The template could not be opened.'));
 					return;

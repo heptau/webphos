@@ -19,8 +19,8 @@ export function is_clipped(layer) {
  * @returns {boolean} there is a layer below, to which this one can be clipped
  */
 export function can_clip(layers, layer_id) {
-	var sorted = layers.concat().sort(function (a, b) { return b.order - a.order; });
-	var index = sorted.findIndex(function (layer) { return layer.id == layer_id; });
+	const sorted = layers.concat().sort((a, b) => { return b.order - a.order; });
+	const index = sorted.findIndex((layer) => { return layer.id == layer_id; });
 	return index >= 0 && index < sorted.length - 1;
 }
 
@@ -32,12 +32,12 @@ export function can_clip(layers, layer_id) {
  * @returns {object|null} null when the layer is not clipped
  */
 export function clip_base(layers, layer_id) {
-	var sorted = layers.concat().sort(function (a, b) { return b.order - a.order; });
-	var index = sorted.findIndex(function (layer) { return layer.id == layer_id; });
+	const sorted = layers.concat().sort((a, b) => { return b.order - a.order; });
+	const index = sorted.findIndex((layer) => { return layer.id == layer_id; });
 	if (index < 0 || !is_clipped(sorted[index])) {
 		return null;
 	}
-	for (var i = index + 1; i < sorted.length; i++) {
+	for (let i = index + 1; i < sorted.length; i++) {
 		if (!is_clipped(sorted[i])) {
 			return sorted[i];
 		}

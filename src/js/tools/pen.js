@@ -76,7 +76,7 @@ class Pen_class extends Base_tools_class {
 		this.anchors = path.anchors;
 		this.closed = path.closed;
 		this.editing = path.layer_id == null ? null : path.layer_id;
-		var settings = config.TOOLS.find((tool) => tool.name == this.name);
+		const settings = config.TOOLS.find((tool) => tool.name == this.name);
 		if (settings && path.mode && settings.attributes.mode) {
 			settings.attributes.mode.value = path.mode;
 		}
@@ -92,12 +92,12 @@ class Pen_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
-		var point = {x: mouse.x, y: mouse.y};
-		var hit = hit_path(this.anchors, point, this.radius());
+		const point = {x: mouse.x, y: mouse.y};
+		const hit = hit_path(this.anchors, point, this.radius());
 		if (hit && hit.index == 0 && hit.part == 'anchor' && this.anchors.length >= 2 && this.closed == false) {
 			this.closed = true;
 			this.update_bar();
@@ -118,15 +118,15 @@ class Pen_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false || this.drag == null || mouse.click_valid == false) {
 			return;
 		}
-		var anchor = this.anchors[this.drag.index];
+		const anchor = this.anchors[this.drag.index];
 		if (anchor == null) {
 			return;
 		}
-		var point = {x: mouse.x, y: mouse.y};
+		const point = {x: mouse.x, y: mouse.y};
 		if (this.drag.part == 'new') {
 			if (Math.hypot(point.x - anchor.x, point.y - anchor.y) > 2 / (config.ZOOM || 1)) {
 				drag_smooth(anchor, point);
@@ -147,7 +147,7 @@ class Pen_class extends Base_tools_class {
 	 * @returns {{points: {x: number, y: number}[], margin: number}}
 	 */
 	outline() {
-		var params = this.getParams();
+		const params = this.getParams();
 		return {points: flatten_path(this.anchors, this.closed), margin: Math.ceil((params.size || 1) / 2) + 2};
 	}
 
@@ -159,33 +159,33 @@ class Pen_class extends Base_tools_class {
 			alertify.error(t('A path needs at least 2 points.'));
 			return;
 		}
-		var params = this.getParams();
-		var mode = params.mode && params.mode.value !== undefined ? params.mode.value : params.mode;
-		var box = bounds_of(this.outline().points);
-		var margin = this.outline().margin;
-		var x = Math.floor(box.x - margin);
-		var y = Math.floor(box.y - margin);
-		var width = Math.max(1, Math.ceil(box.width + margin * 2));
-		var height = Math.max(1, Math.ceil(box.height + margin * 2));
-		var move = (p) => (p ? {x: p.x - x, y: p.y - y} : null);
-		var data = this.anchors.map((a) => ({x: a.x - x, y: a.y - y, in: move(a.in), out: move(a.out)}));
-		var layer = {
+		const params = this.getParams();
+		const mode = params.mode && params.mode.value !== undefined ? params.mode.value : params.mode;
+		const box = bounds_of(this.outline().points);
+		const margin = this.outline().margin;
+		const x = Math.floor(box.x - margin);
+		const y = Math.floor(box.y - margin);
+		const width = Math.max(1, Math.ceil(box.width + margin * 2));
+		const height = Math.max(1, Math.ceil(box.height + margin * 2));
+		const move = (p) => (p ? {x: p.x - x, y: p.y - y} : null);
+		const data = this.anchors.map((a) => ({x: a.x - x, y: a.y - y, in: move(a.in), out: move(a.out)}));
+		const layer = {
 			type: this.name,
 			name: t('Path'),
-			data: data,
-			params: {size: params.size, mode: mode, closed: this.closed, stroke_color: config.COLOR_BG},
+			data,
+			params: {size: params.size, mode, closed: this.closed, stroke_color: config.COLOR_BG},
 			render_function: [this.name, 'render'],
-			x: x,
-			y: y,
-			width: width,
-			height: height,
+			x,
+			y,
+			width,
+			height,
 			width_original: width,
 			height_original: height,
 			rotate: null,
 			is_vector: true,
 			color: config.COLOR,
 		};
-		var editing = this.editing != null ? config.layers.find((item) => item.id == this.editing) : null;
+		const editing = this.editing != null ? config.layers.find((item) => item.id == this.editing) : null;
 		this.reset_state();
 		config.need_render = true;
 		if (editing) {
@@ -214,7 +214,7 @@ class Pen_class extends Base_tools_class {
 			alertify.error(t('A path needs at least 3 points.'));
 			return;
 		}
-		var mask = path_mask(this.anchors, config.WIDTH, config.HEIGHT);
+		const mask = path_mask(this.anchors, config.WIDTH, config.HEIGHT);
 		this.reset_state();
 		config.need_render = true;
 		return new Edit_selection_class().set_mask(mask, true);
@@ -222,18 +222,18 @@ class Pen_class extends Base_tools_class {
 
 	update_bar() {
 		if (this.bar == null) {
-			var bar = document.createElement('div');
+			const bar = document.createElement('div');
 			bar.className = 'distort_bar';
 			bar.setAttribute('role', 'toolbar');
 			bar.setAttribute('aria-label', t('Pen'));
-			var label = document.createElement('span');
+			const label = document.createElement('span');
 			label.textContent = t('Path');
 			bar.appendChild(label);
-			var divider = document.createElement('span');
+			const divider = document.createElement('span');
 			divider.className = 'distort_bar_divider';
 			bar.appendChild(divider);
-			var button = (text, handler) => {
-				var element = document.createElement('button');
+			const button = (text, handler) => {
+				const element = document.createElement('button');
 				element.type = 'button';
 				element.textContent = t(text);
 				element.addEventListener('click', handler);
@@ -262,16 +262,16 @@ class Pen_class extends Base_tools_class {
 	 * Draws the path of a layer: stroke and / or fill, anchors are in the pixels of the layer
 	 */
 	render(ctx, layer) {
-		var anchors = clean_anchors(layer.data);
+		const anchors = clean_anchors(layer.data);
 		if (anchors.length < 2) {
 			return;
 		}
-		var params = layer.params || {};
-		var closed = params.closed === true;
-		var mode = params.mode || 'Stroke';
-		var scale_x = layer.width_original ? layer.width / layer.width_original : 1;
-		var scale_y = layer.height_original ? layer.height / layer.height_original : 1;
-		var points = flatten_path(anchors, closed, 24);
+		const params = layer.params || {};
+		const closed = params.closed === true;
+		const mode = params.mode || 'Stroke';
+		const scale_x = layer.width_original ? layer.width / layer.width_original : 1;
+		const scale_y = layer.height_original ? layer.height / layer.height_original : 1;
+		const points = flatten_path(anchors, closed, 24);
 
 		ctx.save();
 		ctx.translate(layer.x, layer.y);
@@ -306,8 +306,8 @@ class Pen_class extends Base_tools_class {
 		if (this.anchors.length == 0) {
 			return;
 		}
-		var scale = 1 / (config.ZOOM || 1);
-		var path = flatten_path(this.anchors, this.closed);
+		const scale = 1 / (config.ZOOM || 1);
+		const path = flatten_path(this.anchors, this.closed);
 		ctx.save();
 		ctx.beginPath();
 		path.forEach((p, i) => {
@@ -345,7 +345,7 @@ class Pen_class extends Base_tools_class {
 				ctx.fill();
 				ctx.stroke();
 			});
-			var half = 3.5 * scale;
+			const half = 3.5 * scale;
 			ctx.fillStyle = index == 0 && this.closed == false ? '#0a84ff' : '#ffffff';
 			ctx.lineWidth = scale;
 			ctx.strokeStyle = '#0a84ff';

@@ -18,7 +18,7 @@ const CURVE_CHANNELS = ['rgb', 'red', 'green', 'blue'];
  */
 export function default_curves() {
 	/** @type {Object<string, number[][]>} */
-	var curves = {};
+	const curves = {};
 	CURVE_CHANNELS.forEach((name) => {
 		curves[name] = [[0, 0], [255, 255]];
 	});
@@ -33,7 +33,7 @@ export function default_curves() {
  */
 export function clean_curves(stored) {
 	/** @type {Object<string, number[][]>} */
-	var curves = {};
+	const curves = {};
 	CURVE_CHANNELS.forEach((name) => {
 		curves[name] = Adjustments.normalizeCurvePoints(stored && typeof stored == 'object' ? stored[name] : null);
 	});
@@ -195,16 +195,16 @@ export function is_adjustment(key) {
  */
 export function default_settings(key) {
 	/** @type {Object<string, any>} */
-	var settings = {};
+	const settings = {};
 	if (!is_adjustment(key)) {
 		return settings;
 	}
-	ADJUSTMENTS[key].params.forEach(function (param) {
+	ADJUSTMENTS[key].params.forEach((param) => {
 		if (param.name) {
 			settings[param.name] = param.value !== undefined ? param.value : (param.values ? param.values[0] : null);
 		}
 	});
-	var state = ADJUSTMENTS[key].state;
+	const state = ADJUSTMENTS[key].state;
 	if (state) {
 		settings[state.name] = state.create();
 	}
@@ -220,14 +220,14 @@ export function default_settings(key) {
  * @returns {Object<string, any>}
  */
 export function clean_settings(key, stored) {
-	var defaults = default_settings(key);
+	const defaults = default_settings(key);
 	/** @type {Object<string, any>} */
-	var result = {};
-	Object.keys(defaults).forEach(function (name) {
-		var value = stored && stored[name] !== undefined ? stored[name] : defaults[name];
+	const result = {};
+	Object.keys(defaults).forEach((name) => {
+		const value = stored && stored[name] !== undefined ? stored[name] : defaults[name];
 		result[name] = typeof defaults[name] == 'boolean' ? value === true : value;
 	});
-	var state = is_adjustment(key) ? ADJUSTMENTS[key].state : undefined;
+	const state = is_adjustment(key) ? ADJUSTMENTS[key].state : undefined;
 	if (state) {
 		result[state.name] = state.clean(stored ? stored[state.name] : null);
 	}
@@ -243,7 +243,7 @@ export function clean_settings(key, stored) {
  * @returns {Image_data}
  */
 export function adjust_image(image, key, stored) {
-	var copy = {width: image.width, height: image.height, data: new Uint8ClampedArray(image.data)};
+	const copy = {width: image.width, height: image.height, data: new Uint8ClampedArray(image.data)};
 	if (!is_adjustment(key)) {
 		return copy;
 	}
@@ -261,16 +261,16 @@ export function adjust_image(image, key, stored) {
  * @returns {Image_data} adjusted
  */
 export function mix_adjusted(original, adjusted, amount, weights) {
-	var k = Math.min(1, Math.max(0, amount));
-	var o = original.data;
-	var a = adjusted.data;
-	for (var i = 0, p = 0; i < a.length; i += 4, p++) {
-		var share = weights ? k * weights[p] / 255 : k;
+	const k = Math.min(1, Math.max(0, amount));
+	const o = original.data;
+	const a = adjusted.data;
+	for (let i = 0, p = 0; i < a.length; i += 4, p++) {
+		const share = weights ? k * weights[p] / 255 : k;
 		if (share >= 1) {
 			a[i + 3] = o[i + 3];
 			continue;
 		}
-		for (var c = 0; c < 3; c++) {
+		for (let c = 0; c < 3; c++) {
 			a[i + c] = Math.round(o[i + c] + (a[i + c] - o[i + c]) * share);
 		}
 		a[i + 3] = o[i + 3];

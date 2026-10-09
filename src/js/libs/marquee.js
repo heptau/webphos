@@ -12,17 +12,17 @@
  */
 export function marquee_rect(start, point, options) {
 	options = options || {};
-	var style = options.style || 'Normal';
-	var fixed_w = Math.max(1, parseFloat(options.fixed_width) || 1);
-	var fixed_h = Math.max(1, parseFloat(options.fixed_height) || 1);
-	var from_center = options.alt === true;
+	const style = options.style || 'Normal';
+	const fixed_w = Math.max(1, parseFloat(options.fixed_width) || 1);
+	const fixed_h = Math.max(1, parseFloat(options.fixed_height) || 1);
+	const from_center = options.alt === true;
 
-	var dx = point.x - start.x;
-	var dy = point.y - start.y;
-	var sign_x = dx < 0 ? -1 : 1;
-	var sign_y = dy < 0 ? -1 : 1;
-	var width = Math.abs(dx);
-	var height = Math.abs(dy);
+	const dx = point.x - start.x;
+	const dy = point.y - start.y;
+	let sign_x = dx < 0 ? -1 : 1;
+	let sign_y = dy < 0 ? -1 : 1;
+	let width = Math.abs(dx);
+	let height = Math.abs(dy);
 
 	if (style == 'Fixed Size') {
 		width = Math.round(fixed_w);
@@ -32,7 +32,7 @@ export function marquee_rect(start, point, options) {
 		sign_y = 1;
 	}
 	else if (style == 'Fixed Ratio') {
-		var ratio = fixed_w / fixed_h;
+		const ratio = fixed_w / fixed_h;
 		//the larger rectangle that keeps the ratio and contains the dragged one
 		width = Math.max(width, height * ratio);
 		height = width / ratio;
@@ -47,7 +47,7 @@ export function marquee_rect(start, point, options) {
 	return {
 		x: sign_x < 0 ? start.x - width : start.x,
 		y: sign_y < 0 ? start.y - height : start.y,
-		width: width,
-		height: height,
+		width,
+		height,
 	};
 }

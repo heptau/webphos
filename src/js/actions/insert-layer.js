@@ -34,7 +34,7 @@ export class Insert_layer_action extends Base_action {
 		const layer = {
 			id: app.Layers.auto_increment,
 			parent_id: 0,
-			name: config.TOOL.name.charAt(0).toUpperCase() + config.TOOL.name.slice(1) + ' #' + app.Layers.auto_increment,
+			name: `${config.TOOL.name.charAt(0).toUpperCase() + config.TOOL.name.slice(1)  } #${  app.Layers.auto_increment}`,
 			type: null,
 			link: null,
 			x: 0,
@@ -71,7 +71,7 @@ export class Insert_layer_action extends Base_action {
 		};
 
 		// Build data
-		for (let i in this.settings) {
+		for (const i in this.settings) {
 			if (typeof layer[i] == "undefined" && !i.startsWith('_')) {
 				alertify.error(t('Error: wrong key: ') + i);
 				continue;
@@ -82,7 +82,7 @@ export class Insert_layer_action extends Base_action {
 		// Prepare image
 		let image_load_promise;
 		if (layer.type == 'image') {
-			
+
 			if (String(layer.name).toLowerCase().endsWith('.svg')) {
 				// We have svg
 				layer.is_vector = true;
@@ -116,7 +116,7 @@ export class Insert_layer_action extends Base_action {
 					//need_autoresize = true;
 				}
 				else if (typeof layer.data == 'string') {
-					image_load_promise = new Promise((resolve, reject) => {
+					image_load_promise = new Promise((resolve) => {
 						// Try loading as imageData
 						layer.link = new Image();
 						layer.link.onload = () => {
@@ -180,7 +180,7 @@ export class Insert_layer_action extends Base_action {
 			this.autoresize_canvas_action = new app.Actions.Autoresize_canvas_action(...autoresize_as);
 			try {
 				await this.autoresize_canvas_action.do();
-			} catch(error) {
+			} catch {
 				this.autoresize_canvas_action = null;
 			}
 		}

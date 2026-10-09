@@ -9,7 +9,7 @@
  * @returns {{x: number, y: number}} the new position of the brush, between the two
  */
 export function stabilize(previous, target, amount) {
-	var strength = Math.min(95, Math.max(0, parseFloat(amount) || 0)) / 100;
+	const strength = Math.min(95, Math.max(0, parseFloat(amount) || 0)) / 100;
 	if (previous == null || strength == 0) {
 		return {x: target.x, y: target.y};
 	}

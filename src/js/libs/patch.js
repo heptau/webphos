@@ -23,12 +23,12 @@ export function box_blur(src, w, h, r) {
 	if (r == 0) {
 		return new Float32Array(src);
 	}
-	var tmp = new Float32Array(w * h);
-	var out = new Float32Array(w * h);
-	for (var y = 0; y < h; y++) {
-		var sum = 0;
-		var row = y * w;
-		for (var x = -r; x < w; x++) {
+	const tmp = new Float32Array(w * h);
+	const out = new Float32Array(w * h);
+	for (let y = 0; y < h; y++) {
+		let sum = 0;
+		const row = y * w;
+		for (let x = -r; x < w; x++) {
 			if (x + r < w) {
 				sum += src[row + x + r];
 			}
@@ -40,9 +40,9 @@ export function box_blur(src, w, h, r) {
 			}
 		}
 	}
-	for (var x2 = 0; x2 < w; x2++) {
-		var total = 0;
-		for (var y2 = -r; y2 < h; y2++) {
+	for (let x2 = 0; x2 < w; x2++) {
+		let total = 0;
+		for (let y2 = -r; y2 < h; y2++) {
 			if (y2 + r < h) {
 				total += tmp[(y2 + r) * w + x2];
 			}
@@ -64,10 +64,10 @@ export function box_blur(src, w, h, r) {
  * @returns {boolean} the point is inside of the polygon
  */
 export function point_in_polygon(x, y, polygon) {
-	var inside = false;
-	for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-		var a = polygon[i];
-		var b = polygon[j];
+	let inside = false;
+	for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+		const a = polygon[i];
+		const b = polygon[j];
 		if ((a.y > y) != (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) {
 			inside = !inside;
 		}
@@ -89,16 +89,16 @@ export function point_in_polygon(x, y, polygon) {
  */
 export function patch_region(image, mask, dx, dy, options) {
 	options = options || {};
-	var w = image.width;
-	var h = image.height;
+	const w = image.width;
+	const h = image.height;
 	dx = Math.round(dx) || 0;
 	dy = Math.round(dy) || 0;
-	var adapt = clamp(parseFloat(options.adapt ?? 100), 0, 100) / 100;
+	const adapt = clamp(parseFloat(options.adapt ?? 100), 0, 100) / 100;
 
 	//where the mask is
-	var left = w, top = h, right = -1, bottom = -1;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
+	let left = w, top = h, right = -1, bottom = -1;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
 			if (mask.data[y * w + x] > 0) {
 				left = Math.min(left, x);
 				right = Math.max(right, x);
@@ -111,24 +111,24 @@ export function patch_region(image, mask, dx, dy, options) {
 		return image;
 	}
 	//far enough to reach the surroundings from the middle of the part
-	var radius = clamp(Math.round(options.radius ?? Math.max(right - left + 1, bottom - top + 1) / 2 + 4), 4, 60);
+	const radius = clamp(Math.round(options.radius ?? Math.max(right - left + 1, bottom - top + 1) / 2 + 4), 4, 60);
 
-	var src = new Uint8ClampedArray(image.data);
-	var coverage = new Float32Array(w * h);
-	var outside = new Float32Array(w * h);
-	for (var i = 0; i < w * h; i++) {
+	const src = new Uint8ClampedArray(image.data);
+	const coverage = new Float32Array(w * h);
+	const outside = new Float32Array(w * h);
+	for (let i = 0; i < w * h; i++) {
 		coverage[i] = mask.data[i] / 255;
 		outside[i] = 1 - coverage[i];
 	}
 	//the edge of the patch fades out over a few pixels
-	var feathered = box_blur(coverage, w, h, 2);
-	var weight = box_blur(outside, w, h, radius);
+	const feathered = box_blur(coverage, w, h, 2);
+	const weight = box_blur(outside, w, h, radius);
 
-	var channels = [];
-	for (var c = 0; c < 3; c++) {
-		var plain = new Float32Array(w * h);
-		var surround = new Float32Array(w * h);
-		for (var k = 0; k < w * h; k++) {
+	const channels = [];
+	for (let c = 0; c < 3; c++) {
+		const plain = new Float32Array(w * h);
+		const surround = new Float32Array(w * h);
+		for (let k = 0; k < w * h; k++) {
 			plain[k] = src[k * 4 + c];
 			surround[k] = src[k * 4 + c] * outside[k];
 		}
@@ -138,24 +138,24 @@ export function patch_region(image, mask, dx, dy, options) {
 		});
 	}
 
-	for (var yy = Math.max(0, top - 2); yy <= Math.min(h - 1, bottom + 2); yy++) {
-		for (var xx = Math.max(0, left - 2); xx <= Math.min(w - 1, right + 2); xx++) {
-			var p = yy * w + xx;
-			var amount = Math.max(feathered[p], coverage[p]);
+	for (let yy = Math.max(0, top - 2); yy <= Math.min(h - 1, bottom + 2); yy++) {
+		for (let xx = Math.max(0, left - 2); xx <= Math.min(w - 1, right + 2); xx++) {
+			const p = yy * w + xx;
+			const amount = Math.max(feathered[p], coverage[p]);
 			if (amount <= 0) {
 				continue;
 			}
-			var sx = xx + dx;
-			var sy = yy + dy;
+			const sx = xx + dx;
+			const sy = yy + dy;
 			if (sx < 0 || sy < 0 || sx >= w || sy >= h) {
 				continue;
 			}
-			var q = sy * w + sx;
-			for (var ch = 0; ch < 3; ch++) {
-				var value = src[q * 4 + ch];
+			const q = sy * w + sx;
+			for (let ch = 0; ch < 3; ch++) {
+				let value = src[q * 4 + ch];
 				if (weight[p] > 0.02) {
 					//the texture of the clean place with the colors of the surroundings of the blemish
-					var shift = channels[ch].target[p] / weight[p] - channels[ch].source[q];
+					const shift = channels[ch].target[p] / weight[p] - channels[ch].source[q];
 					value += shift * adapt;
 				}
 				value = clamp(value, 0, 255);
@@ -181,11 +181,11 @@ export function patch_region(image, mask, dx, dy, options) {
  * @returns {{x: number, y: number}}
  */
 export function picture_to_layer(layer, x, y) {
-	var radians = -(layer.rotate || 0) * Math.PI / 180;
-	var dx = x - (layer.x + layer.width / 2);
-	var dy = y - (layer.y + layer.height / 2);
-	var rx = dx * Math.cos(radians) - dy * Math.sin(radians);
-	var ry = dx * Math.sin(radians) + dy * Math.cos(radians);
+	const radians = -(layer.rotate || 0) * Math.PI / 180;
+	const dx = x - (layer.x + layer.width / 2);
+	const dy = y - (layer.y + layer.height / 2);
+	const rx = dx * Math.cos(radians) - dy * Math.sin(radians);
+	const ry = dx * Math.sin(radians) + dy * Math.cos(radians);
 	return {
 		x: rx * (layer.width_original / (layer.width || 1)) + layer.width_original / 2,
 		y: ry * (layer.height_original / (layer.height || 1)) + layer.height_original / 2,
@@ -201,7 +201,7 @@ export function picture_to_layer(layer, x, y) {
  * @returns {{x: number, y: number}}
  */
 export function vector_to_layer(layer, dx, dy) {
-	var radians = -(layer.rotate || 0) * Math.PI / 180;
+	const radians = -(layer.rotate || 0) * Math.PI / 180;
 	return {
 		x: (dx * Math.cos(radians) - dy * Math.sin(radians)) * (layer.width_original / (layer.width || 1)),
 		y: (dx * Math.sin(radians) + dy * Math.cos(radians)) * (layer.height_original / (layer.height || 1)),

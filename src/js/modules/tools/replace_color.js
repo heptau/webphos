@@ -15,19 +15,18 @@ class Tools_replaceColor_class {
 	}
 
 	replace_color() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Replace color',
 			preview: true,
-			on_change: function (params, canvas_preview, w, h) {
-				var img = canvas_preview.getImageData(0, 0, w, h);
-				var data = _this.do_replace(img, params);
+			on_change: (params, canvas_preview, w, h) => {
+				const img = canvas_preview.getImageData(0, 0, w, h);
+				const data = this.do_replace(img, params);
 				canvas_preview.putImageData(data, 0, 0);
 			},
 			params: [
@@ -37,8 +36,8 @@ class Tools_replaceColor_class {
 				{name: "alpha", title: "Alpha:", value: "255", range: [0, 255]},
 				{name: "mode", title: "Mode:", values: ['Advanced', 'Simple']},
 			],
-			on_finish: function (params) {
-				_this.save_alpha(params);
+			on_finish: (params) => {
+				this.save_alpha(params);
 			},
 		};
 		this.POP.show(settings);
@@ -46,12 +45,12 @@ class Tools_replaceColor_class {
 
 	save_alpha(params) {
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = this.do_replace(img, params);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const data = this.do_replace(img, params);
 		ctx.putImageData(data, 0, 0);
 
 		//save
@@ -61,21 +60,22 @@ class Tools_replaceColor_class {
 	}
 
 	do_replace(data, params) {
-		var target = params.target;
-		var replacement = params.replacement;
-		var power = params.power;
-		var alpha = params.alpha;
-		var mode = params.mode;
+		let diff;
+		const target = params.target;
+		const replacement = params.replacement;
+		const power = params.power;
+		const alpha = params.alpha;
+		const mode = params.mode;
 
-		var imgData = data.data;
-		var target_rgb = this.Helper.hexToRgb(target);
-		var target_hsl = this.Helper.rgbToHsl(target_rgb.r, target_rgb.g, target_rgb.b);
-		var target_normalized = this.Helper.hslToRgb(target_hsl.h, target_hsl.s, 0.5);
+		const imgData = data.data;
+		const target_rgb = this.Helper.hexToRgb(target);
+		const target_hsl = this.Helper.rgbToHsl(target_rgb.r, target_rgb.g, target_rgb.b);
+		const target_normalized = this.Helper.hslToRgb(target_hsl.h, target_hsl.s, 0.5);
 
-		var replacement_rgb = this.Helper.hexToRgb(replacement);
-		var replacement_hsl = this.Helper.rgbToHsl(replacement_rgb.r, replacement_rgb.g, replacement_rgb.b);
+		const replacement_rgb = this.Helper.hexToRgb(replacement);
+		const replacement_hsl = this.Helper.rgbToHsl(replacement_rgb.r, replacement_rgb.g, replacement_rgb.b);
 
-		for (var i = 0; i < imgData.length; i += 4) {
+		for (let i = 0; i < imgData.length; i += 4) {
 			if (imgData[i + 3] == 0)
 				continue;	//transparent
 
@@ -83,7 +83,7 @@ class Tools_replaceColor_class {
 				//simple replace
 
 				//calculate difference from requested color, and change alpha
-				var diff = (Math.abs(imgData[i] - target_rgb.r)
+				diff = (Math.abs(imgData[i] - target_rgb.r)
 					+ Math.abs(imgData[i + 1] - target_rgb.g)
 					+ Math.abs(imgData[i + 2] - target_rgb.b)) / 3;
 				if (diff > power)
@@ -97,17 +97,17 @@ class Tools_replaceColor_class {
 			}
 			else {
 				//advanced replace using HSL
-				
-				var hsl = this.Helper.rgbToHsl(imgData[i], imgData[i + 1], imgData[i + 2]);
-				var normalized = this.Helper.hslToRgb(hsl.h, hsl.s, 0.5);
-				var diff = (Math.abs(normalized.r - target_normalized.r)
+
+				const hsl = this.Helper.rgbToHsl(imgData[i], imgData[i + 1], imgData[i + 2]);
+				const normalized = this.Helper.hslToRgb(hsl.h, hsl.s, 0.5);
+				diff = (Math.abs(normalized.r - target_normalized.r)
 					+ Math.abs(normalized.g - target_normalized.g)
 					+ Math.abs(normalized.b - target_normalized.b)) / 3;
 				if (diff > power)
 					continue;
 
 				//change to new color with existing luminance
-				var normalized_final = this.Helper.hslToRgb(
+				const normalized_final = this.Helper.hslToRgb(
 					replacement_hsl.h,
 					replacement_hsl.s,
 					hsl.l * (replacement_hsl.l)

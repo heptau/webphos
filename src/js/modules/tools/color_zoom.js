@@ -13,27 +13,26 @@ class Tools_colorZoom_class {
 	}
 
 	color_zoom() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Color zoom',
 			preview: true,
 			params: [
 				{name: "zoom", title: "Zoom:", value: "2", range: [2, 20], },
 				{name: "center", title: "Center:", value: "128", range: [0, 255]},
 			],
-			on_change: function (params, canvas_preview, w, h) {
-				var img = canvas_preview.getImageData(0, 0, w, h);
-				var data = _this.change(img, params.zoom, params.center);
+			on_change: (params, canvas_preview, w, h) => {
+				const img = canvas_preview.getImageData(0, 0, w, h);
+				const data = this.change(img, params.zoom, params.center);
 				canvas_preview.putImageData(data, 0, 0);
 			},
-			on_finish: function (params) {
-				_this.save_zoom(params.zoom, params.center);
+			on_finish: (params) => {
+				this.save_zoom(params.zoom, params.center);
 			},
 		};
 		this.POP.show(settings);
@@ -41,12 +40,12 @@ class Tools_colorZoom_class {
 
 	save_zoom(zoom, center) {
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = this.change(img, zoom, center);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const data = this.change(img, zoom, center);
 		ctx.putImageData(data, 0, 0);
 
 		//save
@@ -56,16 +55,16 @@ class Tools_colorZoom_class {
 	}
 
 	change(data, zoom, center) {
-		var imgData = data.data;
-		var grey;
-		for (var i = 0; i < imgData.length; i += 4) {
+		const imgData = data.data;
+		let grey;
+		for (let i = 0; i < imgData.length; i += 4) {
 			if (imgData[i + 3] == 0)
 				continue;	//transparent
 
 			grey = Math.round(0.2126 * imgData[i] + 0.7152 * imgData[i + 1] + 0.0722 * imgData[i + 2]);
 
-			for (var j = 0; j < 3; j++) {
-				var k = i + j;
+			for (let j = 0; j < 3; j++) {
+				const k = i + j;
 				if (grey > center)
 					imgData[k] += (imgData[k] - center) * zoom;
 				else if (grey < center)

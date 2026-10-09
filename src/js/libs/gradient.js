@@ -17,8 +17,8 @@ function clamp(value, min, max) {
 }
 
 function to_hex(color) {
-	var rgb = parse_color(color);
-	return '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
+	const rgb = parse_color(color);
+	return `#${  rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
 /**
@@ -29,17 +29,17 @@ function to_hex(color) {
  * @returns {Stop[]}
  */
 export function normalize_stops(stops) {
-	var list = Array.isArray(stops) ? stops : [];
-	var result = list.slice(0, MAX_STOPS).map(function (stop) {
+	const list = Array.isArray(stops) ? stops : [];
+	const result = list.slice(0, MAX_STOPS).map((stop) => {
 		stop = stop || {};
-		var alpha = parseFloat(stop.alpha);
+		const alpha = parseFloat(stop.alpha);
 		return {
 			pos: clamp(parseFloat(stop.pos) || 0, 0, 1),
 			color: to_hex(stop.color),
 			alpha: isNaN(alpha) ? 255 : clamp(Math.round(alpha), 0, 255),
 		};
 	});
-	result.sort(function (a, b) { return a.pos - b.pos; });
+	result.sort((a, b) => { return a.pos - b.pos; });
 	if (result.length == 0) {
 		return [{pos: 0, color: '#000000', alpha: 255}, {pos: 1, color: '#ffffff', alpha: 255}];
 	}
@@ -60,7 +60,7 @@ export function normalize_stops(stops) {
 export function simple_stops(color_1, color_2, alpha) {
 	return normalize_stops([
 		{pos: 0, color: color_1, alpha: 255},
-		{pos: 1, color: color_2, alpha: alpha},
+		{pos: 1, color: color_2, alpha},
 	]);
 }
 
@@ -84,7 +84,7 @@ export function layer_stops(params) {
  */
 export function gradient_type(params) {
 	params = params || {};
-	var type = params.type && params.type.value !== undefined ? params.type.value : params.type;
+	const type = params.type && params.type.value !== undefined ? params.type.value : params.type;
 	if (GRADIENT_TYPES.includes(type)) {
 		return type;
 	}
@@ -96,7 +96,7 @@ export function gradient_type(params) {
  * @returns {Stop[]} the same gradient running the other way
  */
 export function reverse_stops(stops) {
-	return normalize_stops(stops).map(function (stop) {
+	return normalize_stops(stops).map((stop) => {
 		return {pos: 1 - stop.pos, color: stop.color, alpha: stop.alpha};
 	}).reverse();
 }
@@ -107,12 +107,12 @@ export function reverse_stops(stops) {
  * @param {Stop[]} stops
  */
 export function reflect_stops(stops) {
-	var list = normalize_stops(stops);
-	var result = [];
-	for (var i = list.length - 1; i >= 0; i--) {
+	const list = normalize_stops(stops);
+	const result = [];
+	for (let i = list.length - 1; i >= 0; i--) {
 		result.push({pos: (1 - list[i].pos) / 2, color: list[i].color, alpha: list[i].alpha});
 	}
-	for (var j = 0; j < list.length; j++) {
+	for (let j = 0; j < list.length; j++) {
 		result.push({pos: (1 + list[j].pos) / 2, color: list[j].color, alpha: list[j].alpha});
 	}
 	return result;
@@ -123,8 +123,8 @@ export function reflect_stops(stops) {
  * @returns {string} CSS color for the canvas gradient
  */
 export function stop_css(stop) {
-	var rgb = parse_color(stop.color);
-	return 'rgba(' + rgb[0] + ', ' + rgb[1] + ', ' + rgb[2] + ', ' + Math.round(clamp(stop.alpha, 0, 255) / 255 * 1000) / 1000 + ')';
+	const rgb = parse_color(stop.color);
+	return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${Math.round(clamp(stop.alpha, 0, 255) / 255 * 1000) / 1000})`;
 }
 
 /**
@@ -135,11 +135,12 @@ export function stop_css(stop) {
  * @returns {number[]} [r, g, b, a] with a 0-255
  */
 export function color_at(stops, t) {
-	var list = normalize_stops(stops);
+	let k, cb;
+	const list = normalize_stops(stops);
 	t = clamp(t, 0, 1);
-	var first = list[0];
-	var last = list[list.length - 1];
-	var pick = function (stop) {
+	const first = list[0];
+	const last = list[list.length - 1];
+	const pick = function (stop) {
 		return parse_color(stop.color).concat([stop.alpha]);
 	};
 	if (t <= first.pos) {
@@ -148,14 +149,14 @@ export function color_at(stops, t) {
 	if (t >= last.pos) {
 		return pick(last);
 	}
-	for (var i = 1; i < list.length; i++) {
+	for (let i = 1; i < list.length; i++) {
 		if (t <= list[i].pos) {
-			var a = list[i - 1];
-			var b = list[i];
-			var k = b.pos == a.pos ? 1 : (t - a.pos) / (b.pos - a.pos);
-			var ca = pick(a);
-			var cb = pick(b);
-			return ca.map(function (v, n) { return Math.round(v + (cb[n] - v) * k); });
+			const a = list[i - 1];
+			const b = list[i];
+			k = b.pos == a.pos ? 1 : (t - a.pos) / (b.pos - a.pos);
+			const ca = pick(a);
+			cb = pick(b);
+			return ca.map((v, n) => { return Math.round(v + (cb[n] - v) * k); });
 		}
 	}
 	return pick(last);
@@ -172,22 +173,22 @@ export function color_at(stops, t) {
  * @returns {Uint8ClampedArray} RGBA pixels
  */
 export function diamond_pixels(width, height, geometry, stops) {
-	var lookup = [];
-	for (var i = 0; i < 256; i++) {
+	const lookup = [];
+	for (let i = 0; i < 256; i++) {
 		lookup.push(color_at(stops, i / 255));
 	}
-	var rx = Math.max(Math.abs(geometry.rx), 0.0001);
-	var ry = Math.max(Math.abs(geometry.ry), 0.0001);
-	var reach = rx + ry;
-	var inner = clamp(geometry.inner || 0, 0, 0.99);
-	var data = new Uint8ClampedArray(width * height * 4);
-	for (var y = 0; y < height; y++) {
-		var dy = Math.abs(y + 0.5 - geometry.y);
-		for (var x = 0; x < width; x++) {
-			var t = (Math.abs(x + 0.5 - geometry.x) + dy) / reach;
+	const rx = Math.max(Math.abs(geometry.rx), 0.0001);
+	const ry = Math.max(Math.abs(geometry.ry), 0.0001);
+	const reach = rx + ry;
+	const inner = clamp(geometry.inner || 0, 0, 0.99);
+	const data = new Uint8ClampedArray(width * height * 4);
+	for (let y = 0; y < height; y++) {
+		const dy = Math.abs(y + 0.5 - geometry.y);
+		for (let x = 0; x < width; x++) {
+			let t = (Math.abs(x + 0.5 - geometry.x) + dy) / reach;
 			t = clamp((t - inner) / (1 - inner), 0, 1);
-			var c = lookup[Math.round(t * 255)];
-			var p = (y * width + x) * 4;
+			const c = lookup[Math.round(t * 255)];
+			const p = (y * width + x) * 4;
 			data[p] = c[0];
 			data[p + 1] = c[1];
 			data[p + 2] = c[2];
@@ -225,8 +226,8 @@ export const GRADIENT_PRESETS = [
  * @returns {Stop[]} stops with the colors filled in
  */
 export function preset_stops(preset, foreground, background) {
-	return normalize_stops(preset.stops.map(function (stop) {
-		var color = stop.color == '@fg' ? foreground : (stop.color == '@bg' ? background : stop.color);
-		return {pos: stop.pos, color: color, alpha: stop.alpha};
+	return normalize_stops(preset.stops.map((stop) => {
+		const color = stop.color == '@fg' ? foreground : (stop.color == '@bg' ? background : stop.color);
+		return {pos: stop.pos, color, alpha: stop.alpha};
 	}));
 }

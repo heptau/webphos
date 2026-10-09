@@ -8,7 +8,7 @@ import { symmetry_transforms } from './../libs/symmetry.js';
 
 class Pencil_class extends Base_tools_class {
 
-	constructor(ctx) {
+	constructor() {
 		super();
 		this.Base_layers = new Base_layers_class();
 		this.name = 'pencil';
@@ -19,14 +19,13 @@ class Pencil_class extends Base_tools_class {
 	}
 
 	load() {
-		var _this = this;
 
 		//pointer events
-		document.addEventListener('pointerdown', function (event) {
-			_this.pointerdown(event);
+		document.addEventListener('pointerdown', (event) => {
+			this.pointerdown(event);
 		});
-		document.addEventListener('pointermove', function (event) {
-			_this.pointermove(event);
+		document.addEventListener('pointermove', (event) => {
+			this.pointermove(event);
 		});
 
 		this.default_events();
@@ -58,22 +57,22 @@ class Pencil_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false)
 			return;
 
 		//the stabilizer follows the stroke from its first point
 		this.smooth_last = {x: mouse.x, y: mouse.y};
 
-		var params_hash = this.get_params_hash();
-		var opacity = Math.round(config.ALPHA / 255 * 100);
-		
+		const params_hash = this.get_params_hash();
+		const opacity = Math.round(config.ALPHA / 255 * 100);
+
 		if (config.layer.type != this.name || params_hash != this.params_hash || is_stretched(config.layer)) {
 			//register new object - current layer is not ours, params changed or the layer was stretched with the handles
 			this.layer = {
 				type: this.name,
 				data: [],
-				opacity: opacity,
+				opacity,
 				params: Object.assign(this.clone(this.getParams()), {symmetry_center: [config.WIDTH / 2, config.HEIGHT / 2]}),
 				status: 'draft',
 				render_function: [this.name, 'render'],
@@ -108,8 +107,8 @@ class Pencil_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.is_drag == false)
 			return;
 		if (mouse.click_valid == false) {
@@ -117,15 +116,15 @@ class Pencil_class extends Base_tools_class {
 		}
 
 		//detect line size
-		var size = params.size;
-		var new_size = size;
+		const size = params.size;
+		let new_size = size;
 
 		if (params.pressure == true && this.pressure_supported) {
 			new_size = size * this.pointer_pressure * 2;
 		}
 
 		//stabilizer: the pencil follows the mouse with a lag
-		var smooth = stabilize(this.smooth_last, mouse, params.stabilizer);
+		const smooth = stabilize(this.smooth_last, mouse, params.stabilizer);
 		this.smooth_last = smooth;
 
 		//more data
@@ -138,22 +137,22 @@ class Pencil_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.click_valid == false) {
 			config.layer.status = null;
 			return;
 		}
 
 		//detect line size
-		var size = params.size;
-		var new_size = size;
+		const size = params.size;
+		let new_size = size;
 
 		if (params.pressure == true && this.pressure_supported) {
 			new_size = size * this.pointer_pressure * 2;
 		}
 
-		var smooth = stabilize(this.smooth_last, mouse, params.stabilizer);
+		const smooth = stabilize(this.smooth_last, mouse, params.stabilizer);
 		this.smooth_last = smooth;
 
 		//more data
@@ -171,10 +170,10 @@ class Pencil_class extends Base_tools_class {
 
 	render(ctx, layer) {
 		//symmetry: the same strokes again, mirrored or turned around the center of the picture
-		var params = layer.params || {};
-		var center = params.symmetry_center || [config.WIDTH / 2, config.HEIGHT / 2];
-		var center_x = center[0] - layer.x;
-		var center_y = center[1] - layer.y;
+		const params = layer.params || {};
+		const center = params.symmetry_center || [config.WIDTH / 2, config.HEIGHT / 2];
+		const center_x = center[0] - layer.x;
+		const center_y = center[1] - layer.y;
 		symmetry_transforms(params.symmetry).forEach((transform, index) => {
 			if (index == 0) {
 				this.render_aliased(ctx, layer);
@@ -189,7 +188,7 @@ class Pencil_class extends Base_tools_class {
 			ctx.restore();
 		});
 	}
-	
+
 	/**
 	 * draw without antialiasing, sharp, ugly mode.
 	 *
@@ -200,10 +199,10 @@ class Pencil_class extends Base_tools_class {
 		if (layer.data.length == 0)
 			return;
 
-		var params = layer.params;
-		var data = layer.data;
-		var n = data.length;
-		var size = params.size;
+		const params = layer.params;
+		const data = layer.data;
+		const n = data.length;
+		let size = params.size;
 
 		//set styles
 		ctx.save();
@@ -211,13 +210,13 @@ class Pencil_class extends Base_tools_class {
 		ctx.strokeStyle = layer.color;
 		ctx.translate(layer.x, layer.y);
 		//the layer was resized with the handles: the strokes are stretched with it
-		var scale = stroke_scale(layer);
+		const scale = stroke_scale(layer);
 		ctx.scale(scale.x, scale.y);
 
 		//draw
 		ctx.beginPath();
 		ctx.moveTo(data[0][0], data[0][1]);
-		for (var i = 1; i < n; i++) {
+		for (let i = 1; i < n; i++) {
 			if (data[i] === null) {
 				//break
 				ctx.beginPath();
@@ -277,14 +276,14 @@ class Pencil_class extends Base_tools_class {
 	 * @param {int} size
 	 */
 	draw_simple_line(ctx, from_x, from_y, to_x, to_y, size) {
-		var dist_x = from_x - to_x;
-		var dist_y = from_y - to_y;
-		var distance = Math.sqrt((dist_x * dist_x) + (dist_y * dist_y));
-		var radiance = Math.atan2(dist_y, dist_x);
+		const dist_x = from_x - to_x;
+		const dist_y = from_y - to_y;
+		const distance = Math.sqrt((dist_x * dist_x) + (dist_y * dist_y));
+		const radiance = Math.atan2(dist_y, dist_x);
 
-		for (var j = 0; j < distance; j++) {
-			var x_tmp = Math.round(to_x + Math.cos(radiance) * j) - Math.floor(size / 2) - 1;
-			var y_tmp = Math.round(to_y + Math.sin(radiance) * j) - Math.floor(size / 2) - 1;
+		for (let j = 0; j < distance; j++) {
+			const x_tmp = Math.round(to_x + Math.cos(radiance) * j) - Math.floor(size / 2) - 1;
+			const y_tmp = Math.round(to_y + Math.sin(radiance) * j) - Math.floor(size / 2) - 1;
 
 			ctx.fillRect(x_tmp, y_tmp, size, size);
 		}
@@ -294,16 +293,17 @@ class Pencil_class extends Base_tools_class {
 	 * recalculate layer x, y, width and height values.
 	 */
 	check_dimensions() {
+		let i;
 		if(config.layer.data.length == 0)
 			return;
 
 		//find bounds
-		var data = JSON.parse(JSON.stringify(config.layer.data)); // Deep copy for history
-		var min_x = data[0][0];
-		var min_y = data[0][1];
-		var max_x = data[0][0];
-		var max_y = data[0][1];
-		for(var i in data){
+		const data = JSON.parse(JSON.stringify(config.layer.data)); // Deep copy for history
+		let min_x = data[0][0];
+		let min_y = data[0][1];
+		let max_x = data[0][0];
+		let max_y = data[0][1];
+		for(i in data){
 			if(data[i] === null)
 				continue;
 			min_x = Math.min(min_x, data[i][0]);
@@ -313,7 +313,7 @@ class Pencil_class extends Base_tools_class {
 		}
 
 		//move current data
-		for(var i in data){
+		for(i in data){
 			if(data[i] === null)
 				continue;
 			data[i][0] = data[i][0] - min_x;

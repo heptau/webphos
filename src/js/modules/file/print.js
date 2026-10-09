@@ -1,6 +1,6 @@
-/** 
+/**
  * manages files / print
- * 
+ *
  * @author ViliusL
  */
 class File_print_class {

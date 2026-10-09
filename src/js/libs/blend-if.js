@@ -22,8 +22,8 @@ export function normalize_range(range) {
 	if (!Array.isArray(range) || range.length != 4) {
 		return DEFAULT_RANGE.concat();
 	}
-	var values = range.map(function (value) { return clamp(Math.round(parseFloat(value)) || 0, 0, 255); });
-	for (var i = 1; i < 4; i++) {
+	const values = range.map((value) => { return clamp(Math.round(parseFloat(value)) || 0, 0, 255); });
+	for (let i = 1; i < 4; i++) {
 		values[i] = Math.max(values[i], values[i - 1]);
 	}
 	return values;
@@ -37,8 +37,8 @@ export function is_default(blend_if) {
 	if (!blend_if) {
 		return true;
 	}
-	var own = normalize_range(blend_if.this);
-	var below = normalize_range(blend_if.below);
+	const own = normalize_range(blend_if.this);
+	const below = normalize_range(blend_if.below);
 	return own.join() == DEFAULT_RANGE.join() && below.join() == DEFAULT_RANGE.join();
 }
 
@@ -47,11 +47,11 @@ export function is_default(blend_if) {
  * @returns {Float32Array} how much of the layer stays for every brightness 0-255
  */
 export function range_table(range) {
-	var r = normalize_range(range);
-	var table = new Float32Array(256);
-	for (var v = 0; v < 256; v++) {
-		var rise = v < r[0] ? 0 : (v >= r[1] ? 1 : (v - r[0]) / (r[1] - r[0]));
-		var fall = v > r[3] ? 0 : (v <= r[2] ? 1 : (r[3] - v) / (r[3] - r[2]));
+	const r = normalize_range(range);
+	const table = new Float32Array(256);
+	for (let v = 0; v < 256; v++) {
+		const rise = v < r[0] ? 0 : (v >= r[1] ? 1 : (v - r[0]) / (r[1] - r[0]));
+		const fall = v > r[3] ? 0 : (v <= r[2] ? 1 : (r[3] - v) / (r[3] - r[2]));
 		table[v] = rise * fall;
 	}
 	return table;
@@ -70,15 +70,15 @@ function brightness(data, i) {
  * @returns {Image_data} the layer
  */
 export function apply_blend_if(layer, backdrop, blend_if) {
-	var own = range_table(blend_if.this);
-	var below = range_table(blend_if.below);
-	var data = layer.data;
-	var base = backdrop.data;
-	for (var i = 0; i < data.length; i += 4) {
+	const own = range_table(blend_if.this);
+	const below = range_table(blend_if.below);
+	const data = layer.data;
+	const base = backdrop.data;
+	for (let i = 0; i < data.length; i += 4) {
 		if (data[i + 3] == 0) {
 			continue;
 		}
-		var factor = own[brightness(data, i)] * below[brightness(base, i)];
+		const factor = own[brightness(data, i)] * below[brightness(base, i)];
 		data[i + 3] = Math.round(data[i + 3] * factor);
 	}
 	return layer;
@@ -94,10 +94,10 @@ export function apply_blend_if(layer, backdrop, blend_if) {
  * @returns {number[]}
  */
 export function range_from_settings(dark, dark_soft, light, light_soft) {
-	var a = clamp(parseFloat(dark) || 0, 0, 255);
-	var d = clamp(parseFloat(light ?? 255), 0, 255);
-	var b = clamp(a + (parseFloat(dark_soft) || 0), 0, 255);
-	var c = clamp(d - (parseFloat(light_soft) || 0), 0, 255);
+	const a = clamp(parseFloat(dark) || 0, 0, 255);
+	const d = clamp(parseFloat(light ?? 255), 0, 255);
+	const b = clamp(a + (parseFloat(dark_soft) || 0), 0, 255);
+	const c = clamp(d - (parseFloat(light_soft) || 0), 0, 255);
 	return normalize_range([a, b, c, d]);
 }
 
@@ -106,6 +106,6 @@ export function range_from_settings(dark, dark_soft, light, light_soft) {
  * @returns {{dark: number, dark_soft: number, light: number, light_soft: number}} the same range for the dialog
  */
 export function settings_from_range(range) {
-	var r = normalize_range(range);
+	const r = normalize_range(range);
 	return {dark: r[0], dark_soft: r[1] - r[0], light: r[3], light_soft: r[3] - r[2]};
 }

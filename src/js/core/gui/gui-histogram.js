@@ -15,7 +15,7 @@ class GUI_histogram_class {
 	}
 
 	render_main_histogram() {
-		var container = document.getElementById('toggle_histogram');
+		const container = document.getElementById('toggle_histogram');
 		if (!container) {
 			return;
 		}
@@ -43,47 +43,47 @@ class GUI_histogram_class {
 	}
 
 	render() {
-		var block = document.getElementById('histogram_base');
-		var container = document.getElementById('toggle_histogram');
+		const block = document.getElementById('histogram_base');
+		const container = document.getElementById('toggle_histogram');
 		if (!this.canvas || !block || block.classList.contains('panel_hidden') || container.classList.contains('hidden')) {
 			return;
 		}
-		var ctx = this.canvas.getContext('2d');
+		const ctx = this.canvas.getContext('2d');
 		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		if (!config.layer) {
 			return;
 		}
 
 		//a small copy is enough for the statistics
-		var source;
+		let source;
 		try {
 			source = this.Base_layers.convert_layer_to_canvas();
 		}
-		catch (error) {
+		catch {
 			return;
 		}
 		if (!source || source.width < 1 || source.height < 1) {
 			return;
 		}
-		var scale = Math.min(1, 256 / Math.max(source.width, source.height));
-		var small = document.createElement('canvas');
+		const scale = Math.min(1, 256 / Math.max(source.width, source.height));
+		const small = document.createElement('canvas');
 		small.width = Math.max(1, Math.round(source.width * scale));
 		small.height = Math.max(1, Math.round(source.height * scale));
-		var small_ctx = small.getContext('2d', {willReadFrequently: true});
+		const small_ctx = small.getContext('2d', {willReadFrequently: true});
 		small_ctx.drawImage(source, 0, 0, small.width, small.height);
-		var result = histograms(small_ctx.getImageData(0, 0, small.width, small.height));
+		const result = histograms(small_ctx.getImageData(0, 0, small.width, small.height));
 
-		var maximum = histogram_scale([result.red, result.green, result.blue, result.rgb]);
+		const maximum = histogram_scale([result.red, result.green, result.blue, result.rgb]);
 		if (maximum == 0) {
 			return;
 		}
-		var width = this.canvas.width;
-		var height = this.canvas.height;
-		var draw = function (values, color, fill) {
+		const width = this.canvas.width;
+		const height = this.canvas.height;
+		const draw = function (values, color, fill) {
 			ctx.beginPath();
 			ctx.moveTo(0, height);
-			for (var x = 0; x < 256; x++) {
-				var h = Math.min(1, values[x] / maximum) * (height - 2);
+			for (let x = 0; x < 256; x++) {
+				const h = Math.min(1, values[x] / maximum) * (height - 2);
 				ctx.lineTo(x * width / 255, height - h);
 			}
 			ctx.lineTo(width, height);
@@ -98,7 +98,7 @@ class GUI_histogram_class {
 				ctx.stroke();
 			}
 		};
-		var muted = getComputedStyle(document.body).getPropertyValue('--text-color-muted').trim() || '#888';
+		const muted = getComputedStyle(document.body).getPropertyValue('--text-color-muted').trim() || '#888';
 		ctx.globalAlpha = 0.45;
 		draw(result.rgb, muted, true);
 		ctx.globalAlpha = 0.9;

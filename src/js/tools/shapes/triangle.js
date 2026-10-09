@@ -1,5 +1,3 @@
-import app from './../../app.js';
-import config from './../../config.js';
 import Base_tools_class from './../../core/base-tools.js';
 import Base_layers_class from './../../core/base-layers.js';
 
@@ -38,7 +36,7 @@ class Triangle_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
@@ -47,8 +45,7 @@ class Triangle_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
-		var fill = params.fill;
+		const params = layer.params;
 
 		ctx.save();
 

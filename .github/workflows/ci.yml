@@ -152,17 +152,17 @@ jobs:
           VENDOR_SIZE=$(stat -c%s "dist/vendors.*.js" 2>/dev/null | head -1)
           MAX_MAIN=1200000  # 1.2MB
           MAX_VENDOR=350000 # 350KB
-          
+
           if [ "$MAIN_SIZE" -gt "$MAX_MAIN" ]; then
             echo "::error::Main bundle size (${MAIN_SIZE} bytes) exceeds limit (${MAX_MAIN} bytes)"
             exit 1
           fi
-          
+
           if [ "$VENDOR_SIZE" -gt "$MAX_VENDOR" ]; then
             echo "::error::Vendor bundle size (${VENDOR_SIZE} bytes) exceeds limit (${MAX_VENDOR} bytes)"
             exit 1
           fi
-          
+
           echo "Bundle sizes within limits:"
           echo "  Main: $((MAIN_SIZE / 1024)) KB"
           echo "  Vendor: $((VENDOR_SIZE / 1024)) KB"

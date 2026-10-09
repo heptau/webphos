@@ -4,7 +4,7 @@ import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.j
 import Base_tools_class from './../../core/base-tools.js';
 import Edit_selection_class from './selection.js';
 import { mask_bounds, transform_mask } from './../../libs/selection-mask.js';
-import { IDENTITY, frame_of, handle_points, hit_test, drag_transform, SCALE_HANDLES } from './../../libs/selection-transform.js';
+import { IDENTITY, handle_points, hit_test, drag_transform, SCALE_HANDLES } from './../../libs/selection-transform.js';
 import { t } from '../tools/translate.js';
 
 const HANDLE_SIZE = 8; //screen pixels
@@ -17,7 +17,7 @@ const CURSORS = {
 	move: 'move', rotate: 'grab',
 };
 
-var instance = null;
+let instance = null;
 
 /**
  * Select > Transform Selection with the mouse: a frame around the selection. The handles scale it (Shift keeps the
@@ -46,8 +46,8 @@ class Edit_selection_transform_session_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var current = this.selection.get_mask();
-		var bounds = mask_bounds(current.mask);
+		const current = this.selection.get_mask();
+		const bounds = mask_bounds(current.mask);
 		if (bounds == null) {
 			alertify.error(t('Empty selection'));
 			return;
@@ -101,20 +101,20 @@ class Edit_selection_transform_session_class {
 		//the tools do not get the click while the session is on
 		event.stopImmediatePropagation();
 		event.preventDefault();
-		var point = this.point(event);
-		var kind = hit_test(this.bounds, this.transform, point, REACH / this.zoom(), ROTATE_DISTANCE / this.zoom());
+		const point = this.point(event);
+		const kind = hit_test(this.bounds, this.transform, point, REACH / this.zoom(), ROTATE_DISTANCE / this.zoom());
 		if (kind) {
-			this.dragging = {kind: kind, from: point, start: Object.assign({}, this.transform)};
+			this.dragging = {kind, from: point, start: Object.assign({}, this.transform)};
 		}
 	}
 
 	pointer_move(event) {
 		if (this.dragging == null) {
 			if (this.on_canvas(event)) {
-				var kind = hit_test(this.bounds, this.transform, this.point(event), REACH / this.zoom(), ROTATE_DISTANCE / this.zoom());
+				const kind = hit_test(this.bounds, this.transform, this.point(event), REACH / this.zoom(), ROTATE_DISTANCE / this.zoom());
 				if (kind != this.hover) {
 					this.hover = kind;
-					var wrapper = document.getElementById('main_wrapper');
+					const wrapper = document.getElementById('main_wrapper');
 					if (wrapper) {
 						wrapper.style.cursor = CURSORS[kind] || 'default';
 					}
@@ -184,8 +184,8 @@ class Edit_selection_transform_session_class {
 		if (!this.active) {
 			return;
 		}
-		var scale = 1 / this.zoom();
-		var points = handle_points(this.bounds, this.transform, ROTATE_DISTANCE * scale);
+		const scale = 1 / this.zoom();
+		const points = handle_points(this.bounds, this.transform, ROTATE_DISTANCE * scale);
 		ctx.save();
 		ctx.beginPath();
 		['tl', 'tr', 'br', 'bl'].forEach((name, i) => (i == 0 ? ctx.moveTo(points[name].x, points[name].y) : ctx.lineTo(points[name].x, points[name].y)));
@@ -198,7 +198,7 @@ class Edit_selection_transform_session_class {
 		ctx.lineWidth = scale;
 		ctx.strokeStyle = '#ffffff';
 		ctx.stroke();
-		var size = HANDLE_SIZE * scale;
+		const size = HANDLE_SIZE * scale;
 		SCALE_HANDLES.forEach((name) => {
 			ctx.fillStyle = this.dragging && this.dragging.kind == name ? '#0a84ff' : '#ffffff';
 			ctx.fillRect(points[name].x - size / 2, points[name].y - size / 2, size, size);
@@ -224,7 +224,7 @@ class Edit_selection_transform_session_class {
 		config.view_overlay = null;
 		this.dragging = null;
 		this.selection.Selection_mask.clear_preview();
-		var wrapper = document.getElementById('main_wrapper');
+		const wrapper = document.getElementById('main_wrapper');
 		if (wrapper) {
 			wrapper.style.cursor = '';
 		}
@@ -253,10 +253,10 @@ class Edit_selection_transform_session_class {
 		if (!this.active) {
 			return;
 		}
-		var base = this.base;
-		var transform = this.transform;
+		const base = this.base;
+		const transform = this.transform;
 		this.finish();
-		var current = this.selection.get_mask();
+		const current = this.selection.get_mask();
 		//the selection could have changed by Undo meanwhile
 		if (current == null || current.mask !== base) {
 			return;
@@ -265,28 +265,28 @@ class Edit_selection_transform_session_class {
 	}
 
 	show_bar() {
-		var bar = document.createElement('div');
+		const bar = document.createElement('div');
 		bar.className = 'distort_bar';
 		bar.setAttribute('role', 'toolbar');
 		bar.setAttribute('aria-label', t('Transform Selection'));
-		var button = (text, handler) => {
-			var element = document.createElement('button');
+		const button = (text, handler) => {
+			const element = document.createElement('button');
 			element.type = 'button';
 			element.textContent = t(text);
 			element.addEventListener('click', handler);
 			bar.appendChild(element);
 			return element;
 		};
-		var label = document.createElement('span');
+		const label = document.createElement('span');
 		label.textContent = t('Transform Selection');
 		bar.appendChild(label);
-		var divider = document.createElement('span');
+		const divider = document.createElement('span');
 		divider.className = 'distort_bar_divider';
 		bar.appendChild(divider);
 		button('Reset', () => this.reset());
 		button('Numbers', () => this.numbers());
 		button('Cancel', () => this.cancel());
-		var apply = button('Apply', () => this.apply());
+		const apply = button('Apply', () => this.apply());
 		apply.className = 'primary';
 		document.body.appendChild(bar);
 		this.bar = bar;

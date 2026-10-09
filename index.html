@@ -4,36 +4,38 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="x-ua-compatible" content="IE=edge" />
 	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self' https://www.googleapis.com; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'self'; child-src 'self';" />
-	<title>WebPhos - image editor</title>
-	<meta name="description" content="WebPhos is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
+	<title>Lumifex - image editor</title>
+	<meta name="description" content="Lumifex is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
 	<meta name="keywords" content="photo, image, picture, transparent, layers, free, edit, html5, canvas, javascript, online, photoshop, gimp, effects, sharpen, blur, magic eraser tool, clone tool, rotate, resize, photoshop online, online tools, tilt shift, sprites, keypoints" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0" />
-	<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
-	<link rel="icon" sizes="192x192" href="images/favicon.png">
+	<link rel="icon" type="image/png" sizes="192x192" href="images/manifest/192x192.png">
 	<link rel="manifest" href="manifest.webmanifest">
-	<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+	<link rel="apple-touch-icon" href="images/manifest/192x192-maskable.png">
 	<meta name="theme-color" content="#f4f4f6" media="(prefers-color-scheme: light)">
 	<meta name="theme-color" content="#2a2a2c" media="(prefers-color-scheme: dark)">
 	<!-- Google -->
-	<meta itemprop="name" content="WebPhos" />
-	<meta itemprop="description" content="WebPhos is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
+	<meta itemprop="name" content="Lumifex" />
+	<meta itemprop="description" content="Lumifex is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
 	<!-- Twitter -->
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="WebPhos" />
-	<meta name="twitter:description" content="WebPhos is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
-	<meta name="twitter:image:alt" content="WebPhos is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
+	<meta name="twitter:title" content="Lumifex" />
+	<meta name="twitter:image" content="https://lumifex.80.cz/images/lumifex-preview.jpg" />
+	<meta name="twitter:description" content="Lumifex is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
+	<meta name="twitter:image:alt" content="Lumifex is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
 	<!-- Facebook, Pinterest -->
-	<meta property="og:title" content="WebPhos" />
+	<meta property="og:title" content="Lumifex" />
+	<meta property="og:image" content="https://lumifex.80.cz/images/lumifex-preview.jpg" />
+	<meta property="og:url" content="https://lumifex.80.cz/" />
 	<meta property="og:type" content="article" />
-	<meta property="og:description" content="WebPhos is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
-<meta property="og:site_name" content="WebPhos" />
+	<meta property="og:description" content="Lumifex is a free online image editor using HTML5. Edit, adjust your images, add effects online in your browser, without installing anything..." />
+<meta property="og:site_name" content="Lumifex" />
 	</head>
 <body>
 	<a class="skip_link trn" href="#main_wrapper">Skip to canvas</a>
 	<div class="wrapper">
 		<header class="app-header">
 			<nav aria-label="Main Menu" class="main_menu" id="main_menu" role="navigation"></nav>
-			
+
 			<div class="submenu">
 				<div class="block attributes" id="action_attributes" role="region" aria-label="Tool attributes"></div>
 				<button class="undo_button" id="undo_button" type="button" aria-label="Undo last action">
@@ -41,7 +43,7 @@
 				</button>
 			</div>
 		</header>
-		
+
 		<main class="app-main">
 			<aside class="sidebar_left" id="tools_container" role="complementary" aria-label="Drawing tools">
 				<h2 class="sr_only">Drawing Tools</h2>
@@ -71,7 +73,7 @@
 					<h2 class="trn toggle" data-target="toggle_preview" tabindex="0" role="button" aria-expanded="false" aria-controls="toggle_preview">Preview</h2>
 					<div id="toggle_preview" role="region" aria-label="Canvas preview"></div>
 				</div>
-				
+
 				<div class="histogram block" id="histogram_base">
 					<h2 class="trn toggle toggle-full" data-target="toggle_histogram" tabindex="0" role="button" aria-expanded="false" aria-controls="toggle_histogram">Histogram</h2>
 					<div class="content histogram-content" id="toggle_histogram" role="region" aria-label="Histogram"></div>
@@ -81,12 +83,12 @@
 					<h2 class="trn toggle" data-target="toggle_colors" tabindex="0" role="button" aria-expanded="false" aria-controls="toggle_colors">Colors</h2>
 					<div class="content" id="toggle_colors" role="region" aria-label="Color palette"></div>
 				</div>
-				
+
 				<div class="details block" id="details_base">
 					<h2 class="trn toggle toggle-full" data-target="toggle_details" tabindex="0" role="button" aria-expanded="false" aria-controls="toggle_details">Layer details</h2>
 					<div class="content details-content" id="toggle_details" role="region" aria-label="Layer properties"></div>
 				</div>
-				
+
 				<div class="history block" id="history_base">
 					<h2 class="trn toggle toggle-full" data-target="toggle_history" tabindex="0" role="button" aria-expanded="false" aria-controls="toggle_history">History</h2>
 					<div class="content history-content" id="toggle_history" role="region" aria-label="History"></div>

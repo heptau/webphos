@@ -36,11 +36,11 @@ const BLEND_MODES = [
 	['luminosity', 'Luminosity'],
 ];
 
-var template = `
+const template = `
 	<input type="search" id="layer_search" class="layer_search" aria-label="Search layers" autocomplete="off" />
 	<div class="layer_props">
 		<select id="layer_blend" aria-label="Blend mode" title="Blend mode">
-			${ BLEND_MODES.map((mode) => `<option class="trn" value="${ mode[0] }">${ mode[1] }</option>`).join('') }
+			${ BLEND_MODES.map((mode) => `<option class="trn" value="${mode[0]}">${mode[1]}</option>`).join('') }
 		</select>
 		<label class="layer_opacity" title="Opacity">
 			<span class="trn">Opacity:</span>
@@ -67,7 +67,7 @@ var template = `
  */
 class GUI_layers_class {
 
-	constructor(ctx) {
+	constructor() {
 		this.Base_layers = new Base_layers_class();
 		this.Helper = new Helper_class();
 		this.Layer_rename = new Layer_rename_class();
@@ -88,19 +88,18 @@ class GUI_layers_class {
 	}
 
 	set_events() {
-		var _this = this;
 
 		//search in layer names
-		document.getElementById('layer_search').addEventListener('input', function () {
-			_this.layer_filter = this.value.trim().toLowerCase();
-			_this.render_layers();
+		document.getElementById('layer_search').addEventListener('input', (event) => {
+			this.layer_filter = event.currentTarget.value.trim().toLowerCase();
+			this.render_layers();
 		});
 		//drag layers to change the order
-		var dragged = null;
-		var list = document.getElementById('layers');
-		list.addEventListener('dragstart', function (event) {
-			var button = event.target.closest ? event.target.closest('button.layer_name') : null;
-			if (!button || _this.layer_filter) {
+		let dragged = null;
+		const list = document.getElementById('layers');
+		list.addEventListener('dragstart', (event) => {
+			const button = event.target.closest ? event.target.closest('button.layer_name') : null;
+			if (!button || this.layer_filter) {
 				event.preventDefault();
 				return;
 			}
@@ -108,16 +107,16 @@ class GUI_layers_class {
 			event.dataTransfer.effectAllowed = 'move';
 			event.dataTransfer.setData('text/plain', dragged);
 		});
-		list.addEventListener('dragover', function (event) {
+		list.addEventListener('dragover', (event) => {
 			if (dragged !== null) {
 				event.preventDefault();
 			}
 		});
-		list.addEventListener('drop', function (event) {
+		list.addEventListener('drop', (event) => {
 			if (dragged === null) {
 				return;
 			}
-			var header = event.target.closest ? event.target.closest('button.group_toggle') : null;
+			const header = event.target.closest ? event.target.closest('button.group_toggle') : null;
 			if (header) {
 				//dropped on the row of a group: the layer goes into the group
 				event.preventDefault();
@@ -125,20 +124,20 @@ class GUI_layers_class {
 				dragged = null;
 				return;
 			}
-			var target = event.target.closest ? event.target.closest('button.layer_name') : null;
+			const target = event.target.closest ? event.target.closest('button.layer_name') : null;
 			if (!target) {
 				return;
 			}
 			event.preventDefault();
-			var ids = Array.from(list.querySelectorAll('button.layer_name')).map(function (button) {
+			const ids = Array.from(list.querySelectorAll('button.layer_name')).map((button) => {
 				return button.dataset.id;
 			});
-			var steps = ids.indexOf(dragged) - ids.indexOf(target.dataset.id);
-			var moved = config.layers.find((layer) => layer.id == dragged);
-			var onto = config.layers.find((layer) => layer.id == target.dataset.id);
+			const steps = ids.indexOf(dragged) - ids.indexOf(target.dataset.id);
+			const moved = config.layers.find((layer) => layer.id == dragged);
+			const onto = config.layers.find((layer) => layer.id == target.dataset.id);
 			if (steps != 0) {
-				var actions = [];
-				for (var i = 0; i < Math.abs(steps); i++) {
+				const actions = [];
+				for (let i = 0; i < Math.abs(steps); i++) {
 					actions.push(new app.Actions.Reorder_layer_action(dragged, steps > 0 ? 1 : -1));
 				}
 				app.State.do_action(new app.Actions.Bundle_action('reorder_layers', 'Reorder Layer', actions));
@@ -149,12 +148,12 @@ class GUI_layers_class {
 			}
 			dragged = null;
 		});
-		list.addEventListener('dragend', function () {
+		list.addEventListener('dragend', () => {
 			dragged = null;
 		});
 
 		//blend mode and opacity of the selected layer
-		var change_layer_prop = function (props) {
+		const change_layer_prop = function (props) {
 			if (!config.layer) {
 				return;
 			}
@@ -168,7 +167,7 @@ class GUI_layers_class {
 			change_layer_prop({composition: this.value});
 		});
 		document.getElementById('layer_opacity').addEventListener('change', function () {
-			var value = parseInt(this.value, 10);
+			let value = parseInt(this.value, 10);
 			if (isNaN(value)) {
 				value = 100;
 			}
@@ -176,15 +175,15 @@ class GUI_layers_class {
 		});
 
 		document.getElementById('layer_fill_opacity').addEventListener('change', function () {
-			var value = parseInt(this.value, 10);
+			let value = parseInt(this.value, 10);
 			if (isNaN(value)) {
 				value = 100;
 			}
 			change_layer_prop({fill_opacity: Math.min(100, Math.max(0, value))});
 		});
 
-		document.getElementById('layers_base').addEventListener('click', function (event) {
-			var target = event.target;
+		document.getElementById('layers_base').addEventListener('click', (event) => {
+			let target = event.target;
 			if (target.closest && target.closest('.layer_buttons button')) {
 				//the buttons contain icons, the click can come from the icon
 				target = target.closest('.layer_buttons button');
@@ -197,11 +196,11 @@ class GUI_layers_class {
 			}
 			else if (target.id == 'layer_duplicate') {
 				//duplicate
-				_this.Layer_duplicate.duplicate();
+				this.Layer_duplicate.duplicate();
 			}
 			else if (target.id == 'layer_raster') {
 				//raster
-				_this.Layer_raster.raster();
+				this.Layer_raster.raster();
 			}
 			else if (target.id == 'layer_up') {
 				//move layer up
@@ -224,7 +223,7 @@ class GUI_layers_class {
 			else if (target.id == 'visibility') {
 				if (event.altKey) {
 					//Alt + click shows only this layer (a second Alt + click shows all again)
-					return _this.solo_layer(target.dataset.id);
+					return this.solo_layer(target.dataset.id);
 				}
 				//change visibility
 				return app.State.do_action(
@@ -272,7 +271,7 @@ class GUI_layers_class {
 			}
 			else if (target.id == 'mask_name') {
 				//disable / enable layer mask
-				var mask_layer = app.Layers.get_layer(parseInt(target.dataset.pid));
+				const mask_layer = app.Layers.get_layer(parseInt(target.dataset.pid));
 				if (mask_layer) {
 					app.State.do_action(
 						new app.Actions.Bundle_action('layer_mask', 'Toggle Mask', [
@@ -289,27 +288,27 @@ class GUI_layers_class {
 			}
 			else if (target.id == 'filter_name') {
 				//edit filter
-				var effects = _this.Effects_browser.get_effects_list();
-				var key = target.dataset.filter.toLowerCase();
-				for (var i in effects) {
+				const effects = this.Effects_browser.get_effects_list();
+				const key = target.dataset.filter.toLowerCase();
+				for (const i in effects) {
 					if(effects[i].title.toLowerCase() == key){
-						_this.Base_layers.select(target.dataset.pid);
-						var function_name = _this.Effects_browser.get_function_from_path(key);
+						this.Base_layers.select(target.dataset.pid);
+						const function_name = this.Effects_browser.get_function_from_path(key);
 						effects[i].object[function_name](target.dataset.id);
 					}
 				}
 			}
 		});
 
-		document.getElementById('layers_base').addEventListener('dblclick', function (event) {
-			var target = event.target;
+		document.getElementById('layers_base').addEventListener('dblclick', (event) => {
+			const target = event.target;
 			if (target.classList && target.classList.contains('group_toggle')) {
 				//the settings of the group (the two clicks have folded and unfolded it again)
 				app.GUI.run_target('layer/group.group_settings', target.dataset.group);
 				return;
 			}
 			if (target.id == 'layer_name') {
-				var clicked = config.layers.find((layer) => layer.id == target.dataset.id);
+				const clicked = config.layers.find((layer) => layer.id == target.dataset.id);
 				if (clicked && clicked.type == 'adjustment') {
 					//an adjustment layer opens its settings
 					app.GUI.run_target('layer/adjustment.edit');
@@ -321,7 +320,7 @@ class GUI_layers_class {
 					return;
 				}
 				//rename layer directly in the list
-				_this.rename_inline(target);
+				this.rename_inline(target);
 			}
 		});
 
@@ -333,13 +332,13 @@ class GUI_layers_class {
 	 * @param {HTMLElement} button
 	 */
 	rename_inline(button) {
-		var id = parseInt(button.dataset.id, 10);
-		var layer = config.layers.find((item) => item.id == id);
+		const id = parseInt(button.dataset.id, 10);
+		const layer = config.layers.find((item) => item.id == id);
 		if (!layer || layer.locked === true) {
 			this.Layer_rename.rename(id);
 			return;
 		}
-		var input = document.createElement('input');
+		const input = document.createElement('input');
 		input.type = 'text';
 		input.className = 'layer_rename_input';
 		input.value = layer.name;
@@ -350,13 +349,13 @@ class GUI_layers_class {
 		input.focus();
 		input.select();
 
-		var done = false;
-		var finish = (save) => {
+		let done = false;
+		const finish = (save) => {
 			if (done) {
 				return;
 			}
 			done = true;
-			var validation = validate_layer_name(input.value.trim());
+			const validation = validate_layer_name(input.value.trim());
 			input.remove();
 			button.style.display = '';
 			if (save && validation.valid && validation.sanitized != layer.name) {
@@ -388,15 +387,15 @@ class GUI_layers_class {
 	 */
 	solo_layer(id) {
 		id = parseInt(id, 10);
-		var others = config.layers.filter((layer) => layer.id != id);
-		var target = config.layers.find((layer) => layer.id == id);
+		const others = config.layers.filter((layer) => layer.id != id);
+		const target = config.layers.find((layer) => layer.id == id);
 		if (!target) {
 			return;
 		}
-		var only = target.visible == true && others.every((layer) => layer.visible != true);
-		var actions = [];
+		const only = target.visible == true && others.every((layer) => layer.visible != true);
+		const actions = [];
 		config.layers.forEach((layer) => {
-			var wanted = only ? true : layer.id == id;
+			const wanted = only ? true : layer.id == id;
 			if ((layer.visible == true) != wanted) {
 				actions.push(new app.Actions.Toggle_layer_visibility_action(layer.id));
 			}
@@ -410,17 +409,17 @@ class GUI_layers_class {
 	 * shows blend mode and opacity of the selected layer in the panel header
 	 */
 	sync_layer_props() {
-		var select = document.getElementById('layer_blend');
-		var opacity = document.getElementById('layer_opacity');
+		const select = document.getElementById('layer_blend');
+		const opacity = document.getElementById('layer_opacity');
 		if (!select || !opacity) {
 			return;
 		}
-		var search = document.getElementById('layer_search');
+		const search = document.getElementById('layer_search');
 		if (search) {
 			search.placeholder = t('Search layers');
 		}
-		var layer = config.layer;
-		var fill = document.getElementById('layer_fill_opacity');
+		const layer = config.layer;
+		const fill = document.getElementById('layer_fill_opacity');
 		select.disabled = opacity.disabled = !layer;
 		if (fill) {
 			fill.disabled = !layer;
@@ -428,8 +427,8 @@ class GUI_layers_class {
 		if (!layer) {
 			return;
 		}
-		var composition = layer.composition || 'source-over';
-		var known = BLEND_MODES.some((mode) => mode[0] == composition);
+		const composition = layer.composition || 'source-over';
+		const known = BLEND_MODES.some((mode) => mode[0] == composition);
 		select.value = known ? composition : '';
 		if (!known) {
 			select.selectedIndex = -1;
@@ -446,42 +445,42 @@ class GUI_layers_class {
 	 * renders layers list
 	 */
 	render_layers() {
-		var target_id = 'layers';
-		var layers = config.layers.concat().sort(
+		const target_id = 'layers';
+		const layers = config.layers.concat().sort(
 			//sort function
 				(a, b) => b.order - a.order
 			);
 
 		document.getElementById(target_id).innerHTML = '';
-		var html = '';
-		
+		let html = '';
+
 		if (config.layer) {
 			//layers of a group get a header row and can be folded (not while searching, the matches must stay visible)
-			var rows = this.layer_filter
-				? layers.map((layer) => ({kind: 'layer', layer: layer}))
+			const rows = this.layer_filter
+				? layers.map((layer) => ({kind: 'layer', layer}))
 				: panel_rows(layers, config.collapsed_groups || []);
-			for (var row_index in rows) {
-				var row = rows[row_index];
+			for (const row_index in rows) {
+				const row = rows[row_index];
 				if (row.kind == 'header') {
-					var group_path = this.Helper.escapeHtml(row.group);
-					var group_label = this.Helper.escapeHtml(row.label);
-					var group_visible = row.members.some((member) => member.visible != false);
-					var group_has_active = row.members.some((member) => member.id == config.layer.id);
-					html += '<div class="item group_header' + (group_has_active ? ' has_active' : '') + '" style="margin-left:' + row.depth * 12 + 'px">';
-					html += '	<button class="visibility group_visibility' + (group_visible ? ' visible' : '') + '" data-group="' + group_path + '" title="' + (group_visible ? t('Hide Group') : t('Show Group')) + '"></button>';
-					html += '	<button class="group_toggle" data-group="' + group_path + '" aria-expanded="' + (row.collapsed ? 'false' : 'true') + '" title="' + t('Double click: Group Settings') + '">'
-						+ '<span class="chevron" aria-hidden="true">' + (row.collapsed ? '\u25B8' : '\u25BE') + '</span> ' + group_label + ' <small style="opacity:.65">(' + row.members.length + ')</small>'
-						+ (group_props_of(row.members[0], row.group).mask ? ' <span class="group_mask" title="' + t('Group Mask') + '" aria-label="' + t('Group Mask') + '">\u25D0</span>' : '') + '</button>';
+					const group_path = this.Helper.escapeHtml(row.group);
+					const group_label = this.Helper.escapeHtml(row.label);
+					const group_visible = row.members.some((member) => member.visible != false);
+					const group_has_active = row.members.some((member) => member.id == config.layer.id);
+					html += `<div class="item group_header${group_has_active ? ' has_active' : ''}" style="margin-left:${row.depth * 12}px">`;
+					html += `	<button class="visibility group_visibility${group_visible ? ' visible' : ''}" data-group="${group_path}" title="${group_visible ? t('Hide Group') : t('Show Group')}"></button>`;
+					html += `	<button class="group_toggle" data-group="${group_path}" aria-expanded="${row.collapsed ? 'false' : 'true'}" title="${t('Double click: Group Settings')}">`
+						+ `<span class="chevron" aria-hidden="true">${row.collapsed ? '\u25B8' : '\u25BE'}</span> ${group_label} <small style="opacity:.65">(${row.members.length})</small>${
+						 group_props_of(row.members[0], row.group).mask ? ` <span class="group_mask" title="${t('Group Mask')}" aria-label="${t('Group Mask')}">\u25D0</span>` : ''  }</button>`;
 					html += '	<div class="clear"></div>';
 					html += '</div>';
 					continue;
 				}
-				var i = layers.indexOf(row.layer);
-				var value = layers[i];
+				const i = layers.indexOf(row.layer);
+				const value = layers[i];
 				if (this.layer_filter && String(value.name).toLowerCase().indexOf(this.layer_filter) < 0) {
 					continue;
 				}
-				var class_extra = '';
+				let class_extra = '';
 				if(value.composition === 'source-atop'){
 					class_extra += ' shorter';
 				}
@@ -489,35 +488,34 @@ class GUI_layers_class {
 					class_extra += ' active';
 				}
 
-				html += '<div class="item ' + class_extra + '"' + (row.depth > 0 ? ' style="margin-left:' + row.depth * 12 + 'px"' : '') + '>';
+				html += `<div class="item ${class_extra}"${  row.depth > 0 ? ` style="margin-left:${row.depth * 12}px"` : ''  }>`;
 				if (value.visible == true)
-					html += '	<button class="visibility visible trn" id="visibility" data-id="' + value.id + '" title="Hide"></button>';
+					html += `	<button class="visibility visible trn" id="visibility" data-id="${value.id}" title="Hide"></button>`;
 				else
-					html += '	<button class="visibility trn" id="visibility" data-id="' + value.id + '" title="Show"></button>';
-				html += '	<button class="delete trn" id="delete" data-id="' + value.id + '" title="Delete"></button>';
-				
+					html += `	<button class="visibility trn" id="visibility" data-id="${value.id}" title="Show"></button>`;
+				html += `	<button class="delete trn" id="delete" data-id="${value.id}" title="Delete"></button>`;
+
 				if(value.composition === 'source-atop'){
-					html += '	<button class="arrow_down" data-id="' + value.id + '" ></button>';
+					html += `	<button class="arrow_down" data-id="${value.id}" ></button>`;
 				}
 
-				var kind = value.type == null ? 'empty' : (value.type == 'adjustment' ? 'adjustment' : (is_vector_layer(value) ? 'vector' : 'raster'));
-				var kind_title = {empty: t('Empty layer'), vector: t('Vector layer'), raster: t('Raster layer'), adjustment: t('Adjustment layer')}[kind];
-				var kind_shapes = {
+				const kind = value.type == null ? 'empty' : (value.type == 'adjustment' ? 'adjustment' : (is_vector_layer(value) ? 'vector' : 'raster'));
+				const kind_title = {empty: t('Empty layer'), vector: t('Vector layer'), raster: t('Raster layer'), adjustment: t('Adjustment layer')}[kind];
+				const kind_shapes = {
 					//the first layer of a new document is empty: the first brush stroke, shape or text makes it vector
 					empty: '<rect x="2.5" y="2.5" width="11" height="11" stroke-dasharray="2 2"/>',
 					vector: '<path d="M3 13C3 7 7 3 13 3"/><rect x="1.5" y="11.5" width="3" height="3" fill="currentColor"/><rect x="11.5" y="1.5" width="3" height="3" fill="currentColor"/>',
 					raster: '<path d="M2.5 2.5h11v11h-11zM2.5 6.2h11M2.5 9.8h11M6.2 2.5v11M9.8 2.5v11"/>',
 					adjustment: '<circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 1 0 11z" fill="currentColor"/>',
 				};
-				var kind_icon = '<svg class="layer_kind ' + kind + '" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="' + kind_title + '"><title>' + kind_title + '</title>'
-					+ kind_shapes[kind] + '</svg>';
-				var linked = value.link_id != null;
-				var layer_title = kind_icon + (value.locked === true ? '\uD83D\uDD12 ' : '')
-					+ (linked ? '<span class="layer_link" title="' + t('Linked layer') + '" aria-label="' + t('Linked layer') + '">\uD83D\uDD17</span> ' : '')
+				const kind_icon = `<svg class="layer_kind ${kind}" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="${kind_title}"><title>${kind_title}</title>${kind_shapes[kind]}</svg>`;
+				const linked = value.link_id != null;
+				const layer_title = kind_icon + (value.locked === true ? '\uD83D\uDD12 ' : '')
+					+ (linked ? `<span class="layer_link" title="${t('Linked layer')}" aria-label="${t('Linked layer')}">\uD83D\uDD17</span> ` : '')
 					+ this.Helper.escapeHtml(value.name);
-				
-				var label = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].indexOf(value.color_label) >= 0 ? value.color_label : '';
-				html += '	<button class="layer_name" id="layer_name" draggable="' + (this.layer_filter ? 'false' : 'true') + '" data-label="' + label + '" data-id="' + value.id + '"' + (value.id == config.layer.id ? ' aria-current="true"' : '') + '>' + layer_title + '</button>';
+
+				const label = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].indexOf(value.color_label) >= 0 ? value.color_label : '';
+				html += `	<button class="layer_name" id="layer_name" draggable="${this.layer_filter ? 'false' : 'true'}" data-label="${label}" data-id="${value.id}"${value.id == config.layer.id ? ' aria-current="true"' : ''}>${layer_title}</button>`;
 				html += '	<div class="clear"></div>';
 				html += '</div>';
 
@@ -526,20 +524,20 @@ class GUI_layers_class {
 					html += '<div class="filters">';
 					if (layers[i].mask) {
 						html += '<div class="filter">';
-						html += '	<span class="delete" id="delete_mask" data-pid="' + layers[i].id + '" title="delete"></span>';
-						html += '	<span class="layer_name" id="mask_name" data-pid="' + layers[i].id + '" title="Disable / Enable Mask">'
-							+ '<span class="trn">Layer Mask</span>' + (layers[i].mask_enabled === false ? ' (<span class="trn">off</span>)' : '') + '</span>';
+						html += `	<span class="delete" id="delete_mask" data-pid="${layers[i].id}" title="delete"></span>`;
+						html += `	<span class="layer_name" id="mask_name" data-pid="${layers[i].id}" title="Disable / Enable Mask">`
+							+ `<span class="trn">Layer Mask</span>${layers[i].mask_enabled === false ? ' (<span class="trn">off</span>)' : ''}</span>`;
 						html += '	<div class="clear"></div>';
 						html += '</div>';
 					}
-					for (var j in layers[i].filters) {
-						var filter = layers[i].filters[j];
-						var title = this.Helper.escapeHtml(this.Helper.ucfirst(String(filter.name)));
+					for (const j in layers[i].filters) {
+						const filter = layers[i].filters[j];
+						let title = this.Helper.escapeHtml(this.Helper.ucfirst(String(filter.name)));
 						title = title.replace(/-/g, ' ');
 
 						html += '<div class="filter">';
-						html += '	<span class="delete" id="delete_filter" data-pid="' + layers[i].id + '" data-id="' + filter.id + '" title="delete"></span>';
-						html += '	<span class="layer_name" id="filter_name" data-pid="' + layers[i].id + '" data-id="' + filter.id + '" data-filter="' + this.Helper.escapeHtml(String(filter.name)) + '">' + title + '</span>';
+						html += `	<span class="delete" id="delete_filter" data-pid="${layers[i].id}" data-id="${filter.id}" title="delete"></span>`;
+						html += `	<span class="layer_name" id="filter_name" data-pid="${layers[i].id}" data-id="${filter.id}" data-filter="${this.Helper.escapeHtml(String(filter.name))}">${title}</span>`;
 						html += '	<div class="clear"></div>';
 						html += '</div>';
 					}
@@ -556,9 +554,9 @@ class GUI_layers_class {
 			this.Tools_translate.translate(config.LANG, document.getElementById(target_id));
 		}
 		//converting to raster makes sense for a vector layer and for the empty first layer (it becomes a transparent picture)
-		var raster_button = document.getElementById('layer_raster');
+		const raster_button = document.getElementById('layer_raster');
 		if (raster_button) {
-			var layer = config.layer;
+			const layer = config.layer;
 			//no layer yet (the start of the program): nothing to convert
 			raster_button.disabled = !layer || layer.type == 'adjustment' || (is_vector_layer(layer) == false && layer.type != null);
 		}

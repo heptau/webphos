@@ -1,10 +1,10 @@
 const menuDefinition = [
 	{
-		name: 'WebPhos',
+		name: 'Lumifex',
 		app_menu: true,
 		children: [
 			{
-				name: 'About WebPhos',
+				name: 'About Lumifex',
 				ellipsis: true,
 				target: 'help/about.about'
 			},
@@ -31,7 +31,7 @@ const menuDefinition = [
 				divider: true
 			},
 			{
-				name: 'Quit WebPhos',
+				name: 'Quit Lumifex',
 				target: 'help/quit.quit'
 			}
 		]
@@ -2088,7 +2088,7 @@ const menuDefinition = [
 			},
 			{
 				name: 'Report Issues',
-				href: 'https://github.com/heptau/webphos/issues'
+				href: 'https://github.com/heptau/lumifex/issues'
 			}
 		]
 	}

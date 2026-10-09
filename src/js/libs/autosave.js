@@ -14,7 +14,7 @@ function open_db() {
 			reject(new Error('IndexedDB not supported'));
 			return;
 		}
-		var request = indexedDB.open(DB_NAME, 1);
+		const request = indexedDB.open(DB_NAME, 1);
 		request.onerror = () => reject(request.error);
 		request.onsuccess = () => resolve(request.result);
 		request.onupgradeneeded = () => request.result.createObjectStore(STORE);
@@ -23,8 +23,8 @@ function open_db() {
 
 function run(mode, action) {
 	return open_db().then((db) => new Promise((resolve, reject) => {
-		var transaction = db.transaction([STORE], mode);
-		var request = action(transaction.objectStore(STORE));
+		const transaction = db.transaction([STORE], mode);
+		const request = action(transaction.objectStore(STORE));
 		transaction.oncomplete = () => {
 			db.close();
 			resolve(request ? request.result : undefined);
@@ -62,17 +62,17 @@ export async function save_session(session) {
 		await run('readwrite', (store) => store.put(session, KEY));
 		return true;
 	}
-	catch (e) {
+	catch {
 		return false;
 	}
 }
 
 export async function load_session() {
 	try {
-		var session = await run('readonly', (store) => store.get(KEY));
+		const session = await run('readonly', (store) => store.get(KEY));
 		return is_session_fresh(session, Date.now()) ? session : null;
 	}
-	catch (e) {
+	catch {
 		return null;
 	}
 }
@@ -81,7 +81,7 @@ export async function clear_session() {
 	try {
 		await run('readwrite', (store) => store.delete(KEY));
 	}
-	catch (e) {
+	catch {
 		//ignore
 	}
 }

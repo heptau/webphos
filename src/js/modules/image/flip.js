@@ -25,14 +25,13 @@ class Image_flip_class {
 		}
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
 
 		//create destination canvas
-		var canvas2 = document.createElement('canvas');
+		const canvas2 = document.createElement('canvas');
 		canvas2.width = canvas.width;
 		canvas2.height = canvas.height;
-		var ctx2 = canvas2.getContext("2d");
+		const ctx2 = canvas2.getContext("2d");
 		canvas2.dataset.x = canvas.dataset.x;
 		canvas2.dataset.y = canvas.dataset.y;
 

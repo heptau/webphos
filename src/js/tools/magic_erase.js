@@ -16,28 +16,26 @@ class Magic_erase_class extends Base_tools_class {
 	}
 
 	dragStart(event) {
-		var _this = this;
-		if (config.TOOL.name != _this.name)
+		if (config.TOOL.name != this.name)
 			return;
-		_this.mousedown(event);
+		this.mousedown(event);
 	}
 
 	load() {
-		var _this = this;
 
 		//mouse events
-		document.addEventListener('mousedown', function (event) {
-			_this.dragStart(event);
+		document.addEventListener('mousedown', (event) => {
+			this.dragStart(event);
 		});
 
 		// collect touch events
-		document.addEventListener('touchstart', function (event) {
-			_this.dragStart(event);
+		document.addEventListener('touchstart', (event) => {
+			this.dragStart(event);
 		});
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -50,7 +48,7 @@ class Magic_erase_class extends Base_tools_class {
 	}
 
 	async magic_erase(mouse) {
-		var params = this.getParams();
+		const params = this.getParams();
 
 		if(this.working == true){
 			return;
@@ -66,14 +64,14 @@ class Magic_erase_class extends Base_tools_class {
 		}
 
 		//get canvas from layer
-		var canvas = document.createElement('canvas');
-		var ctx = canvas.getContext("2d");
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext("2d");
 		canvas.width = config.layer.width_original;
 		canvas.height = config.layer.height_original;
 		ctx.drawImage(config.layer.link, 0, 0);
 
-		var mouse_x = Math.round(mouse.x) - config.layer.x;
-		var mouse_y = Math.round(mouse.y) - config.layer.y;
+		let mouse_x = Math.round(mouse.x) - config.layer.x;
+		let mouse_y = Math.round(mouse.y) - config.layer.y;
 
 		//adapt to origin size
 		mouse_x = this.adaptSize(mouse_x, 'width');
@@ -110,33 +108,34 @@ class Magic_erase_class extends Base_tools_class {
 	 * @param {Boolean} anti_aliasing
 	 */
 	magic_erase_general(context, W, H, x, y, sensitivity, anti_aliasing, contiguous = false) {
+		let i;
 		sensitivity = sensitivity * 255 / 100; //convert to 0-255 interval
 		x = parseInt(x);
 		y = parseInt(y);
-		var canvasTemp = document.createElement('canvas');
+		const canvasTemp = document.createElement('canvas');
 		canvasTemp.width = W;
 		canvasTemp.height = H;
-		var ctxTemp = canvasTemp.getContext("2d");
+		const ctxTemp = canvasTemp.getContext("2d");
 
 		ctxTemp.rect(0, 0, W, H);
 		ctxTemp.fillStyle = "rgba(255, 255, 255, 0)";
 		ctxTemp.fill();
 
-		var img_tmp = ctxTemp.getImageData(0, 0, W, H);
-		var imgData_tmp = img_tmp.data;
+		const img_tmp = ctxTemp.getImageData(0, 0, W, H);
+		const imgData_tmp = img_tmp.data;
 
-		var img = context.getImageData(0, 0, W, H);
-		var imgData = img.data;
-		var k = ((y * (img.width * 4)) + (x * 4));
-		var dx = [0, -1, +1, 0];
-		var dy = [-1, 0, 0, +1];
-		var color_to = {
+		const img = context.getImageData(0, 0, W, H);
+		const imgData = img.data;
+		let k = ((y * (img.width * 4)) + (x * 4));
+		const dx = [0, -1, +1, 0];
+		const dy = [-1, 0, 0, +1];
+		const color_to = {
 			r: 255,
 			g: 255,
 			b: 255,
 			a: 255
 		};
-		var color_from = {
+		const color_from = {
 			r: imgData[k + 0],
 			g: imgData[k + 1],
 			b: imgData[k + 2],
@@ -150,16 +149,16 @@ class Magic_erase_class extends Base_tools_class {
 		}
 		if (contiguous == false) {
 			//check only nearest pixels
-			var stack = [];
+			const stack = [];
 			stack.push([x, y]);
 			while (stack.length > 0) {
-				var curPoint = stack.pop();
-				for (var i = 0; i < 4; i++) {
-					var nextPointX = curPoint[0] + dx[i];
-					var nextPointY = curPoint[1] + dy[i];
+				const curPoint = stack.pop();
+				for (i = 0; i < 4; i++) {
+					const nextPointX = curPoint[0] + dx[i];
+					const nextPointY = curPoint[1] + dy[i];
 					if (nextPointX < 0 || nextPointY < 0 || nextPointX >= W || nextPointY >= H)
 						continue;
-					var k = (nextPointY * W + nextPointX) * 4;
+					k = (nextPointY * W + nextPointX) * 4;
 					if (imgData_tmp[k + 3] != 0)
 						continue; //already parsed
 
@@ -180,14 +179,14 @@ class Magic_erase_class extends Base_tools_class {
 		}
 		else {
 			//global mode - contiguous
-			for (var i = 0; i < imgData.length; i += 4) {
+			for (i = 0; i < imgData.length; i += 4) {
 				if (imgData[i + 3] == 0)
 					continue;	//transparent
 
 				//imgData[i] + 0.7152 * imgData[i + 1] + 0.0722 * imgData[i + 2]);
 
-				for (var j = 0; j < 4; j++) {
-					var k = i + j;
+				for (let j = 0; j < 4; j++) {
+					k = i + j;
 
 					if (Math.abs(imgData[k] - color_from.r) <= sensitivity
 						&& Math.abs(imgData[k + 1] - color_from.g) <= sensitivity

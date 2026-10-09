@@ -10,11 +10,11 @@ export async function read_clipboard_canvas() {
 	if (!navigator.clipboard || typeof navigator.clipboard.read != 'function') {
 		throw new Error(t('Your browser does not allow reading the clipboard.'));
 	}
-	var blob = null;
+	let blob = null;
 	try {
-		var items = await navigator.clipboard.read();
-		for (var item of items) {
-			var type = item.types.find((name) => name.indexOf('image/') == 0);
+		const items = await navigator.clipboard.read();
+		for (const item of items) {
+			const type = item.types.find((name) => name.indexOf('image/') == 0);
 			if (type) {
 				blob = await item.getType(type);
 				break;
@@ -27,8 +27,8 @@ export async function read_clipboard_canvas() {
 	if (!blob) {
 		throw new Error(t('There is no picture in the clipboard.'));
 	}
-	var bitmap = await createImageBitmap(blob);
-	var canvas = document.createElement('canvas');
+	const bitmap = await createImageBitmap(blob);
+	const canvas = document.createElement('canvas');
 	canvas.width = bitmap.width;
 	canvas.height = bitmap.height;
 	canvas.getContext('2d').drawImage(bitmap, 0, 0);

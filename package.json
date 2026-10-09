@@ -1,6 +1,6 @@
 {
-  "name": "webphos",
-  "version": "26.1.0",
+  "name": "lumifex",
+  "version": "26.1.1",
   "author": "Vilius L.",
   "description": "Online graphics editing tool lets create, edit images using HTML5 technologies.",
   "keywords": [
@@ -24,9 +24,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heptau/webphos"
+    "url": "https://github.com/heptau/lumifex"
   },
-  "homepage": "https://github.com/heptau/webphos",
+  "homepage": "https://github.com/heptau/lumifex",
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.24.0",

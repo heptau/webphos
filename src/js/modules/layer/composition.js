@@ -11,7 +11,7 @@ class Layer_composition_class {
 	}
 
 	composition() {
-		var compositions = [
+		const compositions = [
 			"-- Default --",
 			"color",
 			"color-burn",
@@ -42,25 +42,24 @@ class Layer_composition_class {
 			"xor",
 		];
 
-		var initial_composition = config.layer.composition;
-		var _this = this;
+		const initial_composition = config.layer.composition;
 
-		var settings = {
+		const settings = {
 			title: 'Composition',
 			//preview: true,
 			params: [
 				{name: "composition", title: "Composition:", value: config.layer.composition, values: compositions},
 			],
-			on_change: function (params, canvas_preview, w, h) {
+			on_change: (params) => {
 				//redraw preview
 				if (params.composition == '-- Default --') {
 					params.composition = 'source-over';
 				}
 				config.layer.composition = params.composition;
 				config.need_render = true;
-				_this.Base_gui_class.GUI_layers.render_layers();
+				this.Base_gui_class.GUI_layers.render_layers();
 			},
-			on_finish: function (params) {
+			on_finish (params) {
 				config.layer.composition = initial_composition;
 				if (params.composition == '-- Default --') {
 					params.composition = 'source-over';
@@ -73,10 +72,10 @@ class Layer_composition_class {
 					])
 				);
 			},
-			on_cancel: function (params) {
+			on_cancel: () => {
 				config.layer.composition = initial_composition;
 				config.need_render = true;
-				_this.Base_gui_class.GUI_layers.render_layers();
+				this.Base_gui_class.GUI_layers.render_layers();
 			},
 		};
 		this.POP.show(settings);

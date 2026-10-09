@@ -20,21 +20,19 @@ class Effects_borders_class {
 			return;
 		}
 
-		var _this = this;
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'borders');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'borders');
 
-		var settings = {
+		const settings = {
 			title: 'Borders',
 			params: [
 				{name: "color", title: "Color:", value: filter.color ??= config.COLOR, type: 'color'},
 				{name: "size", title: "Size:", value: filter.size ??= 10},
 			],
-			on_finish: function (params) {
-				var target = Math.min(config.WIDTH, config.HEIGHT);
-				_this.add_borders(params, filter_id);
+			on_finish: (params) => {
+				this.add_borders(params, filter_id);
 			},
 		};
-		var rotate = config.layer.rotate;
+		const rotate = config.layer.rotate;
 		config.layer.rotate = 0;
 		this.Base_layers.disable_filter(filter_id);
 		this.POP.show(settings);
@@ -43,8 +41,8 @@ class Effects_borders_class {
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//draw
 		ctx.drawImage(canvas_thumb,
@@ -59,21 +57,17 @@ class Effects_borders_class {
 		ctx.stroke();
 	}
 
-	render_pre(ctx, data) {
+	render_pre() {
 
 	}
 
 	render_post(ctx, data, layer){
-		var size = Math.max(0, data.params.size);
+		const size = Math.max(0, data.params.size);
 
-		var x = layer.x;
-		var y = layer.y;
-		var width = parseInt(layer.width);
-		var height = parseInt(layer.height);
+		let width = parseInt(layer.width);
+		let height = parseInt(layer.height);
 
 		//legacy check
-		if(x == null) x = 0;
-		if(y == null) y = 0;
 		if(!width) width = config.WIDTH;
 		if(!height) height = config.HEIGHT;
 
@@ -86,8 +80,8 @@ class Effects_borders_class {
 		//draw with rotation support
 		ctx.translate(layer.x + width / 2, layer.y + height / 2);
 		ctx.rotate(layer.rotate * Math.PI / 180);
-		var x_new = -width / 2;
-		var y_new = -height / 2;
+		const x_new = -width / 2;
+		const y_new = -height / 2;
 
 		ctx.beginPath();
 		ctx.rect(x_new - size * 0.5, y_new - size * 0.5, width + size, height + size);

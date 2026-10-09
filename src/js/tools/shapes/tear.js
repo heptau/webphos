@@ -30,7 +30,7 @@ class Tear_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
@@ -39,7 +39,7 @@ class Tear_class extends Base_tools_class {
 		ctx.strokeStyle = '#555';
 		ctx.lineWidth = 2;
 
-		var width_all = width + x * 2;
+		const width_all = width + x * 2;
 		width = height * this.best_ratio;
 		x = (width_all - width) / 2;
 
@@ -50,7 +50,7 @@ class Tear_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
+		const params = layer.params;
 		ctx.save();
 
 		//set styles
@@ -71,15 +71,15 @@ class Tear_class extends Base_tools_class {
 	}
 
 	draw_shape(ctx, x, y, width, height, fill, stroke) {
-		var left = parseInt(x);
-		var top = parseInt(y);
+		const left = parseInt(x);
+		const top = parseInt(y);
 
 		//settings
-		var curve_height = 29 / 100;
-		var curve_start_x = 28 / 100;
-		var curve_end_x = 1 - curve_start_x;
-		var curve_cdx = 70;
-		var curve_cdy = 58;
+		const curve_height = 29 / 100;
+		const curve_start_x = 28 / 100;
+		const curve_end_x = 1 - curve_start_x;
+		const curve_cdx = 70;
+		const curve_cdy = 58;
 
 		ctx.beginPath();
 		ctx.moveTo(left + width * 0.5, top);

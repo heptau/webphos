@@ -20,10 +20,10 @@ export function read_cookie_value(cookie_string, name) {
 	if (typeof cookie_string != 'string' || cookie_string == '') {
 		return null;
 	}
-	var parts = cookie_string.split(';');
-	for (var i in parts) {
-		var part = parts[i].trim();
-		var separator = part.indexOf('=');
+	const parts = cookie_string.split(';');
+	for (const i in parts) {
+		const part = parts[i].trim();
+		const separator = part.indexOf('=');
 		if (separator == -1) {
 			continue;
 		}
@@ -44,25 +44,25 @@ export function parse_config_value(raw) {
 	if (typeof raw != 'string' || raw == '') {
 		return {};
 	}
-	var candidates = [raw];
+	const candidates = [raw];
 	try {
-		var decoded = decodeURIComponent(raw);
+		const decoded = decodeURIComponent(raw);
 		if (decoded != raw) {
 			candidates.unshift(decoded);
 		}
 	}
-	catch (error) {
+	catch {
 		//malformed URI sequence - try raw value only
 	}
 
-	for (var i in candidates) {
+	for (const i in candidates) {
 		try {
-			var data = JSON.parse(candidates[i]);
+			const data = JSON.parse(candidates[i]);
 			if (data !== null && typeof data == 'object' && Array.isArray(data) == false) {
 				return data;
 			}
 		}
-		catch (error) {
+		catch {
 			//try next candidate
 		}
 	}
@@ -98,8 +98,7 @@ export function write_config(data) {
 	if (typeof document == 'undefined') {
 		return;
 	}
-	var expire = new Date();
+	const expire = new Date();
 	expire.setTime(expire.getTime() + EXPIRE_DAYS * 24 * 3600 * 1000);
-	document.cookie = CONFIG_COOKIE + '=' + serialize_config_value(data)
-		+ '; expires=' + expire.toUTCString() + '; SameSite=Lax';
+	document.cookie = `${CONFIG_COOKIE  }=${serialize_config_value(data)}; expires=${expire.toUTCString()}; SameSite=Lax`;
 }

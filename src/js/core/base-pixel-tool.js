@@ -34,8 +34,8 @@ class Base_pixel_tool_class extends Base_tools_class {
 			return;
 		this.mousemove(event);
 
-		var mouse = this.get_mouse_info(event);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(event);
+		const params = this.getParams();
 		if (params.size) {
 			this.show_mouse_cursor(mouse.x, mouse.y, params.size, 'circle');
 		}
@@ -60,21 +60,21 @@ class Base_pixel_tool_class extends Base_tools_class {
 	 * @param {function} fn
 	 */
 	with_region(ctx, position, radius, fn) {
-		var left = Math.max(0, Math.floor(position.x - radius));
-		var top = Math.max(0, Math.floor(position.y - radius));
-		var right = Math.min(ctx.canvas.width, Math.ceil(position.x + radius));
-		var bottom = Math.min(ctx.canvas.height, Math.ceil(position.y + radius));
+		const left = Math.max(0, Math.floor(position.x - radius));
+		const top = Math.max(0, Math.floor(position.y - radius));
+		const right = Math.min(ctx.canvas.width, Math.ceil(position.x + radius));
+		const bottom = Math.min(ctx.canvas.height, Math.ceil(position.y + radius));
 		if (right <= left || bottom <= top) {
 			return;
 		}
-		var image = ctx.getImageData(left, top, right - left, bottom - top);
+		const image = ctx.getImageData(left, top, right - left, bottom - top);
 		fn(image, position.x - left, position.y - top);
 		ctx.putImageData(image, left, top);
 	}
 
 	mousedown(e) {
 		this.started = false;
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -94,7 +94,7 @@ class Base_pixel_tool_class extends Base_tools_class {
 		this.tmpCanvas.height = config.layer.height_original;
 		this.tmpCanvasCtx.drawImage(config.layer.link, 0, 0);
 
-		var params = this.getParams();
+		const params = this.getParams();
 		this.last = this.to_layer_position(mouse);
 		if (this.begin) {
 			this.begin(this.tmpCanvasCtx, this.last, params);
@@ -108,18 +108,18 @@ class Base_pixel_tool_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false || mouse.click_valid == false || this.started == false || this.single_click) {
 			return;
 		}
-		var params = this.getParams();
-		var position = this.to_layer_position(mouse);
-		var size = Math.max(1, this.adaptSize(params.size || 20, 'width'));
-		var spacing = Math.max(1, size / this.spacing_factor);
-		var distance = Math.hypot(position.x - this.last.x, position.y - this.last.y);
-		var steps = Math.floor(distance / spacing);
-		for (var s = 1; s <= steps; s++) {
-			var next = {
+		const params = this.getParams();
+		const position = this.to_layer_position(mouse);
+		const size = Math.max(1, this.adaptSize(params.size || 20, 'width'));
+		const spacing = Math.max(1, size / this.spacing_factor);
+		const distance = Math.hypot(position.x - this.last.x, position.y - this.last.y);
+		const steps = Math.floor(distance / spacing);
+		for (let s = 1; s <= steps; s++) {
+			const next = {
 				x: this.last.x + (position.x - this.last.x) * s / steps,
 				y: this.last.y + (position.y - this.last.y) * s / steps,
 			};
@@ -142,7 +142,7 @@ class Base_pixel_tool_class extends Base_tools_class {
 		}
 
 		app.State.do_action(
-			new app.Actions.Bundle_action(this.name + '_tool', this.history_name, [
+			new app.Actions.Bundle_action(`${this.name  }_tool`, this.history_name, [
 				new app.Actions.Update_layer_image_action(this.tmpCanvas)
 			])
 		);

@@ -16,7 +16,7 @@ class File_save_size_class {
 
 	update_file_size(file_size) {
 		//the size is calculated asynchronously, the dialog may be closed by then
-		var element = document.getElementById('file_size');
+		const element = document.getElementById('file_size');
 		if (!element) {
 			return;
 		}
@@ -26,11 +26,11 @@ class File_save_size_class {
 		}
 
 		if (file_size > 1024 * 1024)
-			file_size = this.owner.Helper.number_format(file_size / 1024 / 1024, 2) + ' MB';
+			file_size = `${this.owner.Helper.number_format(file_size / 1024 / 1024, 2)  } MB`;
 		else if (file_size > 1024)
-			file_size = this.owner.Helper.number_format(file_size / 1024, 2) + ' KB';
+			file_size = `${this.owner.Helper.number_format(file_size / 1024, 2)  } KB`;
 		else
-			file_size = (file_size) + ' B';
+			file_size = `${file_size  } B`;
 		element.innerHTML = file_size;
 	}
 
@@ -40,17 +40,17 @@ class File_save_size_class {
 	 * @param {boolean} calculate_file_size
 	 */
 	save_dialog_onchange(calculate_file_size) {
-		var _this = this;
-		var user_response = this.owner.POP.get_params();
+		let canvas, ctx, data_header;
+		const user_response = this.owner.POP.get_params();
 
-		var quality = parseInt(user_response.quality);
+		let quality = parseInt(user_response.quality);
 		if (quality > 100 || quality < 1 || isNaN(quality) == true)
 			quality = 90;
 		quality = quality / 100;
 
 		//detect type
-		var type = user_response.type;
-		var parts = type.split(" ");
+		let type = user_response.type;
+		const parts = type.split(" ");
 		type = parts[0];
 
 		if (type == 'JPG' || type == 'WEBP' || type == 'AVIF' || type == 'PDF')
@@ -100,8 +100,8 @@ class File_save_size_class {
 
 		if (type != 'JSON') {
 			//create temp canvas
-			var canvas = document.createElement('canvas');
-			var ctx = canvas.getContext("2d");
+			canvas = document.createElement('canvas');
+			ctx = canvas.getContext("2d");
 			canvas.width = config.WIDTH;
 			canvas.height = config.HEIGHT;
 			disable_canvas_smooth(ctx);
@@ -109,10 +109,10 @@ class File_save_size_class {
 			//ask data
 			if (user_response.layers == 'Selected' && type != 'GIF' && config.layer.type != null) {
 				//only current layer !!!
-				var layer = config.layer;
+				const layer = config.layer;
 
-				var initial_x = null;
-				var initial_y = null;
+				let initial_x = null;
+				let initial_y = null;
 				if (layer.x != null && layer.y != null && layer.width != null && layer.height != null) {
 					//change position to top left corner
 					initial_x = layer.x;
@@ -147,73 +147,73 @@ class File_save_size_class {
 		//calc size
 		if (type == 'PNG') {
 			//png
-			canvas.toBlob(function (blob) {
-				_this.update_file_size(blob.size);
+			canvas.toBlob((blob) => {
+				this.update_file_size(blob.size);
 			});
 		}
 		else if (type == 'JPG') {
 			//jpg
-			canvas.toBlob(function (blob) {
-				_this.update_file_size(blob.size);
+			canvas.toBlob((blob) => {
+				this.update_file_size(blob.size);
 			}, "image/jpeg", quality);
 		}
 		else if (type == 'PDF') {
 			//pdf = jpeg + small header
-			canvas.toBlob(function (blob) {
-				_this.update_file_size(blob.size + 900);
+			canvas.toBlob((blob) => {
+				this.update_file_size(blob.size + 900);
 			}, "image/jpeg", quality);
 		}
 		else if (type == 'WEBP') {
 			//WEBP
-			var data_header = "image/webp";
+			data_header = "image/webp";
 
 			//check support
 			if (check_format_support(canvas, data_header, false) == false) {
-				_this.update_file_size('-');
+				this.update_file_size('-');
 				return;
 			}
 
-			canvas.toBlob(function (blob) {
-				_this.update_file_size(blob.size);
+			canvas.toBlob((blob) => {
+				this.update_file_size(blob.size);
 			}, data_header, quality);
 		}
 		else if (type == 'AVIF') {
 			//AVIF
-			var data_header = "image/avif";
+			data_header = "image/avif";
 
 			//check support
 			if (check_format_support(canvas, data_header, false) == false) {
-				_this.update_file_size('-');
+				this.update_file_size('-');
 				return;
 			}
 
-			canvas.toBlob(function (blob) {
-				_this.update_file_size(blob.size);
+			canvas.toBlob((blob) => {
+				this.update_file_size(blob.size);
 			}, data_header, quality);
 		}
 		else if (type == 'BMP') {
 			//bmp
 
-			_this.update_file_size(canvas_to_bmp_blob(canvas).size);
+			this.update_file_size(canvas_to_bmp_blob(canvas).size);
 		}
 		else if (type == 'TIFF') {
 			//tiff
-			var data_header = "image/tiff";
+			data_header = "image/tiff";
 
-			CanvasToTIFF.toBlob(canvas, function(blob) {
-				_this.update_file_size(blob.size);
+			CanvasToTIFF.toBlob(canvas, (blob) => {
+				this.update_file_size(blob.size);
 			}, data_header);
 		}
 		else if (type == 'JSON') {
 			//json
-			var data_json = export_as_json();
+			const data_json = export_as_json();
 
-			var blob = new Blob([data_json], {type: "text/plain"});
-			_this.update_file_size(blob.size);
+			const blob = new Blob([data_json], {type: "text/plain"});
+			this.update_file_size(blob.size);
 		}
 		else if (type == 'GIF') {
 			//gif
-			_this.update_file_size('-');
+			this.update_file_size('-');
 		}
 	}
 

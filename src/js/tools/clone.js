@@ -22,84 +22,80 @@ class Clone_class extends Base_tools_class {
 	}
 
 	load() {
-		var _this = this;
-		var is_touch = false;
+		let is_touch = false;
 
 		//mouse events
-		document.addEventListener('mousedown', function (event) {
+		document.addEventListener('mousedown', (event) => {
 			if(is_touch)
 				return;
-			_this.dragStart(event);
+			this.dragStart(event);
 		});
-		document.addEventListener('mousemove', function (event) {
+		document.addEventListener('mousemove', (event) => {
 			if(is_touch)
 				return;
-			_this.dragMove(event);
+			this.dragMove(event);
 		});
-		document.addEventListener('mouseup', function (event) {
+		document.addEventListener('mouseup', (event) => {
 			if(is_touch)
 				return;
-			_this.dragEnd(event);
+			this.dragEnd(event);
 		});
 
 		// collect touch events
-		document.addEventListener('touchstart', function (event) {
+		document.addEventListener('touchstart', (event) => {
 			is_touch = true;
-			_this.dragStart(event);
+			this.dragStart(event);
 		});
-		document.addEventListener('touchmove', function (event) {
-			_this.dragMove(event);
+		document.addEventListener('touchmove', (event) => {
+			this.dragMove(event);
 		});
-		document.addEventListener('touchend', function (event) {
-			_this.dragEnd(event);
+		document.addEventListener('touchend', (event) => {
+			this.dragEnd(event);
 		});
 
-		document.addEventListener('contextmenu', function (event) {
-			_this.mouseRightClick(event);
+		document.addEventListener('contextmenu', (event) => {
+			this.mouseRightClick(event);
 		});
 	}
 
 	dragStart(event) {
-		var _this = this;
-		if (config.TOOL.name != _this.name)
+		if (config.TOOL.name != this.name)
 			return;
-		_this.mousedown(event);
+		this.mousedown(event);
 
-		var mouse = this.get_mouse_info(event);
+		const mouse = this.get_mouse_info(event);
 		if (mouse.click_valid == true) {
-			this.pressTimer = window.setTimeout(function() {
+			this.pressTimer = window.setTimeout(() => {
 				//long press success
-				_this.mouseLongClick();
+				this.mouseLongClick();
 			}, 2000);
 		}
 	}
 
 	dragMove(event) {
-		var _this = this;
-		if (config.TOOL.name != _this.name)
+		if (config.TOOL.name != this.name)
 			return;
-		_this.mousemove(event);
+		this.mousemove(event);
 
 		//mouse cursor
-		var mouse = _this.get_mouse_info(event);
-		var params = _this.getParams();
-		_this.show_mouse_cursor(mouse.x, mouse.y, params.size, 'circle');
+		const mouse = this.get_mouse_info(event);
+		const params = this.getParams();
+		this.show_mouse_cursor(mouse.x, mouse.y, params.size, 'circle');
 
 		clearTimeout(this.pressTimer);
 	}
 
 	dragEnd(event) {
-		var _this = this;
-		if (config.TOOL.name != _this.name)
+		if (config.TOOL.name != this.name)
 			return;
-		_this.mouseup(event);
+		this.mouseup(event);
 
 		clearTimeout(this.pressTimer);
 	}
 
 	on_params_update() {
-		var params = this.getParams();
-		var strict_element = document.getElementById('strict');
+		const params = this.getParams();
+		const strict_element = document.getElementById('strict');
 
 		if (params.circle == false) {
 			//hide strict controls
@@ -114,8 +110,8 @@ class Clone_class extends Base_tools_class {
 	mouseRightClick(e) {
 		if (config.TOOL.name != this.name)
 			return;
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 
 		if (e.which == 3 && mouse.valid == true) {
 			e.preventDefault();
@@ -134,8 +130,8 @@ class Clone_class extends Base_tools_class {
 		if (e.which == 3 && mouse.valid == true) {
 			//right click - save coords
 
-			var mouse_x = this.adaptSize(mouse.x, 'width');
-			var mouse_y = this.adaptSize(mouse.y, 'height');
+			const mouse_x = this.adaptSize(mouse.x, 'width');
+			const mouse_y = this.adaptSize(mouse.y, 'height');
 
 			this.clone_coords = {
 				x: mouse_x,
@@ -146,8 +142,8 @@ class Clone_class extends Base_tools_class {
 	}
 
 	mouseLongClick(){
-		var params = this.getParams();
-		var mouse = this.get_mouse_info();
+		const params = this.getParams();
+		const mouse = this.get_mouse_info();
 
 		if (params.source_layer.value == 'Previous' && config.layer.type === null) {
 			this.Layer_raster.raster();
@@ -161,8 +157,8 @@ class Clone_class extends Base_tools_class {
 			return;
 		}
 
-		var mouse_x = this.adaptSize(mouse.x, 'width');
-		var mouse_y = this.adaptSize(mouse.y, 'height');
+		const mouse_x = this.adaptSize(mouse.x, 'width');
+		const mouse_y = this.adaptSize(mouse.y, 'height');
 
 		this.clone_coords = {
 			x: mouse_x,
@@ -173,10 +169,10 @@ class Clone_class extends Base_tools_class {
 
 	mousedown(e) {
 		this.started = false;
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
-		var layer = config.layer;
-		var previous_layer = this.Base_layers.find_previous(config.layer.id);
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
+		const layer = config.layer;
+		const previous_layer = this.Base_layers.find_previous(config.layer.id);
 
 		if (mouse.click_valid == false) {
 			return;
@@ -235,8 +231,7 @@ class Clone_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
 
 		if (mouse.is_drag == false)
 			return;
@@ -254,7 +249,7 @@ class Clone_class extends Base_tools_class {
 		config.need_render = true;
 	}
 
-	mouseup(e) {
+	mouseup() {
 		if (this.started == false) {
 			return;
 		}
@@ -274,11 +269,11 @@ class Clone_class extends Base_tools_class {
 	}
 
 	clone_general(canvas_from, canvas_to, type, mouse) {
-		var params = this.getParams();
+		const params = this.getParams();
 
-		var mouse_x = Math.round(mouse.x) - config.layer.x;
-		var mouse_y = Math.round(mouse.y) - config.layer.y;
-		var half = Math.round(params.size / 2);
+		let mouse_x = Math.round(mouse.x) - config.layer.x;
+		let mouse_y = Math.round(mouse.y) - config.layer.y;
+		const half = Math.round(params.size / 2);
 
 		//adapt to origin size
 		mouse_x = this.adaptSize(mouse_x, 'width');
@@ -289,22 +284,22 @@ class Clone_class extends Base_tools_class {
 		mouse_y = Math.round(mouse_y);
 
 		//create source canvas
-		var canvas_source = document.createElement("canvas");
-		var ctx_source = canvas_source.getContext("2d");
-		var w = Math.ceil(params.size);
-		var h = Math.ceil(params.size);
+		const canvas_source = document.createElement("canvas");
+		const ctx_source = canvas_source.getContext("2d");
+		const w = Math.ceil(params.size);
+		const h = Math.ceil(params.size);
 		canvas_source.width = w;
 		canvas_source.height = h;
 
 		//add data
-		var x_from = Math.round(this.clone_coords.x - (mouse.click_x - mouse_x));
-		var y_from = Math.round(this.clone_coords.y - (mouse.click_y - mouse_y));
+		let x_from = Math.round(this.clone_coords.x - (mouse.click_x - mouse_x));
+		let y_from = Math.round(this.clone_coords.y - (mouse.click_y - mouse_y));
 		if (params.anti_aliasing == false) {
 			ctx_source.arc(half, half, half, 0, Math.PI * 2, false);
 			ctx_source.clip();
 		}
 		if (params.source_layer.value == 'Previous') {
-			var previous_layer = this.Base_layers.find_previous(config.layer.id);
+			const previous_layer = this.Base_layers.find_previous(config.layer.id);
 
 			x_from = Math.round(this.clone_coords.x - (mouse.click_x - mouse_x)) - previous_layer.x + config.layer.x;
 			y_from = Math.round(this.clone_coords.y - (mouse.click_y - mouse_y)) - previous_layer.y + config.layer.y;
@@ -317,7 +312,7 @@ class Clone_class extends Base_tools_class {
 
 		//apply anti aliasing
 		if (params.anti_aliasing == true) {
-			var gradient = ctx_source.createRadialGradient(half, half, 0, half, half, half + 1);
+			const gradient = ctx_source.createRadialGradient(half, half, 0, half, half, half + 1);
 			gradient.addColorStop(0, 'white');
 			gradient.addColorStop(0.3, 'white');
 			gradient.addColorStop(1, 'transparent');

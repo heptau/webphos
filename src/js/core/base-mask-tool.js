@@ -41,9 +41,9 @@ class Base_mask_tool_class extends Base_tools_class {
 	 * Draws the tint of a custom mask; plain rectangles use the selection fill.
 	 */
 	render_mask_overlay(ctx) {
-		var current = this.Selection_mask.get();
-		var preview = this.Selection_mask.get_preview();
-		var custom = preview != null || (current != null && current.kind == 'custom');
+		const current = this.Selection_mask.get();
+		const preview = this.Selection_mask.get_preview();
+		const custom = preview != null || (current != null && current.kind == 'custom');
 		if (this.sel_config.enable_background === custom) {
 			this.sel_config.enable_background = !custom;
 			setTimeout(() => {
@@ -67,14 +67,14 @@ class Base_mask_tool_class extends Base_tools_class {
 	 * @param {{shiftKey: boolean, altKey: boolean}} e
 	 */
 	async commit_mask(mask, e) {
-		var feather = parseInt(this.getParams().feather) || 0;
+		const feather = parseInt(this.getParams().feather) || 0;
 		if (feather > 0) {
 			mask = feather_mask(mask, feather);
 		}
 
-		var current = this.Selection_mask.get();
+		const current = this.Selection_mask.get();
 		if (current != null && (e.shiftKey || e.altKey)) {
-			var mode = e.shiftKey && e.altKey ? 'intersect' : (e.shiftKey ? 'add' : 'subtract');
+			const mode = e.shiftKey && e.altKey ? 'intersect' : (e.shiftKey ? 'add' : 'subtract');
 			mask = combine_masks(current.mask, mask, mode);
 		}
 
@@ -84,7 +84,7 @@ class Base_mask_tool_class extends Base_tools_class {
 		await this.Edit_selection.set_mask(mask, false);
 	}
 
-	render(ctx, layer) {
+	render() {
 		//nothing
 	}
 

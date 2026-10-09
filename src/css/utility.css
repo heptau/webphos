@@ -1,20 +1,20 @@
 
 /* Common input label sizes */
 .label_width_character {
-    width: 100%;
-    max-width: 2.88rem;
-    overflow: hidden;
-    flex-shrink: 0;
+	width: 100%;
+	max-width: 2.88rem;
+	overflow: hidden;
+	flex-shrink: 0;
 }
 .label_width_small {
-    width: 100%;
-    max-width: 6.4rem;
-    overflow: hidden;
+	width: 100%;
+	max-width: 6.4rem;
+	overflow: hidden;
 }
 .label_width_medium {
-    width: 100%;
-    max-width: 10.4rem;
-    overflow: hidden;
+	width: 100%;
+	max-width: 10.4rem;
+	overflow: hidden;
 }
 
 /* Font color utility */
@@ -24,15 +24,15 @@
 .text_muted { color: var(--text-color-muted); }
 
 /*
-    Size inputs based on the number of "w" characters that could fit in the input. "w" is usually the widest character.
-    This is a rough estimate since all characters vary in width. For example an input with numbers
-    usually fits way more characters than an input with letters.
-    "cw" means character width
+	Size inputs based on the number of "w" characters that could fit in the input. "w" is usually the widest character.
+	This is a rough estimate since all characters vary in width. For example an input with numbers
+	usually fits way more characters than an input with letters.
+	"cw" means character width
 */
 .input_cw_1, .input_cw_2, .input_cw_3, .input_cw_4, .input_cw_5,
 .input_cw_6, .input_cw_7, .input_cw_8, .input_cw_9, .input_cw_10
 .input_cw_11, .input_cw_12, .input_cw_13, .input_cw_14, .input_cw_15 {
-    width: 100%;
+	width: 100%;
 }
 .input_cw_1 { max-width: 2.25rem; }
 .input_cw_2 { max-width: 3.25rem; }

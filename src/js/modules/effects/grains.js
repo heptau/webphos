@@ -15,27 +15,26 @@ class Effects_grains_class {
 	}
 
 	grains() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Grains',
 			preview: true,
 			effects: true,
 			params: [
 				{name: "level", title: "Level:", value: "30", range: [0, 50]},
 			],
-			on_change: function (params, canvas_preview, w, h) {
-				var img = canvas_preview.getImageData(0, 0, w, h);
-				var data = _this.change(img, params);
+			on_change: (params, canvas_preview, w, h) => {
+				const img = canvas_preview.getImageData(0, 0, w, h);
+				const data = this.change(img, params);
 				canvas_preview.putImageData(data, 0, 0);
 			},
-			on_finish: function (params) {
-				_this.save(params);
+			on_finish: (params) => {
+				this.save(params);
 			},
 		};
 		this.POP.show(settings);
@@ -43,12 +42,12 @@ class Effects_grains_class {
 
 	save(params) {
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = this.change(img, params);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const data = this.change(img, params);
 		ctx.putImageData(data, 0, 0);
 
 		//save
@@ -60,18 +59,18 @@ class Effects_grains_class {
 	change(data, params) {
 		if (params.level == 0)
 			return data;
-		var imgData = data.data;
+		const imgData = data.data;
 
-		var H = data.height;
-		var W = data.width;
+		const H = data.height;
+		const W = data.width;
 
-		for (var j = 0; j < H; j++) {
-			for (var i = 0; i < W; i++) {
-				var x = (i + j * W) * 4;
+		for (let j = 0; j < H; j++) {
+			for (let i = 0; i < W; i++) {
+				const x = (i + j * W) * 4;
 				if (imgData[x + 3] == 0)
 					continue;	//transparent
 				//increase it's lightness
-				var delta = this.Helper.getRandomInt(0, params.level);
+				const delta = this.Helper.getRandomInt(0, params.level);
 				if (delta == 0)
 					continue;
 
@@ -94,16 +93,16 @@ class Effects_grains_class {
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 		ctx.drawImage(canvas_thumb, 0, 0);
 
 		//now update
-		var img = ctx.getImageData(0, 0, canvas_thumb.width, canvas_thumb.height);
-		var params = {
+		const img = ctx.getImageData(0, 0, canvas_thumb.width, canvas_thumb.height);
+		const params = {
 			level: 30,
 		}
-		var data = this.change(img, params);
+		const data = this.change(img, params);
 		ctx.putImageData(data, 0, 0);
 	}
 

@@ -2,7 +2,7 @@ import config from './../config.js';
 import { rect_mask } from './../libs/selection-mask.js';
 import { save_selection, delete_selection, load_all_selections } from './../libs/selection-store.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * Holds the current selection mask.
@@ -37,8 +37,8 @@ class Selection_mask_class {
 	 * @returns {boolean} true when an existing selection was overwritten
 	 */
 	save(name, mask) {
-		var overwritten = this.saved.has(name);
-		var copy = {width: mask.width, height: mask.height, data: new Uint8ClampedArray(mask.data)};
+		const overwritten = this.saved.has(name);
+		const copy = {width: mask.width, height: mask.height, data: new Uint8ClampedArray(mask.data)};
 		this.saved.set(name, copy);
 		save_selection(name, copy); //persistent, failures are only logged
 		return overwritten;
@@ -67,12 +67,12 @@ class Selection_mask_class {
 	 * @returns {{width: number, height: number, data: Uint8ClampedArray}|null} copy of the saved mask
 	 */
 	load(name) {
-		var mask = this.saved.get(name);
+		const mask = this.saved.get(name);
 		return mask ? {width: mask.width, height: mask.height, data: new Uint8ClampedArray(mask.data)} : null;
 	}
 
 	remove(name) {
-		var removed = this.saved.delete(name);
+		const removed = this.saved.delete(name);
 		delete_selection(name);
 		return removed;
 	}
@@ -96,19 +96,19 @@ class Selection_mask_class {
 	 * @returns {{mask: object, kind: 'rect'|'custom', rect: object}|null} null when nothing is selected
 	 */
 	get() {
-		var selection = this.get_selection ? this.get_selection() : null;
+		const selection = this.get_selection ? this.get_selection() : null;
 		if (!selection || !selection.width || !selection.height) {
 			return null;
 		}
-		var key = this.rect_key(selection);
-		var custom = this.custom;
+		const key = this.rect_key(selection);
+		const custom = this.custom;
 		if (custom && custom.key === key && custom.mask.width == config.WIDTH && custom.mask.height == config.HEIGHT) {
 			return {mask: custom.mask, kind: 'custom', rect: selection};
 		}
 
-		var id = key + ',' + config.WIDTH + ',' + config.HEIGHT;
+		const id = `${key  },${config.WIDTH},${  config.HEIGHT}`;
 		if (!this.rect_cache || this.rect_cache.id !== id) {
-			this.rect_cache = {id: id, mask: rect_mask(selection, config.WIDTH, config.HEIGHT)};
+			this.rect_cache = {id, mask: rect_mask(selection, config.WIDTH, config.HEIGHT)};
 		}
 		return {mask: this.rect_cache.mask, kind: 'rect', rect: selection};
 	}
@@ -120,7 +120,7 @@ class Selection_mask_class {
 	 * @param {{x: number, y: number, width: number, height: number}} rect
 	 */
 	set_custom(mask, rect) {
-		this.custom = {mask: mask, key: this.rect_key(rect), overlay: null};
+		this.custom = {mask, key: this.rect_key(rect), overlay: null};
 	}
 
 	/**
@@ -130,7 +130,7 @@ class Selection_mask_class {
 	 * @param {function(): boolean} is_active tells whether the dialog is still open
 	 */
 	set_preview(mask, is_active) {
-		this.preview = {mask: mask, overlay: this.build_overlay(mask, [255, 160, 0]), is_active: is_active};
+		this.preview = {mask, overlay: this.build_overlay(mask, [255, 160, 0]), is_active};
 	}
 
 	clear_preview() {
@@ -191,12 +191,12 @@ class Selection_mask_class {
 	 * @returns {HTMLCanvasElement}
 	 */
 	build_overlay(mask, color) {
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = mask.width;
 		canvas.height = mask.height;
-		var ctx = canvas.getContext('2d');
-		var image = ctx.createImageData(mask.width, mask.height);
-		for (var p = 0, i = 0; p < mask.data.length; p++, i += 4) {
+		const ctx = canvas.getContext('2d');
+		const image = ctx.createImageData(mask.width, mask.height);
+		for (let p = 0, i = 0; p < mask.data.length; p++, i += 4) {
 			image.data[i] = color[0];
 			image.data[i + 1] = color[1];
 			image.data[i + 2] = color[2];

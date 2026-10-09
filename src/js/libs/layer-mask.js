@@ -7,14 +7,14 @@
 import { create_mask, sample_mask_for_layer, resize_mask } from './selection-mask.js';
 import { rle_encode, rle_decode } from './selection-store.js';
 
-var MAX_PIXELS = 64 * 1000 * 1000;
+const MAX_PIXELS = 64 * 1000 * 1000;
 
 /**
  * @param {{width: number, height: number, data: Uint8ClampedArray}} mask
  * @returns {{width: number, height: number, values: number[], counts: number[]}}
  */
 export function serialize_layer_mask(mask) {
-	var rle = rle_encode(mask.data);
+	const rle = rle_encode(mask.data);
 	return {width: mask.width, height: mask.height, values: Array.from(rle.values), counts: Array.from(rle.counts)};
 }
 
@@ -27,8 +27,8 @@ export function deserialize_layer_mask(stored) {
 		|| !Array.isArray(stored.values) || !Array.isArray(stored.counts)) {
 		return null;
 	}
-	var data = rle_decode(Uint8Array.from(stored.values), Uint32Array.from(stored.counts), stored.width * stored.height);
-	return data ? {width: stored.width, height: stored.height, data: data} : null;
+	const data = rle_decode(Uint8Array.from(stored.values), Uint32Array.from(stored.counts), stored.width * stored.height);
+	return data ? {width: stored.width, height: stored.height, data} : null;
 }
 
 /**
@@ -48,10 +48,10 @@ export function uniform_layer_mask(layer, value) {
  * @param {{x: number, y: number, width: number, height: number}} layer
  */
 export function layer_mask_from_selection(selection_mask, layer) {
-	var width = Math.max(1, Math.round(layer.width));
-	var height = Math.max(1, Math.round(layer.height));
-	var geometry = {x: layer.x, y: layer.y, width: width, height: height};
-	return {width: width, height: height, data: sample_mask_for_layer(selection_mask, geometry, width, height)};
+	const width = Math.max(1, Math.round(layer.width));
+	const height = Math.max(1, Math.round(layer.height));
+	const geometry = {x: layer.x, y: layer.y, width, height};
+	return {width, height, data: sample_mask_for_layer(selection_mask, geometry, width, height)};
 }
 
 /**
@@ -63,16 +63,16 @@ export function layer_mask_from_selection(selection_mask, layer) {
  * @param {number} canvas_height
  */
 export function layer_mask_to_selection(layer_mask, layer, canvas_width, canvas_height) {
-	var result = create_mask(canvas_width, canvas_height);
-	var offset_x = Math.round(layer.x);
-	var offset_y = Math.round(layer.y);
-	for (var y = 0; y < layer_mask.height; y++) {
-		var cy = y + offset_y;
+	const result = create_mask(canvas_width, canvas_height);
+	const offset_x = Math.round(layer.x);
+	const offset_y = Math.round(layer.y);
+	for (let y = 0; y < layer_mask.height; y++) {
+		const cy = y + offset_y;
 		if (cy < 0 || cy >= canvas_height) {
 			continue;
 		}
-		for (var x = 0; x < layer_mask.width; x++) {
-			var cx = x + offset_x;
+		for (let x = 0; x < layer_mask.width; x++) {
+			const cx = x + offset_x;
 			if (cx >= 0 && cx < canvas_width) {
 				result.data[cy * canvas_width + cx] = layer_mask.data[y * layer_mask.width + x];
 			}
@@ -88,8 +88,8 @@ export function layer_mask_to_selection(layer_mask, layer, canvas_width, canvas_
  * @param {object} layer_mask mask in layer box resolution (resampled when the sizes differ)
  */
 export function apply_layer_mask(image, layer_mask) {
-	var mask = resize_mask(layer_mask, image.width, image.height);
-	for (var p = 0, i = 3; p < mask.data.length; p++, i += 4) {
+	const mask = resize_mask(layer_mask, image.width, image.height);
+	for (let p = 0, i = 3; p < mask.data.length; p++, i += 4) {
 		image.data[i] = image.data[i] * mask.data[p] / 255;
 	}
 	return image;

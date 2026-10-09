@@ -27,7 +27,7 @@ class Animation_class extends Base_tools_class {
 		//nothing
 	}
 
-	render(ctx, layer) {
+	render() {
 		//nothing
 	}
 
@@ -35,13 +35,13 @@ class Animation_class extends Base_tools_class {
 	 * disable_selection
 	 */
 	disable_selection(ctx) {
-		var sel_config = {
+		const sel_config = {
 			enable_background: false,
 			enable_borders: false,
 			enable_controls: false,
 			enable_rotation: false,
 			enable_move: false,
-			data_function: function () {
+			data_function () {
 				return null;
 			},
 		};
@@ -52,7 +52,7 @@ class Animation_class extends Base_tools_class {
 		if(data.key != "play")
 			return;
 
-		var params = this.getParams();
+		const params = this.getParams();
 		if (config.layers.length == 1) {
 			alertify.error(t('Can not animate 1 layer.'));
 			return;
@@ -77,13 +77,12 @@ class Animation_class extends Base_tools_class {
 	}
 
 	start(delay) {
-		var _this = this;
 		delay = parseInt(delay);
 		if (delay < 0)
 			delay = 50;
 
-		this.intervalID = window.setInterval(function () {
-			_this.play(_this);
+		this.intervalID = window.setInterval(() => {
+			this.play(this);
 		}, delay);
 	}
 
@@ -93,7 +92,7 @@ class Animation_class extends Base_tools_class {
 
 	play(_this) {
 
-		for (var i in config.layers) {
+		for (const i in config.layers) {
 			config.layers[i].visible = false;
 		}
 

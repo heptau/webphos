@@ -17,5 +17,5 @@ for (const key of Object.keys(cs)) {
 		added++;
 	}
 }
-fs.writeFileSync(file, JSON.stringify(empty, null, 4) + '\n');
-console.log('empty.json: added ' + added + ' keys');
+fs.writeFileSync(file, `${JSON.stringify(empty, null, 4)  }\n`);
+console.log(`empty.json: added ${added} keys`);

@@ -1,5 +1,3 @@
-import app from './../../app.js';
-import config from './../../config.js';
 import Base_tools_class from './../../core/base-tools.js';
 import Base_layers_class from './../../core/base-layers.js';
 
@@ -42,7 +40,7 @@ class Hexagon_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
@@ -56,8 +54,7 @@ class Hexagon_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
-		var fill = params.fill;
+		const params = layer.params;
 
 		ctx.save();
 
@@ -85,7 +82,7 @@ class Hexagon_class extends Base_tools_class {
 
 		ctx.scale(1, this.best_ratio);
 
-		for(var i in coords){
+		for(const i in coords){
 			if(coords[i] === null){
 				ctx.closePath();
 				ctx.fill();
@@ -95,8 +92,8 @@ class Hexagon_class extends Base_tools_class {
 			}
 
 			//coords in 100x100 box
-			var pos_x = x + coords[i][0] * width / 100;
-			var pos_y = y + coords[i][1] * height / 100;
+			const pos_x = x + coords[i][0] * width / 100;
+			const pos_y = y + coords[i][1] * height / 100;
 
 			if(i == '0')
 				ctx.moveTo(pos_x, pos_y);

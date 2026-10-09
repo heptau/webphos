@@ -25,11 +25,10 @@ class Polygon_class extends Base_tools_class {
 	}
 
 	load() {
-		var _this = this;
 		this.default_events();
-		document.addEventListener('keydown', function (event) {
-			var code = event.code;
-			if (config.TOOL.name == _this.name && code == "Escape") {
+		document.addEventListener('keydown', (event) => {
+			const code = event.code;
+			if (config.TOOL.name == this.name && code == "Escape") {
 				//escape
 				config.layer.status = null;
 			}
@@ -63,18 +62,18 @@ class Polygon_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
 
-		var params_hash = this.get_params_hash();
+		const params_hash = this.get_params_hash();
 
-		var mouse_x = mouse.x;
-		var mouse_y = mouse.y;
+		let mouse_x = mouse.x;
+		let mouse_y = mouse.y;
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -122,9 +121,9 @@ class Polygon_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
+		const mouse = this.get_mouse_info(e);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
 
 		if (mouse.click_valid == false) {
 			return;
@@ -134,7 +133,7 @@ class Polygon_class extends Base_tools_class {
 		}
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -151,16 +150,16 @@ class Polygon_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
 
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -178,7 +177,7 @@ class Polygon_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 
 		if(config.TOOL.name != 'select'){
@@ -187,12 +186,12 @@ class Polygon_class extends Base_tools_class {
 
 		//also draw control lines
 		if(config.layer.type == this.name){
-			var data = config.layer.data;
+			const data = config.layer.data;
 			this.selected_obj_positions = {};
 
 			//draw corners
-			for(var i in data) {
-				var point = data[i];
+			for(const i in data) {
+				const point = data[i];
 
 				this.selected_obj_positions[i] = this.Helper.draw_control_point(
 					this.ctx,
@@ -212,11 +211,11 @@ class Polygon_class extends Base_tools_class {
 		ctx.strokeStyle = '#555';
 		ctx.lineWidth = 2;
 
-		var width_all = width + x * 2;
+		const width_all = width + x * 2;
 		width = height * this.best_ratio;
 		x = (width_all - width) / 2;
 
-		var data = [
+		const data = [
 			{x: 0, y: 0},
 			{x: width, y: 0},
 			{x: width * 1.1, y: height * 2 / 3},
@@ -231,7 +230,7 @@ class Polygon_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
+		const params = layer.params;
 
 		ctx.save();
 
@@ -259,7 +258,7 @@ class Polygon_class extends Base_tools_class {
 
 		//draw
 		ctx.beginPath();
-		for(var i in data) {
+		for(const i in data) {
 			if(i == 0){
 				ctx.moveTo(x + data[i].x, y + data[i].y);
 			}
@@ -273,16 +272,16 @@ class Polygon_class extends Base_tools_class {
 	}
 
 	selected_object_actions(e) {
+		let bezier;
 		if(config.TOOL.name != 'select' || config.layer.type != this.name){
 			return;
 		}
 
-		var ctx = this.Base_layers.ctx;
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		const mainWrapper = document.getElementById('main_wrapper');
 
 		//simplify checks
-		var event_type = e.type;
+		let event_type = e.type;
 		if(event_type == 'touchstart') event_type = 'mousedown';
 		if(event_type == 'touchmove') event_type = 'mousemove';
 		if(event_type == 'touchend') event_type = 'mouseup';
@@ -303,12 +302,11 @@ class Polygon_class extends Base_tools_class {
 			mainWrapper.style.cursor = "move";
 
 			if (e.buttons == 1 || typeof e.buttons == "undefined") {
-				var type = this.selected_object_drag_type;
-				var bezier = config.layer.data;
+				const type = this.selected_object_drag_type;
 
 				// Do transformations
-				var dx = Math.round(mouse.x - mouse.click_x) - config.layer.x;
-				var dy = Math.round(mouse.y - mouse.click_y) - config.layer.y;
+				const dx = Math.round(mouse.x - mouse.click_x) - config.layer.x;
+				const dy = Math.round(mouse.y - mouse.click_y) - config.layer.y;
 
 				// Set values
 				config.layer.data[type] = {
@@ -322,7 +320,7 @@ class Polygon_class extends Base_tools_class {
 		}
 		if (event_type == 'mouseup' && this.mouse_lock == 'move_point') {
 			this.mouse_lock = null;
-			var bezier = config.layer.data;
+			bezier = config.layer.data;
 
 			//reset sate
 			config.layer.data = this.old_data;
@@ -344,7 +342,7 @@ class Polygon_class extends Base_tools_class {
 		}
 
 		if (!this.mouse_lock) {
-			for (let current_drag_type in this.selected_obj_positions) {
+			for (const current_drag_type in this.selected_obj_positions) {
 				const position = this.selected_obj_positions[current_drag_type];
 				if (position && this.ctx.isPointInPath(position, mouse.x, mouse.y)) {
 					// match

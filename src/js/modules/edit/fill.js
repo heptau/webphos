@@ -8,10 +8,10 @@ import { blend_with_mask } from './../../libs/selection-mask.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 //picture used by Edit > Fill with Pattern (set by Edit > Define Pattern)
-var pattern_canvas = null;
+let pattern_canvas = null;
 
 /**
  * Edit > Fill with foreground color (Alt+Backspace, as in Photoshop).
@@ -36,7 +36,7 @@ class Edit_fill_class {
 	 * Edit > Define Pattern - the selected part of the picture becomes the pattern for Fill with Pattern
 	 */
 	define_pattern() {
-		var part = this.Edit_selection.get_selection_canvas(null, true);
+		const part = this.Edit_selection.get_selection_canvas(null, true);
 		if (part == null) {
 			alertify.error(t('Select a part of the picture first.'));
 			return;
@@ -79,7 +79,7 @@ class Edit_fill_class {
 	 * @param {object|null} [mask] fill through this mask instead of the current selection (Edit > Stroke Selection)
 	 */
 	fill(mask) {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer.type != 'image' && layer.type !== null) {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
@@ -89,12 +89,12 @@ class Edit_fill_class {
 			return;
 		}
 
-		var canvas = document.createElement('canvas');
-		var ctx = canvas.getContext("2d");
-		var scale_x = 1;
-		var scale_y = 1;
-		var offset_x = 0;
-		var offset_y = 0;
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext("2d");
+		let scale_x = 1;
+		let scale_y = 1;
+		let offset_x = 0;
+		let offset_y = 0;
 		if (layer.type !== null) {
 			canvas.width = layer.width_original;
 			canvas.height = layer.height_original;
@@ -109,21 +109,21 @@ class Edit_fill_class {
 			canvas.height = config.HEIGHT;
 		}
 
-		var color = this.Helper.hexToRgb(this.use_background ? config.COLOR_BG : config.COLOR);
-		var alpha = this.use_background ? 1 : config.ALPHA / 255;
-		ctx.fillStyle = 'rgba(' + color.r + ', ' + color.g + ', ' + color.b + ', ' + alpha + ')';
+		const color = this.Helper.hexToRgb(this.use_background ? config.COLOR_BG : config.COLOR);
+		const alpha = this.use_background ? 1 : config.ALPHA / 255;
+		ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
 		if (this.use_pattern && pattern_canvas) {
 			ctx.fillStyle = ctx.createPattern(pattern_canvas, 'repeat');
 		}
 
-		var selection = this.Selection.selection;
-		var current = mask && mask.data ? {kind: 'custom', mask: mask} : this.Edit_selection.get_mask();
+		const selection = this.Selection.selection;
+		const current = mask && mask.data ? {kind: 'custom', mask} : this.Edit_selection.get_mask();
 		if (current != null && current.kind == 'custom') {
 			//soft or non rectangular selection - fill, then blend through the mask
-			var original = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const original = ctx.getImageData(0, 0, canvas.width, canvas.height);
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			var filled = ctx.getImageData(0, 0, canvas.width, canvas.height);
-			var geometry = layer.type !== null
+			const filled = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const geometry = layer.type !== null
 				? layer
 				: {x: 0, y: 0, width: canvas.width, height: canvas.height};
 			ctx.putImageData(blend_with_mask(original, filled, current.mask, geometry), 0, 0);
@@ -149,7 +149,7 @@ class Edit_fill_class {
 		}
 
 		//empty layer - create new image layer
-		var params = {
+		const params = {
 			type: 'image',
 			name: 'Fill',
 			data: canvas.toDataURL("image/png"),

@@ -1,4 +1,3 @@
-import app from './../app.js';
 import config from './../config.js';
 import { Base_action } from './base.js';
 
@@ -6,7 +5,7 @@ export class Update_config_action extends Base_action {
 	/**
 	 * Updates the app config with the provided settings
 	 *
-	 * @param {object} settings 
+	 * @param {object} settings
 	 */
 	constructor(settings) {
 		super('update_config', 'Update Config');
@@ -16,7 +15,7 @@ export class Update_config_action extends Base_action {
 
 	async do() {
 		super.do();
-		for (let i in this.settings) {
+		for (const i in this.settings) {
 			this.old_settings[i] = config[i];
 			config[i] = this.settings[i];
 		}
@@ -24,7 +23,7 @@ export class Update_config_action extends Base_action {
 
 	async undo() {
 		super.undo();
-		for (let i in this.old_settings) {
+		for (const i in this.old_settings) {
 			config[i] = this.old_settings[i];
 		}
 		this.old_settings = {};

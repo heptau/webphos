@@ -1,10 +1,9 @@
-import config from './../../config.js';
 import Base_layers_class from './../../core/base-layers.js';
 import File_open_class from './open.js';
 
-/** 
+/**
  * manages files / quick-load
- * 
+ *
  * @author ViliusL
  */
 class File_quickload_class {
@@ -17,13 +16,12 @@ class File_quickload_class {
 	}
 
 	set_events() {
-		var _this = this;
 
 	}
 
 	quickload() {
 		//load image data
-		var json = localStorage.getItem('quicksave_data');
+		const json = localStorage.getItem('quicksave_data');
 		if (json == '' || json == null) {
 			//nothing was found
 			return false;

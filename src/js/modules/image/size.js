@@ -19,23 +19,22 @@ class Image_size_class {
 	}
 
 	size() {
-		var _this = this;
-		var common_dimensions = this.Base_gui.common_dimensions;
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
-		var enable_autoresize = this.Tools_settings.get_setting('enable_autoresize');
+		const common_dimensions = this.Base_gui.common_dimensions;
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
+		const enable_autoresize = this.Tools_settings.get_setting('enable_autoresize');
 
-		var resolutions = ['Custom'];
-		for (var i in common_dimensions) {
-			var value = common_dimensions[i];
-			resolutions.push(value[0] + 'x' + value[1] + ' - ' + value[2]);
+		const resolutions = ['Custom'];
+		for (const i in common_dimensions) {
+			const value = common_dimensions[i];
+			resolutions.push(`${value[0]  }x${value[1]} - ${  value[2]}`);
 		}
 
 		//convert units
-		var width = from_pixels(config.WIDTH, units, resolution);
-		var height = from_pixels(config.HEIGHT, units, resolution);
+		const width = from_pixels(config.WIDTH, units, resolution);
+		const height = from_pixels(config.HEIGHT, units, resolution);
 
-		var settings = {
+		const settings = {
 			title: 'Canvas Size',
 			params: [
 				{name: "w", title: "Width:", value: width, placeholder: width},
@@ -48,8 +47,8 @@ class Image_size_class {
 				{name: "enable_autoresize", title: "Enable autoresize:", value: enable_autoresize},
 				{name: "in_proportion", title: "In proportion:", value: false},
 			],
-			on_finish: function (params) {
-				_this.size_handler(params);
+			on_finish: (params) => {
+				this.size_handler(params);
 			},
 		};
 		this.POP.show(settings);
@@ -57,11 +56,11 @@ class Image_size_class {
 	}
 
 	size_handler(data) {
-		var width = parseFloat(data.w);
-		var height = parseFloat(data.h);
-		var ratio = config.WIDTH / config.HEIGHT;
-		var units = is_unit(data.units) ? data.units : this.Tools_settings.get_setting('default_units');
-		var resolution = clamp_dpi(data.dpi);
+		let width = parseFloat(data.w);
+		let height = parseFloat(data.h);
+		let ratio = config.WIDTH / config.HEIGHT;
+		const units = is_unit(data.units) ? data.units : this.Tools_settings.get_setting('default_units');
+		const resolution = clamp_dpi(data.dpi);
 
 		if (width < 0){
 			width = 1;
@@ -71,7 +70,7 @@ class Image_size_class {
 		}
 
 		this.Tools_settings.save_setting('enable_autoresize', data.enable_autoresize);
-		
+
 		//aspect ratio
 		if (isNaN(width) && isNaN(height)){
 			alertify.error(t('Wrong dimensions'));
@@ -83,15 +82,15 @@ class Image_size_class {
 		if (isNaN(height)){
 			height = width / ratio;
 		}
-		
+
 		if (data.resolution != 'Custom') {
-			var dim = data.resolution.split(" ");
+			let dim = data.resolution.split(" ");
 			dim = dim[0].split("x");
 			width = parseInt(dim[0]);
 			height = parseInt(dim[1]);
 
 			if(data.layout == 'Portrait'){
-				var tmp = width;
+				const tmp = width;
 				width = height;
 				height = tmp;
 			}
@@ -102,7 +101,7 @@ class Image_size_class {
 			height = to_pixels(height, units, resolution);
 		}
 
-		var actions = [
+		const actions = [
 			new app.Actions.Prepare_canvas_action('undo'),
 			new app.Actions.Update_config_action({
 				WIDTH: parseInt(width),
@@ -114,21 +113,22 @@ class Image_size_class {
 
 		if(data.in_proportion == true) {
 			//resize object and change coordinates
-			var width_ratio =  config.WIDTH / width;
-			var height_ratio = config.HEIGHT / height;
-			var ratio = Math.max(width_ratio, height_ratio);
+			let data_new;
+			const width_ratio =  config.WIDTH / width;
+			const height_ratio = config.HEIGHT / height;
+			ratio = Math.max(width_ratio, height_ratio);
 
-			for (var i in config.layers) {
-				var layer = config.layers[i];
+			for (const i in config.layers) {
+				const layer = config.layers[i];
 				if(layer.x != null && layer.y != null) {
-					var data_new = {
+					data_new = {
 						x: Math.round(layer.x / width_ratio),
 						y: Math.round(layer.y / height_ratio),
 					};
 					actions.push(new app.Actions.Update_layer_action(layer.id, data_new));
 				}
 				if(layer.width != null && layer.height != null) {
-					var data_new = {
+					data_new = {
 						width: Math.round(layer.width / ratio),
 						height: Math.round(layer.height / ratio),
 					};

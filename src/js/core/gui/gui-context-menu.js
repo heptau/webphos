@@ -60,24 +60,25 @@ class GUI_context_menu_class {
 	 * @param {function} run called with (target, parameter)
 	 */
 	show(event, items, run) {
+		let on_key = null;
 		this.hide();
 		event.preventDefault();
 
 		this.host = document.createElement('div');
 		this.host.className = 'main_menu context_host';
-		var html = '<ul class="menu_dropdown" role="menu">';
+		let html = '<ul class="menu_dropdown" role="menu">';
 		items.forEach((item, index) => {
 			if (item.divider) {
 				html += '<li role="presentation"><hr></li>';
 				return;
 			}
 			//the shortcut that is used now (the user can change it), the written one for commands that have none in the list
-			var current = item.target ? this.Shortcuts.text_for(item.target, item.parameter) : null;
-			var shortcut = current !== null ? current : item.shortcut;
-			html += '<li><a role="menuitem" href="javascript:void(0)" data-index="' + index + '">'
-				+ '<span class="name"><span class="trn">' + escape_html(item.name) + '</span>' + (item.ellipsis ? '…' : '') + '</span>'
-				+ (shortcut ? '<span class="shortcut">' + escape_html(this.mac ? format_shortcut_mac(shortcut) : shortcut) + '</span>' : '')
-				+ '</a></li>';
+			const current = item.target ? this.Shortcuts.text_for(item.target, item.parameter) : null;
+			const shortcut = current !== null ? current : item.shortcut;
+			html += `<li><a role="menuitem" href="javascript:void(0)" data-index="${index}">`
+				+ `<span class="name"><span class="trn">${escape_html(item.name)}</span>${item.ellipsis ? '…' : ''}</span>${
+				 shortcut ? `<span class="shortcut">${escape_html(this.mac ? format_shortcut_mac(shortcut) : shortcut)}</span>` : ''
+				 }</a></li>`;
 		});
 		html += '</ul>';
 		this.host.innerHTML = html;
@@ -86,13 +87,13 @@ class GUI_context_menu_class {
 			this.Tools_translate.translate(config.LANG, this.host);
 		}
 
-		var list = this.host.querySelector('ul');
-		var x = Math.min(event.clientX, window.innerWidth - list.offsetWidth - 4);
-		var y = Math.min(event.clientY, window.innerHeight - list.offsetHeight - 4);
-		list.style.left = Math.max(4, x) + 'px';
-		list.style.top = Math.max(4, y) + 'px';
+		const list = this.host.querySelector('ul');
+		const x = Math.min(event.clientX, window.innerWidth - list.offsetWidth - 4);
+		const y = Math.min(event.clientY, window.innerHeight - list.offsetHeight - 4);
+		list.style.left = `${Math.max(4, x)  }px`;
+		list.style.top = `${Math.max(4, y)  }px`;
 
-		var close_on = (e) => {
+		const close_on = (e) => {
 			if (!this.host || this.host.contains(e.target) == false) {
 				this.hide();
 			}
@@ -104,7 +105,7 @@ class GUI_context_menu_class {
 			window.removeEventListener('blur', this.hide_bound);
 			window.removeEventListener('resize', this.hide_bound);
 		};
-		var on_key = (e) => {
+		on_key = (e) => {
 			if (e.key == 'Escape') {
 				if (document.getElementById('popups').children.length == 0) {
 					e.stopPropagation();
@@ -113,10 +114,10 @@ class GUI_context_menu_class {
 			}
 			else if (e.key == 'ArrowDown' || e.key == 'ArrowUp') {
 				//keyboard navigation inside the menu
-				var links = Array.from(list.querySelectorAll('a'));
-				var index = links.indexOf(document.activeElement);
+				const links = Array.from(list.querySelectorAll('a'));
+				const index = links.indexOf(document.activeElement);
 				e.preventDefault();
-				var next = e.key == 'ArrowDown' ? (index + 1) % links.length : (index - 1 + links.length) % links.length;
+				const next = e.key == 'ArrowDown' ? (index + 1) % links.length : (index - 1 + links.length) % links.length;
 				links[index < 0 && e.key == 'ArrowUp' ? links.length - 1 : next].focus();
 			}
 		};
@@ -129,11 +130,11 @@ class GUI_context_menu_class {
 
 		list.addEventListener('contextmenu', (e) => e.preventDefault());
 		list.addEventListener('click', (e) => {
-			var link = e.target.closest('a');
+			const link = e.target.closest('a');
 			if (!link) {
 				return;
 			}
-			var item = items[parseInt(link.dataset.index, 10)];
+			const item = items[parseInt(link.dataset.index, 10)];
 			this.hide();
 			if (item && item.target) {
 				run(item.target, item.parameter ?? null);

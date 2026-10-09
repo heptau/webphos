@@ -3,15 +3,14 @@
  * author: Vilius L.
  */
 
-import config from './../config.js';
 import Dialog_class from './../libs/popup.js';
+import fuzzysort from 'fuzzysort';
 import Base_gui_class from './base-gui.js';
 import menuDefinition from './../config-menu.js';
 import { t } from './../modules/tools/translate.js';
 import { format_shortcut_mac, is_mac_platform } from './../libs/shortcuts.js';
-const fuzzysort = require('fuzzysort');
 
-var instance = null;
+let instance = null;
 
 class Base_search_class {
 
@@ -33,7 +32,7 @@ class Base_search_class {
 
 		//click on a result runs it
 		document.addEventListener('click', (event) => {
-			var result = event.target.closest ? event.target.closest('.search-result') : null;
+			const result = event.target.closest ? event.target.closest('.search-result') : null;
 			if (result && document.querySelector('#global_search_results')) {
 				this.run(parseInt(result.dataset.index, 10));
 			}
@@ -44,65 +43,65 @@ class Base_search_class {
 				return;
 			}
 
-			var node = document.querySelector('#global_search_results');
+			const node = document.querySelector('#global_search_results');
 			node.innerHTML = '';
 
-			var query = event.target.value;
+			const query = event.target.value;
 			if(query == ''){
 				return;
 			}
 
-			let results = fuzzysort.go(query, this.db, {
+			const results = fuzzysort.go(query, this.db, {
 				keys: ['title', 'english'],
 				limit: 10,
 				threshold: -50000,
 			});
 
 			//show
-			for(var i = 0; i < results.length; i++) {
-				var item = results[i];
-				var entry = item.obj;
+			for(let i = 0; i < results.length; i++) {
+				const item = results[i];
+				const entry = item.obj;
 
-				var className = "search-result n" + (i+1);
+				let className = `search-result n${  i+1}`;
 				if(i == 0){
 					className += " active";
 				}
 
-				var label = item[0] ? fuzzysort.highlight(item[0]) : this.escape(entry.title);
-				var shortcut = entry.shortcut ? ' <span class="search-shortcut">' + this.escape(entry.shortcut) + '</span>' : '';
-				node.innerHTML += "<div class='" + className + "' data-index='" + entry.index + "'>"
-					+ label + (entry.path ? ' <span class="search-path">' + this.escape(entry.path) + '</span>' : '') + shortcut + "</div>";
+				const label = item[0] ? fuzzysort.highlight(item[0]) : this.escape(entry.title);
+				const shortcut = entry.shortcut ? ` <span class="search-shortcut">${this.escape(entry.shortcut)}</span>` : '';
+				node.innerHTML += `<div class='${className}' data-index='${entry.index}'>${label}${entry.path ? ` <span class="search-path">${this.escape(entry.path)}</span>` : ''  }${shortcut  }</div>`;
 			}
 		}, false);
 
 		//allow to select with arrow keys
-		document.addEventListener('keydown', function (e) {
+		document.addEventListener('keydown', (e) => {
+			let target, index, target2;
 			if(document.querySelector('#global_search_results') == null
 				|| document.querySelector('.search-result') == null){
 				return;
 			}
-			var k = e.key;
+			const k = e.key;
 
 			if (k == "ArrowUp") {
-				var target = document.querySelector('.search-result.active');
-				var index = Array.from(target.parentNode.children).indexOf(target);
+				target = document.querySelector('.search-result.active');
+				index = Array.from(target.parentNode.children).indexOf(target);
 				if(index > 0){
 					index--;
 				}
 				target.classList.remove('active');
-				var target2 =document.querySelector('#global_search_results').childNodes[index];
+				target2 = document.querySelector('#global_search_results').childNodes[index];
 				target2.classList.add('active');
 				e.preventDefault();
 			}
 			else if (k == "ArrowDown") {
-				var target = document.querySelector('.search-result.active');
-				var index = Array.from(target.parentNode.children).indexOf(target);
-				var total = target.parentNode.childElementCount;
+				target = document.querySelector('.search-result.active');
+				index = Array.from(target.parentNode.children).indexOf(target);
+				const total = target.parentNode.childElementCount;
 				if(index < total - 1){
 					index++;
 				}
 				target.classList.remove('active');
-				var target2 = document.querySelector('#global_search_results').childNodes[index];
+				target2 = document.querySelector('#global_search_results').childNodes[index];
 				target2.classList.add('active');
 				e.preventDefault();
 			}
@@ -111,7 +110,6 @@ class Base_search_class {
 	}
 
 	search() {
-		var _this = this;
 
 		//init DB: all commands of the menu
 		if(this.db === null) {
@@ -119,21 +117,21 @@ class Base_search_class {
 			this.collect_commands(menuDefinition, []);
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Search',
 			params: [
 				{name: "search", title: "Search:", value: ""},
 			],
-			on_load: function (params, popup) {
-				var node = document.createElement("div");
+			on_load (params, popup) {
+				const node = document.createElement("div");
 				node.id = 'global_search_results';
 				node.innerHTML = '';
 				popup.el.querySelector('.dialog_content').appendChild(node);
 			},
-			on_finish: function (params) {
-				var target = document.querySelector('.search-result.active');
+			on_finish: () => {
+				const target = document.querySelector('.search-result.active');
 				if(target){
-					_this.run(parseInt(target.dataset.index, 10));
+					this.run(parseInt(target.dataset.index, 10));
 				}
 			},
 		};
@@ -147,7 +145,7 @@ class Base_search_class {
 	 * flattens the menu to a list of commands (name in the current language and in English, path, shortcut)
 	 */
 	collect_commands(items, path) {
-		for (var item of items) {
+		for (const item of items) {
 			if (item.divider) {
 				continue;
 			}
@@ -158,7 +156,7 @@ class Base_search_class {
 			if (!item.target) {
 				continue;
 			}
-			var shortcut = item.shortcut || '';
+			let shortcut = item.shortcut || '';
 			if (shortcut && is_mac_platform()) {
 				shortcut = format_shortcut_mac(shortcut);
 			}
@@ -167,7 +165,7 @@ class Base_search_class {
 				title: t(item.name),
 				english: item.name,
 				path: path.map((name) => t(name)).join(' › '),
-				shortcut: shortcut,
+				shortcut,
 				target: item.target,
 				parameter: item.parameter ?? null,
 			});
@@ -175,7 +173,7 @@ class Base_search_class {
 	}
 
 	run(index) {
-		var entry = this.db[index];
+		const entry = this.db[index];
 		if (!entry) {
 			return;
 		}

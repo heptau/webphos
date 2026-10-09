@@ -9,8 +9,8 @@ export const COLOR_HISTORY_SIZE = 16;
  * @returns {string|null} normalized "#rrggbb" in lower case or null when it is not a color
  */
 export function normalize_hex(hex) {
-	var match = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
-	return match ? '#' + match[1].toLowerCase() : null;
+	const match = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+	return match ? `#${  match[1].toLowerCase()}` : null;
 }
 
 /**
@@ -22,8 +22,8 @@ export function normalize_hex(hex) {
  * @returns {string[]} new list
  */
 export function push_color(list, hex, max) {
-	var color = normalize_hex(hex);
-	var result = Array.isArray(list) ? list.map(normalize_hex).filter(Boolean) : [];
+	const color = normalize_hex(hex);
+	let result = Array.isArray(list) ? list.map(normalize_hex).filter(Boolean) : [];
 	if (color == null) {
 		return result.slice(0, max || COLOR_HISTORY_SIZE);
 	}
@@ -40,10 +40,10 @@ export function parse_history(text) {
 }
 
 function push_list(items) {
-	var seen = {};
-	var result = [];
+	const seen = {};
+	const result = [];
 	items.forEach((item) => {
-		var color = normalize_hex(item);
+		const color = normalize_hex(item);
 		if (color && !seen[color]) {
 			seen[color] = true;
 			result.push(color);

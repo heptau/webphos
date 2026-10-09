@@ -1,4 +1,3 @@
-import config from './../../config.js';
 import Dialog_class from './../../libs/popup.js';
 import Image_adjustments_class from './adjustments.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
@@ -24,7 +23,7 @@ class Image_quick_edit_class {
 			title: 'Quick Edit',
 			params: [
 				{name: 'text', title: 'What should change?', type: 'textarea', value: '', placeholder: 'a bit brighter, more contrast, warmer'},
-				{html: '<span class="field_comment">' + t('Words: brighter, darker, more / less contrast, more / less saturation, warmer, cooler, black and white, sepia, sharpen, invert, auto. Separate them with commas.').replace(/</g, '&lt;') + '</span>'},
+				{html: `<span class="field_comment">${t('Words: brighter, darker, more / less contrast, more / less saturation, warmer, cooler, black and white, sepia, sharpen, invert, auto. Separate them with commas.').replace(/</g, '&lt;')}</span>`},
 			],
 			on_finish: (params) => {
 				this.run(params.text);
@@ -36,7 +35,7 @@ class Image_quick_edit_class {
 	 * @param {string} text commands in words
 	 */
 	run(text) {
-		var result = parse_commands(text);
+		const result = parse_commands(text);
 		if (result.steps.length == 0) {
 			alertify.warning(t('Nothing to do - try words like "brighter" or "black and white".'));
 			return;

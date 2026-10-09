@@ -3,9 +3,8 @@ import config from './../../config.js';
 import Base_layers_class from './../../core/base-layers.js';
 import Helper_class from './../../libs/helpers.js';
 import Edit_selection_class from './../edit/selection.js';
-import { has_modifier } from './../../libs/shortcuts.js';
 
-var instance = null;
+let instance = null;
 
 class Layer_duplicate_class {
 
@@ -40,20 +39,20 @@ class Layer_duplicate_class {
 	}
 
 	duplicate() {
-		var params = JSON.parse(JSON.stringify(config.layer));
+		const params = JSON.parse(JSON.stringify(config.layer));
 		delete params.id;
 		delete params.order;
 		params.link_id = null; //a copy is not linked with the original
 
 		//generate name
-		var name_number = params.name.match(/^(.*) #([0-9]+)$/);
+		const name_number = params.name.match(/^(.*) #([0-9]+)$/);
 		if(name_number == null){
 			//first duplicate
-			params.name = params.name + " #2";
+			params.name = `${params.name  } #2`;
 		}
 		else{
 			//nth duplicate - name like "query #17"
-			params.name = name_number[1] + " #" + (parseInt(name_number[2]) + 1)
+			params.name = `${name_number[1]  } #${  parseInt(name_number[2]) + 1}`
 		}
 
 		if(params.x != 0 || params.y != 0 || params.width != config.WIDTH || params.height != config.HEIGHT){
@@ -61,7 +60,7 @@ class Layer_duplicate_class {
 			params.y += 10;
 		}
 
-		for (var i in params) {
+		for (const i in params) {
 			//remove private attributes
 			if (i[0] == '_')
 				delete params[i];

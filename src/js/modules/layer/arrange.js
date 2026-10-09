@@ -10,12 +10,12 @@ import { t } from '../tools/translate.js';
 class Layer_arrange_class {
 
 	reverse_order() {
-		var layers = config.layers.concat().sort((a, b) => a.order - b.order);
+		const layers = config.layers.concat().sort((a, b) => a.order - b.order);
 		if (layers.length < 2) {
 			alertify.warning(t('There is only one layer.'));
 			return;
 		}
-		var actions = reverse_steps(layers.map((layer) => layer.id)).map(
+		const actions = reverse_steps(layers.map((layer) => layer.id)).map(
 			(id) => new app.Actions.Reorder_layer_action(id, 1)
 		);
 		return app.State.do_action(
@@ -24,7 +24,7 @@ class Layer_arrange_class {
 	}
 
 	delete_hidden() {
-		var hidden = config.layers.filter((layer) => layer.visible === false);
+		const hidden = config.layers.filter((layer) => layer.visible === false);
 		if (hidden.length == 0) {
 			alertify.warning(t('There are no hidden layers.'));
 			return;

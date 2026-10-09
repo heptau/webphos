@@ -13,23 +13,22 @@ class Layer_differences_class {
 	}
 
 	differences() {
-		var _this = this;
 		if (this.Base_layers.find_previous(config.layer.id) == null) {
 			alertify.error(t('There are no layers behind.'));
 			return false;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Differences',
 			preview: true,
 			params: [
 				{name: "sensitivity", title: "Sensitivity:", value: "0", range: [0, 255]},
 			],
-			on_change: function (params, canvas_preview, w, h) {
-				_this.calc_differences(params.sensitivity, canvas_preview, w, h);
+			on_change: (params, canvas_preview, w, h) => {
+				this.calc_differences(params.sensitivity, canvas_preview, w, h);
 			},
-			on_finish: function (params) {
-				_this.calc_differences(params.sensitivity);
+			on_finish: (params) => {
+				this.calc_differences(params.sensitivity);
 			},
 		};
 		this.POP.show(settings);
@@ -37,21 +36,21 @@ class Layer_differences_class {
 
 	calc_differences(sensitivity, canvas_preview, w, h) {
 		//create tmp canvas
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
-		var ctx = canvas.getContext("2d");
+		const ctx = canvas.getContext("2d");
 
 		//get source data
 		this.Base_layers.render_object(ctx, config.layer);
-		var imgData1 = ctx.getImageData(0, 0, config.WIDTH, config.HEIGHT).data;
+		const imgData1 = ctx.getImageData(0, 0, config.WIDTH, config.HEIGHT).data;
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 		//get target data
-		var next_layer = this.Base_layers.find_previous(config.layer.id);
+		const next_layer = this.Base_layers.find_previous(config.layer.id);
 		this.Base_layers.render_object(ctx, next_layer);
-		var imgData2 = ctx.getImageData(0, 0, config.WIDTH, config.HEIGHT).data;
+		const imgData2 = ctx.getImageData(0, 0, config.WIDTH, config.HEIGHT).data;
 
 		//prepare background
 		ctx.rect(0, 0, config.WIDTH, config.HEIGHT);
@@ -59,11 +58,11 @@ class Layer_differences_class {
 		ctx.fill();
 
 		//generate diff
-		var img3 = ctx.getImageData(0, 0, config.WIDTH, config.HEIGHT);
-		var imgData3 = img3.data;
-		for (var xx = 0; xx < config.WIDTH; xx++) {
-			for (var yy = 0; yy < config.HEIGHT; yy++) {
-				var x = (xx + yy * config.WIDTH) * 4;
+		const img3 = ctx.getImageData(0, 0, config.WIDTH, config.HEIGHT);
+		const imgData3 = img3.data;
+		for (let xx = 0; xx < config.WIDTH; xx++) {
+			for (let yy = 0; yy < config.HEIGHT; yy++) {
+				const x = (xx + yy * config.WIDTH) * 4;
 
 				if (Math.abs(imgData1[x] - imgData2[x]) > sensitivity
 					|| Math.abs(imgData1[x + 1] - imgData2[x + 1]) > sensitivity
@@ -81,7 +80,7 @@ class Layer_differences_class {
 		//show
 		if (canvas_preview == undefined) {
 			//main
-			var params = [];
+			const params = [];
 			params.type = 'image';
 			params.name = 'Differences';
 			params.data = canvas.toDataURL("image/png");

@@ -47,7 +47,7 @@ export function to_pixels(value, unit, dpi) {
 	if (isNaN(value) || !is_unit(unit)) {
 		return NaN;
 	}
-	var pixels = unit == 'pixels' ? value : value * clamp_dpi(dpi) / UNIT_PER_INCH[unit];
+	const pixels = unit == 'pixels' ? value : value * clamp_dpi(dpi) / UNIT_PER_INCH[unit];
 	return Math.max(1, Math.round(pixels));
 }
 
@@ -89,10 +89,10 @@ export function dpi_for(pixels, size, unit) {
  * converts a size between units at the same resolution
  */
 export function convert_size(value, from_unit, to_unit, dpi) {
-	var pixels = to_pixels(value, from_unit, dpi);
+	const pixels = to_pixels(value, from_unit, dpi);
 	if (from_unit != 'pixels' && !isNaN(parseFloat(value))) {
 		//keep the physical size exact instead of going through rounded pixels
-		var inches = parseFloat(value) / UNIT_PER_INCH[from_unit];
+		const inches = parseFloat(value) / UNIT_PER_INCH[from_unit];
 		return to_unit == 'pixels' ? Math.round(inches * clamp_dpi(dpi)) : Math.round(inches * UNIT_PER_INCH[to_unit] * 1000) / 1000;
 	}
 	return from_pixels(pixels, to_unit, dpi);

@@ -11,7 +11,7 @@ const MAX_SIDE = 8192;
 const HANDLE_SIZE = 8; //screen pixels
 const REACH = 12; //screen pixels
 
-var instance = null;
+let instance = null;
 
 /**
  * Skew, Perspective and Distort with the mouse (Edit > Skew / Perspective / Distort): handles lie on the picture of the
@@ -39,7 +39,7 @@ class Edit_distort_session_class {
 			this.set_mode(mode);
 			return;
 		}
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
@@ -64,7 +64,7 @@ class Edit_distort_session_class {
 
 		//a smaller copy for the preview
 		this.scale = Math.min(1, 500 / Math.max(this.w, this.h));
-		var small = document.createElement('canvas');
+		const small = document.createElement('canvas');
 		small.width = Math.max(1, Math.round(this.w * this.scale));
 		small.height = Math.max(1, Math.round(this.h * this.scale));
 		small.getContext('2d').drawImage(this.full, 0, 0, small.width, small.height);
@@ -108,16 +108,16 @@ class Edit_distort_session_class {
 	 * The layer shows the shape (made from the smaller copy)
 	 */
 	show_preview() {
-		var layer = this.layer;
+		const layer = this.layer;
 		if (is_valid_quad(this.quad) == false) {
 			return;
 		}
-		var scaled = this.quad.map((c) => [c[0] * this.scale, c[1] * this.scale]);
-		var result = warp_to_quad(this.small_image, scaled);
+		const scaled = this.quad.map((c) => [c[0] * this.scale, c[1] * this.scale]);
+		const result = warp_to_quad(this.small_image, scaled);
 		if (result == null) {
 			return;
 		}
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = result.image.width;
 		canvas.height = result.image.height;
 		canvas.getContext('2d').putImageData(new ImageData(result.image.data, canvas.width, canvas.height), 0, 0);
@@ -133,7 +133,7 @@ class Edit_distort_session_class {
 	 * @returns {{x: number, y: number}} the position of the mouse on the picture, measured from the layer's own corner
 	 */
 	local_point(event) {
-		var point = this.pointer.get_mouse_coordinates_from_event(event);
+		const point = this.pointer.get_mouse_coordinates_from_event(event);
 		return {x: point.x - this.origin.x, y: point.y - this.origin.y};
 	}
 
@@ -148,10 +148,10 @@ class Edit_distort_session_class {
 		//the tools do not get the click while the session is on
 		event.stopImmediatePropagation();
 		event.preventDefault();
-		var point = this.local_point(event);
-		var handle = find_handle(this.quad, this.mode, point, REACH / (config.ZOOM || 1));
+		const point = this.local_point(event);
+		const handle = find_handle(this.quad, this.mode, point, REACH / (config.ZOOM || 1));
 		if (handle) {
-			this.dragging = {handle: handle, point: point, quad: this.quad.map((c) => [c[0], c[1]])};
+			this.dragging = {handle, point, quad: this.quad.map((c) => [c[0], c[1]])};
 		}
 	}
 
@@ -160,8 +160,8 @@ class Edit_distort_session_class {
 			return;
 		}
 		event.stopImmediatePropagation();
-		var point = this.local_point(event);
-		var next = drag_handle(this.dragging.quad, this.mode, this.dragging.handle, point.x - this.dragging.point.x, point.y - this.dragging.point.y);
+		const point = this.local_point(event);
+		const next = drag_handle(this.dragging.quad, this.mode, this.dragging.handle, point.x - this.dragging.point.x, point.y - this.dragging.point.y);
 		if (is_valid_quad(next)) {
 			this.quad = next;
 			if (!this.scheduled) {
@@ -207,8 +207,8 @@ class Edit_distort_session_class {
 		if (!this.active) {
 			return;
 		}
-		var scale = 1 / (config.ZOOM || 1);
-		var points = this.quad.map((c) => ({x: this.origin.x + c[0], y: this.origin.y + c[1]}));
+		const scale = 1 / (config.ZOOM || 1);
+		const points = this.quad.map((c) => ({x: this.origin.x + c[0], y: this.origin.y + c[1]}));
 		ctx.save();
 		ctx.beginPath();
 		points.forEach((p, i) => (i == 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
@@ -220,10 +220,10 @@ class Edit_distort_session_class {
 		ctx.strokeStyle = '#ffffff';
 		ctx.stroke();
 		handles_for(this.mode).forEach((handle) => {
-			var p = handle_position(this.quad, handle);
-			var size = HANDLE_SIZE * scale;
-			var x = this.origin.x + p.x - size / 2;
-			var y = this.origin.y + p.y - size / 2;
+			const p = handle_position(this.quad, handle);
+			const size = HANDLE_SIZE * scale;
+			const x = this.origin.x + p.x - size / 2;
+			const y = this.origin.y + p.y - size / 2;
 			ctx.fillStyle = this.dragging && this.dragging.handle == handle ? '#0a84ff' : '#ffffff';
 			ctx.fillRect(x, y, size, size);
 			ctx.lineWidth = scale;
@@ -248,7 +248,7 @@ class Edit_distort_session_class {
 	}
 
 	restore() {
-		var layer = this.layer;
+		const layer = this.layer;
 		layer.x = this.saved.x;
 		layer.y = this.saved.y;
 		layer.width = this.saved.width;
@@ -274,34 +274,33 @@ class Edit_distort_session_class {
 	 * The numbers dialog of the same mode (the shape made so far is dropped)
 	 */
 	numbers() {
-		var mode = this.mode;
+		const mode = this.mode;
 		this.cancel();
-		app.GUI.run_target('edit/transform.' + mode + '_numbers');
+		app.GUI.run_target(`edit/transform.${mode}_numbers`);
 	}
 
 	apply() {
 		if (!this.active) {
 			return;
 		}
-		var quad = this.quad;
-		var layer = this.layer;
-		var saved = this.saved;
-		var origin = this.origin;
-		var full = this.full;
-		var title = this.mode == 'skew' ? 'Skew' : (this.mode == 'perspective' ? 'Perspective' : 'Distort');
+		const quad = this.quad;
+		const layer = this.layer;
+		const origin = this.origin;
+		const full = this.full;
+		const title = this.mode == 'skew' ? 'Skew' : (this.mode == 'perspective' ? 'Perspective' : 'Distort');
 		this.finish();
 		this.restore();
-		var bounds = quad_bounds(quad);
+		const bounds = quad_bounds(quad);
 		if (bounds.width > MAX_SIDE || bounds.height > MAX_SIDE) {
 			alertify.error(t('The result would be too big.'));
 			return;
 		}
-		var result = warp_to_quad(full.getContext('2d').getImageData(0, 0, full.width, full.height), quad);
+		const result = warp_to_quad(full.getContext('2d').getImageData(0, 0, full.width, full.height), quad);
 		if (result == null) {
 			alertify.error(t('The corners make a shape that folds over itself.'));
 			return;
 		}
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = result.image.width;
 		canvas.height = result.image.height;
 		canvas.getContext('2d').putImageData(new ImageData(result.image.data, canvas.width, canvas.height), 0, 0);
@@ -324,12 +323,12 @@ class Edit_distort_session_class {
 	 * the bar at the top: the three modes and the buttons that end the session
 	 */
 	show_bar() {
-		var bar = document.createElement('div');
+		const bar = document.createElement('div');
 		bar.className = 'distort_bar';
 		bar.setAttribute('role', 'toolbar');
 		bar.setAttribute('aria-label', t('Distort'));
-		var button = (text, handler, mode) => {
-			var element = document.createElement('button');
+		const button = (text, handler, mode) => {
+			const element = document.createElement('button');
 			element.type = 'button';
 			element.textContent = t(text);
 			if (mode) {
@@ -343,13 +342,13 @@ class Edit_distort_session_class {
 		button('Distort', () => this.set_mode('distort'), 'distort');
 		button('Perspective', () => this.set_mode('perspective'), 'perspective');
 		button('Skew', () => this.set_mode('skew'), 'skew');
-		var divider = document.createElement('span');
+		const divider = document.createElement('span');
 		divider.className = 'distort_bar_divider';
 		bar.appendChild(divider);
 		button('Reset', () => this.reset_quad());
 		button('Numbers', () => this.numbers());
 		button('Cancel', () => this.cancel());
-		var apply = button('Apply', () => this.apply());
+		const apply = button('Apply', () => this.apply());
 		apply.className = 'primary';
 		document.body.appendChild(bar);
 		this.bar = bar;

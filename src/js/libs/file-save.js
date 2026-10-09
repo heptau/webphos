@@ -16,12 +16,12 @@ export function can_use_file_picker() {
  * @returns {{description: string, accept: object}[]|undefined} file type filter for the dialog
  */
 export function picker_types(name) {
-	var match = /\.([a-z0-9]{2,5})$/i.exec(String(name));
+	const match = /\.([a-z0-9]{2,5})$/i.exec(String(name));
 	if (!match) {
 		return undefined;
 	}
-	var extension = '.' + match[1].toLowerCase();
-	var mime = {
+	const extension = `.${  match[1].toLowerCase()}`;
+	const mime = {
 		'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.avif': 'image/avif',
 		'.gif': 'image/gif', '.bmp': 'image/bmp', '.tiff': 'image/tiff', '.tif': 'image/tiff',
 		'.pdf': 'application/pdf', '.json': 'application/json',
@@ -41,8 +41,8 @@ export function picker_types(name) {
 export async function save_blob(blob, name, use_picker) {
 	if (use_picker && can_use_file_picker()) {
 		try {
-			var handle = await window.showSaveFilePicker({suggestedName: name, types: picker_types(name)});
-			var writable = await handle.createWritable();
+			const handle = await window.showSaveFilePicker({suggestedName: name, types: picker_types(name)});
+			const writable = await handle.createWritable();
 			await writable.write(blob);
 			await writable.close();
 			return true;

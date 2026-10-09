@@ -7,11 +7,11 @@
  * @returns {string} "Untitled-1", "Untitled-2"... first name that is not used
  */
 export function next_document_name(names) {
-	var number = 1;
-	while (names.includes('Untitled-' + number)) {
+	let number = 1;
+	while (names.includes(`Untitled-${  number}`)) {
 		number++;
 	}
-	return 'Untitled-' + number;
+	return `Untitled-${  number}`;
 }
 
 /**
@@ -23,7 +23,7 @@ export function next_document_name(names) {
  * @returns {{active: number, switched: boolean}} switched = the active document was removed, a neighbour is shown
  */
 export function remove_document_index(count, active, removed) {
-	var remaining = count - 1;
+	const remaining = count - 1;
 	if (removed == active) {
 		return {active: Math.min(removed, remaining - 1), switched: true};
 	}

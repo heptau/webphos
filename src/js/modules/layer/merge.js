@@ -20,14 +20,14 @@ class Layer_merge_class {
 		}
 
 		//create tmp canvas
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
-		var ctx = canvas.getContext("2d");
+		const ctx = canvas.getContext("2d");
 
 		//first layer
-		var previous_layer = this.Base_layers.find_previous(config.layer.id);
-		var previous_id = previous_layer.id;
+		const previous_layer = this.Base_layers.find_previous(config.layer.id);
+		const previous_id = previous_layer.id;
 		if (previous_layer.type == 'adjustment') {
 			alertify.error(t('Merge Down needs a picture layer below.'));
 			return false;
@@ -37,12 +37,12 @@ class Layer_merge_class {
 		this.Base_layers.render_object(ctx, previous_layer);
 
 		//second layer
-		var current_id = config.layer.id;
-		var current_order = config.layer.order;
+		const current_id = config.layer.id;
+		const current_order = config.layer.order;
 		if (config.layer.type == 'adjustment') {
 			//the adjustment is applied to the layer below (the layer mask is not used)
-			var original = ctx.getImageData(0, 0, canvas.width, canvas.height);
-			var adjusted = adjust_image(original, config.layer.params.adjustment, config.layer.params.settings);
+			const original = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const adjusted = adjust_image(original, config.layer.params.adjustment, config.layer.params.settings);
 			mix_adjusted(original, adjusted, config.layer.opacity / 100, null);
 			ctx.putImageData(new ImageData(adjusted.data, adjusted.width, adjusted.height), 0, 0);
 		}
@@ -59,9 +59,9 @@ class Layer_merge_class {
 		}
 
 		//create requested layer
-		var params = [];
+		const params = [];
 		params.type = 'image';
-		params.name = config.layer.name + ' + merged';
+		params.name = `${config.layer.name  } + merged`;
 		params.order = current_order;
 		params.data = canvas.toDataURL("image/png");
 		app.State.do_action(

@@ -21,15 +21,15 @@ class Rectangle_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false)
 			return;
 
-		var mouse_x = mouse.x;
-		var mouse_y = mouse.y;
+		let mouse_x = mouse.x;
+		let mouse_y = mouse.y;
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -61,8 +61,8 @@ class Rectangle_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 
 		if (mouse.is_drag == false)
 			return;
@@ -70,13 +70,13 @@ class Rectangle_class extends Base_tools_class {
 			return;
 		}
 
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
-		var click_x = Math.round(this.mouse_click.x);
-		var click_y = Math.round(this.mouse_click.y);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
+		const click_x = Math.round(this.mouse_click.x);
+		const click_y = Math.round(this.mouse_click.y);
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -86,10 +86,10 @@ class Rectangle_class extends Base_tools_class {
 			}
 		}
 
-		var x = Math.min(mouse_x, click_x);
-		var y = Math.min(mouse_y, click_y);
-		var width = Math.abs(mouse_x - click_x);
-		var height = Math.abs(mouse_y - click_y);
+		let x = Math.min(mouse_x, click_x);
+		let y = Math.min(mouse_y, click_y);
+		let width = Math.abs(mouse_x - click_x);
+		let height = Math.abs(mouse_y - click_y);
 
 		if (params.square == true || e.ctrlKey == true || e.metaKey) {
 			if (width < height) {
@@ -116,21 +116,21 @@ class Rectangle_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 
 		if (mouse.click_valid == false) {
 			config.layer.status = null;
 			return;
 		}
 
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
-		var click_x = Math.round(this.mouse_click.x);
-		var click_y = Math.round(this.mouse_click.y);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
+		const click_x = Math.round(this.mouse_click.x);
+		const click_y = Math.round(this.mouse_click.y);
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -141,10 +141,10 @@ class Rectangle_class extends Base_tools_class {
 		}
 		this.snap_line_info = {x: null, y: null};
 
-		var x = Math.min(mouse_x, click_x);
-		var y = Math.min(mouse_y, click_y);
-		var width = Math.abs(mouse_x - click_x);
-		var height = Math.abs(mouse_y - click_y);
+		let x = Math.min(mouse_x, click_x);
+		let y = Math.min(mouse_y, click_y);
+		let width = Math.abs(mouse_x - click_x);
+		let height = Math.abs(mouse_y - click_y);
 
 		if (params.square == true || e.ctrlKey == true || e.metaKey) {
 			if (width < height) {
@@ -181,12 +181,12 @@ class Rectangle_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
 	demo(ctx, x, y, width, height) {
-		var coords = [
+		const coords = [
 			[0, 0],
 			[100, 0],
 			[100, 100],
@@ -197,11 +197,11 @@ class Rectangle_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
-		var fill = params.fill;
-		var stroke = params.border;
-		var rotateSupport = true;
-		var radius = params.radius;
+		const params = layer.params;
+		const fill = params.fill;
+		const stroke = params.border;
+		const rotateSupport = true;
+		let radius = params.radius;
 		if(radius == undefined)
 			radius = 0;
 
@@ -231,7 +231,7 @@ class Rectangle_class extends Base_tools_class {
 
 	/**
 	 * Draws a rounded rectangle on canvas.
-	 * 
+	 *
 	 * @param {CanvasRenderingContext2D} ctx
 	 * @param {Number} x
 	 * @param {Number} y
@@ -253,7 +253,7 @@ class Rectangle_class extends Base_tools_class {
 			height = Math.abs(height);
 			y = y - height;
 		}
-		var smaller_dimension = Math.min(width, height);
+		const smaller_dimension = Math.min(width, height);
 
 		radius = parseInt(radius);
 		if (typeof fill == 'undefined') {
@@ -264,7 +264,7 @@ class Rectangle_class extends Base_tools_class {
 		}
 		radius = Math.min(radius, width / 2, height / 2);
 		radius = Math.floor(radius);
-		
+
 		// Odd dimensions must draw offset half a pixel
 		if (width % 2 == 1 && config.layer.status != 'draft') {
 			x -= 0.5;
@@ -273,7 +273,7 @@ class Rectangle_class extends Base_tools_class {
 			y -= 0.5;
 		}
 
-		var stroke_offset = !fill && ctx.lineWidth % 2 == 1 && width > 1 && height > 1 ? 0.5 : 0;
+		const stroke_offset = !fill && ctx.lineWidth % 2 == 1 && width > 1 && height > 1 ? 0.5 : 0;
 
 		if (smaller_dimension < 2) fill = true;
 

@@ -45,19 +45,19 @@ function magnitude(part) {
  */
 export function parse_commands(text) {
 	//"black and white" must not be cut at "and"
-	var cleaned = normalize(text).replace(/black\s*(?:and|&)\s*white/g, 'blackwhite');
-	var parts = cleaned.split(/\s*(?:,|;|\+|\band\b|\bthen\b|\ba\b(?!\s+(?:bit|little|lot))|\bpak\b)\s*/).map((part) => part.trim()).filter((part) => part != '');
-	var steps = [];
-	var unknown = [];
+	const cleaned = normalize(text).replace(/black\s*(?:and|&)\s*white/g, 'blackwhite');
+	const parts = cleaned.split(/\s*(?:,|;|\+|\band\b|\bthen\b|\ba\b(?!\s+(?:bit|little|lot))|\bpak\b)\s*/).map((part) => part.trim()).filter((part) => part != '');
+	let steps = [];
+	const unknown = [];
 	parts.forEach((part) => {
-		var rule = RULES.find((item) => item.re.test(part));
+		const rule = RULES.find((item) => item.re.test(part));
 		if (!rule) {
 			unknown.push(part);
 			return;
 		}
 		steps = steps.concat(rule.steps(magnitude(part)));
 	});
-	return {steps: steps, unknown: unknown};
+	return {steps, unknown};
 }
 
 /**

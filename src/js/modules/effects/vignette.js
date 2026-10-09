@@ -15,14 +15,13 @@ class Effects_vignette_class {
 	}
 
 	vignette() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Vignette',
 			preview: true,
 			effects: true,
@@ -30,13 +29,13 @@ class Effects_vignette_class {
 				{name: "param1", title: "Level:", value: "0.5", range: [0, 1], step: 0.01},
 				{name: "param2", title: "Size:", value: "0.5", range: [0, 1], step: 0.01},
 			],
-			on_change: function (params, canvas_preview, w, h, canvas_) {
-				var data = _this.change(canvas_, params);
+			on_change: (params, canvas_preview, w, h, canvas_) => {
+				const data = this.change(canvas_, params);
 				canvas_preview.clearRect(0, 0, canvas_.width, canvas_.height);
 				canvas_preview.drawImage(data, 0, 0);
 			},
-			on_finish: function (params) {
-				_this.save(params);
+			on_finish: (params) => {
+				this.save(params);
 			},
 		};
 		this.POP.show(settings);
@@ -44,11 +43,11 @@ class Effects_vignette_class {
 
 	save(params) {
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var data = this.change(canvas, params);
+		const data = this.change(canvas, params);
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(data, 0, 0);
 
@@ -64,25 +63,25 @@ class Effects_vignette_class {
 			this.fx_filter = glfx.canvas();
 		}
 
-		var param1 = parseFloat(params.param1);
-		var param2 = parseFloat(params.param2);
+		const param1 = parseFloat(params.param1);
+		const param2 = parseFloat(params.param2);
 
-		var texture = this.fx_filter.texture(canvas);
+		const texture = this.fx_filter.texture(canvas);
 		this.fx_filter.draw(texture).vignette(param1, param2).update();	//effect
 
 		return this.fx_filter;
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//modify
-		var params = {
+		const params = {
 			param1: 0.5,
 			param2: 0.5,
 		};
-		var data = this.change(canvas_thumb, params);
+		const data = this.change(canvas_thumb, params);
 
 		//draw
 		ctx.drawImage(data, 0, 0);

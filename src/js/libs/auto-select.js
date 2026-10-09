@@ -23,8 +23,8 @@ export function inside_frame(layer, point) {
  * @returns {*} id of the layer, null when nothing is there
  */
 export function pick_layer(layers, active_id, point, hit) {
-	for (var i = 0; i < layers.length; i++) {
-		var layer = layers[i];
+	for (let i = 0; i < layers.length; i++) {
+		const layer = layers[i];
 		if ((layer.id == active_id && inside_frame(layer, point)) || hit(layer)) {
 			return layer.id;
 		}

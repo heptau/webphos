@@ -15,7 +15,8 @@ class File_open_json_class {
 	}
 
 	async load_json(data) {
-		var json;
+		let i, j, old_type;
+		let json;
 		if(typeof data == 'string')
 			json = JSON.parse(data);
 		else
@@ -27,7 +28,7 @@ class File_open_json_class {
 		//migration
 		if(semver_compare(json.info.version, '4.0.0') < 0) {
 			//convert from v3 to v4
-			for (var i in json.layers) {
+			for (i in json.layers) {
 				//layers data
 				json.layers[i].id = (parseInt(i) + 1);
 				json.layers[i].opacity = json.layers[i].opacity * 100 || 100;
@@ -38,10 +39,10 @@ class File_open_json_class {
 				delete json.layers[i].title;
 			}
 			json.data = [];
-			for (var i in json.image_data) {
+			for (i in json.image_data) {
 				//image data
-				var new_id = null;
-				for (var j in json.layers) {
+				let new_id = null;
+				for (j in json.layers) {
 					if (json.layers[j].name == json.image_data[i].name) {
 						new_id = json.layers[j].id;
 					}
@@ -58,8 +59,8 @@ class File_open_json_class {
 		}
 		if(semver_compare(json.info.version, '4.5.0') < 0) {
 			//migrate "rectangle", "circle" and "line" types to "shape"
-			for (var i in json.layers) {
-				var old_type = json.layers[i].type;
+			for (i in json.layers) {
+				old_type = json.layers[i].type;
 
 				if(old_type == 'line' && json.layers[i].params.type.value == "Arrow"){
 					//migrate line (type=arrow) to arrow.
@@ -92,8 +93,8 @@ class File_open_json_class {
 		}
 		if(semver_compare(json.info.version, '4.8.0') < 0) {
 			//migrate "borders" layer to rectangle
-			for (var i in json.layers) {
-				var old_type = json.layers[i].type;
+			for (i in json.layers) {
+				old_type = json.layers[i].type;
 
 				if(old_type == 'borders'){
 					json.layers[i].type = 'rectangle';
@@ -113,8 +114,8 @@ class File_open_json_class {
 		}
 		if(semver_compare(json.info.version, '4.11.0') < 0) {
 			//migrate star and star24 objects
-			for (var i in json.layers) {
-				var old_type = json.layers[i].type;
+			for (i in json.layers) {
+				old_type = json.layers[i].type;
 
 				if(old_type == 'star' && typeof json.layers[i].params.corners == "undefined"){
 					json.layers[i].params.corners = 5;
@@ -152,9 +153,9 @@ class File_open_json_class {
 			new app.Actions.Refresh_action_attributes_action('do')
 		);
 
-		var max_id_order = 0;
-		for (var i in json.layers) {
-			var value = json.layers[i];
+		let max_id_order = 0;
+		for (i in json.layers) {
+			const value = json.layers[i];
 
 			if(value.id > max_id_order)
 				max_id_order = value.id;
@@ -164,7 +165,7 @@ class File_open_json_class {
 			if (value.type == 'image') {
 				//add image data
 				value.link = null;
-				for (var j in json.data) {
+				for (j in json.data) {
 					if (json.data[j].id == value.id) {
 						value.data = json.data[j].data;
 					}

@@ -18,21 +18,20 @@ class File_open_url_class {
 	}
 
 	open_url() {
-		var _this = this;
 
-		var settings = {
+		const settings = {
 			title: 'Open URL',
 			params: [
 				{name: "url", title: "URL:", value: ""},
 			],
-			on_finish: function (params) {
+			on_finish: (params) => {
 				// Validate URL before processing
-				var validation = validate_image_url(params.url);
+				const validation = validate_image_url(params.url);
 				if (!validation.valid) {
 					alertify.error(validation.error);
 					return;
 				}
-				_this.file_open_url_handler(params);
+				this.file_open_url_handler(params);
 			},
 		};
 		this.owner.POP.show(settings);
@@ -42,7 +41,7 @@ class File_open_url_class {
 	 * check if url has url params, for example: https://viliusle.github.io/miniPaint/?image=http://i.imgur.com/ATda8Ae.jpg
 	 */
 	maybe_file_open_url_handler() {
-		var url_params = this.owner.Helper.get_url_parameters();
+		const url_params = this.owner.Helper.get_url_parameters();
 
 		if (url_params.image != undefined) {
 			this.open_resource(url_params.image);
@@ -55,7 +54,6 @@ class File_open_url_class {
 	 * @param string resource_url
 	 */
 	open_resource(resource_url) {
-		var _this = this;
 
 		// Validate URL to prevent SSRF attacks
 		if (!is_valid_url(resource_url)) {
@@ -65,21 +63,21 @@ class File_open_url_class {
 
 		if(resource_url.toLowerCase().indexOf('.json') == resource_url.length - 5){
 			//load json
-			safe_execute_async(async function() {
-				var response = await fetch(resource_url);
+			safe_execute_async(async () => {
+				const response = await fetch(resource_url);
 				if (!response.ok) {
-					throw new Error('Failed to fetch: ' + response.status);
+					throw new Error(`Failed to fetch: ${  response.status}`);
 				}
-				var json = await response.json();
-				_this.owner.load_json(json, false);
-			}, 'Open resource JSON').catch(function(error) {
-				var userMessage = get_user_error_message(error, 'Open resource');
+				const json = await response.json();
+				this.owner.load_json(json, false);
+			}, 'Open resource JSON').catch((error) => {
+				const userMessage = get_user_error_message(error, 'Open resource');
 				alertify.error(userMessage);
 			});
 		}
 		else{
 			//load image
-			var data = {
+			const data = {
 				url: resource_url,
 			};
 			this.file_open_url_handler(data);
@@ -88,7 +86,7 @@ class File_open_url_class {
 
 	//handler for open url. Example url: http://i.imgur.com/ATda8Ae.jpg
 	file_open_url_handler(user_response) {
-		var url = user_response.url;
+		const url = user_response.url;
 		if (url == '')
 			return;
 
@@ -98,12 +96,12 @@ class File_open_url_class {
 			return;
 		}
 
-		var layer_name = url.replace(/^.*[\\\/]/, '');
+		const layer_name = url.replace(/^.*[\\/]/, '');
 
-		var img = new Image();
+		const img = new Image();
 		img.crossOrigin = "Anonymous";
 		img.onload = function () {
-			var new_layer = {
+			const new_layer = {
 				name: layer_name,
 				type: 'image',
 				link: img,
@@ -123,7 +121,7 @@ class File_open_url_class {
 			);
 		};
 		img.onerror = function (ex) {
-			var userMessage = get_user_error_message(ex, 'Load image from URL');
+			const userMessage = get_user_error_message(ex, 'Load image from URL');
 			alertify.error(userMessage);
 		};
 		img.src = url;

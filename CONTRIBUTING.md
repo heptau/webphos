@@ -1,6 +1,6 @@
-# Contributing to WebPhos
+# Contributing to Lumifex
 
-WebPhos (formerly miniPaint) is a web image editor written in vanilla JS with
+Lumifex (formerly miniPaint) is a web image editor written in vanilla JS with
 HTML5 canvas, no framework. We love your input! We want to make contributing
 as easy and transparent as possible, whether it's:
 
@@ -42,7 +42,10 @@ accept pull requests.
 | `npm run typecheck` (or `make typecheck`) | TypeScript type check |
 | `make build` | production build into `docs/` |
 
-New texts must be translated: add them to `src/js/languages/cs.json`, run
+English is the development language: code, comments, documentation and the
+texts in the user interface are written in English, and the English text is the
+key of every dictionary. New texts must be translated: add them to
+`src/js/languages/cs.json` (the reference translation), run
 `npm run translations:sync` and translate them to the other languages too.
 
 ## Commit messages
@@ -59,11 +62,31 @@ breaking changes with `!` after the type (`feat!: ...`). Examples:
 
 ## Code Style
 
-Follow the surrounding code: tabs for indentation, no framework, no new
-dependencies without a good reason. User input from URLs and files must be
+Follow the surrounding code: no framework, no new dependencies without a good
+reason, `const` / `let` instead of `var` and arrow functions instead of
+`var _this = this`. `npm run lint` must report nothing. User input from URLs and files must be
 validated (`libs/input-validator.js`, `libs/url-validator.js`), and no data is
 sent to any server (privacy first). Never put personal data of customers
 (PII) into code, tests or documentation.
+
+### Formatting (`.editorconfig`)
+
+The file formatting is set in [`.editorconfig`](.editorconfig); most editors
+and IDEs read it automatically (VS Code needs the EditorConfig extension).
+In short:
+
+- indentation with **tabs** (shown 3 characters wide), **LF** line endings,
+  UTF-8, no trailing whitespace and exactly one newline at the end of a file;
+- YAML files (`.github/workflows/*.yml`) use 2 spaces;
+- Markdown keeps trailing spaces (they are a line break there);
+- `package.json` / `package-lock.json` use 2 spaces (npm writes them that way)
+  and the dictionaries in `src/js/languages/*.json` use 4 spaces (written by
+  `npm run translations:sync`);
+- third-party libraries (`src/js/libs/gifjs`, `glfx.js`, `imagefilters.js`,
+  `color-thief.js`, `canvastotiff.js`, `jquery.translate.js`) and the build
+  output (`docs/`, `dist/`) are left as they are, do not reformat them.
+
+Do not mix formatting changes with other changes in one commit.
 
 ## Any contributions you make will be under the MIT Software License
 
@@ -105,21 +128,21 @@ committed.
 `docs/.well-known/security.txt` is generated too: its source is `public/.well-known/security.txt`
 (edit it there and renew its `Expires` date at least once a year); `scripts/post-build.js` copies it to
 `dist/` and `docs/` on every build. The same applies to `docs/CNAME` (custom domain
-`webphos.80.cz` for GitHub Pages), whose source is `public/CNAME`.
+`lumifex.80.cz` for GitHub Pages), whose source is `public/CNAME`.
 
 Do not edit files in `docs/` by hand; their names contain hashes that change
 with every build.
 
 ## Report bugs using GitHub issues
 
-We use [GitHub issues](https://github.com/heptau/webphos/issues) to track public bugs. Report a bug by [opening a new issue](https://github.com/heptau/webphos/issues/new).
+We use [GitHub issues](https://github.com/heptau/lumifex/issues) to track public bugs. Report a bug by [opening a new issue](https://github.com/heptau/lumifex/issues/new).
 
 ## Write bug reports with detail
 
 **Great Bug Reports** tend to have:
 
 - A quick summary and/or background
-- WebPhos version (see *About WebPhos*) and the browser with its version
+- Lumifex version (see *About Lumifex*) and the browser with its version
 - Operating system and version
 - Steps to reproduce
 	- Be specific!

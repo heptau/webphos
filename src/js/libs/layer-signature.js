@@ -10,8 +10,8 @@
  * @returns {function(object): number}
  */
 export function make_identity() {
-	var ids = new WeakMap();
-	var next = 1;
+	const ids = new WeakMap();
+	let next = 1;
 	return function (object) {
 		if (!ids.has(object)) {
 			ids.set(object, next++);
@@ -29,38 +29,38 @@ export function layer_signature(layer, identity) {
 	try {
 		return signature_text(layer, identity);
 	}
-	catch (error) {
+	catch {
 		//something that can not be written down (a loop): never equal to another signature, so nothing is reused
-		return 'x' + Math.random();
+		return `x${  Math.random()}`;
 	}
 }
 
 function signature_text(layer, identity) {
-	return JSON.stringify(layer, function (key, value) {
+	return JSON.stringify(layer, (key, value) => {
 		if (key.charAt(0) === '_') {
 			return undefined; //private helpers of the layer (exif, caches)
 		}
 		if (key === 'link' || key === 'link_canvas') {
 			//the picture and whether it is loaded already (a layer is drawn empty until then)
-			return value ? 'o' + identity(value) + (value.complete === false ? '-loading' : '') : null;
+			return value ? `o${identity(value)}${value.complete === false ? '-loading' : ''}` : null;
 		}
 		if (key === 'mask' && value && typeof value === 'object') {
-			return 'm' + identity(value);
+			return `m${  identity(value)}`;
 		}
 		if ((key === 'values' || key === 'counts') && Array.isArray(value)) {
-			return 'a' + identity(value) + ':' + value.length; //the long lists of a mask inside of the settings of a group
+			return `a${identity(value)}:${  value.length}`; //the long lists of a mask inside of the settings of a group
 		}
 		if (key === 'data') {
 			if (typeof value === 'string') {
 				//the picture of an image layer as a data URL: its length and ends are enough, it is replaced as a whole
-				return value.length > 200 ? 's' + value.length + value.slice(0, 24) + value.slice(-24) : value;
+				return value.length > 200 ? `s${value.length}${value.slice(0, 24)  }${value.slice(-24)}` : value;
 			}
 			if (value && typeof value === 'object') {
-				return 'd' + identity(value) + ':' + (value.length === undefined ? '' : value.length);
+				return `d${identity(value)}:${  value.length === undefined ? '' : value.length}`;
 			}
 		}
 		if (value && typeof value === 'object' && typeof value.nodeType === 'number') {
-			return 'n' + identity(value);
+			return `n${  identity(value)}`;
 		}
 		return value;
 	});
@@ -73,7 +73,7 @@ function signature_text(layer, identity) {
  * @returns {string}
  */
 export function stack_signature(layers, identity, extra) {
-	return extra + '|' + layers.map(function (layer) { return layer_signature(layer, identity); }).join('|');
+	return `${extra  }|${  layers.map((layer) => { return layer_signature(layer, identity); }).join('|')}`;
 }
 
 /**
@@ -103,26 +103,26 @@ export function is_pixel_exact(layer) {
  * @returns {{upper: object[], lower: object[]}|null} the layers from the top to the active one, and the rest
  */
 export function split_for_cache(layers, active_id, zoom) {
-	var index = layers.findIndex(function (layer) { return layer.id == active_id; });
+	const index = layers.findIndex((layer) => { return layer.id == active_id; });
 	if (index < 0) {
 		return null;
 	}
-	var lower = layers.slice(index + 1);
-	var upper = layers.slice(0, index + 1);
-	if (lower.length < 2 || layers.some(function (layer) { return layer.composition === 'source-atop'; })) {
+	const lower = layers.slice(index + 1);
+	const upper = layers.slice(0, index + 1);
+	if (lower.length < 2 || layers.some((layer) => { return layer.composition === 'source-atop'; })) {
 		return null;
 	}
 	if (zoom > 1 && !lower.every(is_pixel_exact)) {
 		return null;
 	}
-	var top_group = function (layer) {
+	const top_group = function (layer) {
 		return typeof layer.group === 'string' && layer.group !== '' ? layer.group.split('/')[0] : null;
 	};
-	var below_groups = lower.map(top_group).filter(function (name) { return name !== null; });
-	if (upper.some(function (layer) { var name = top_group(layer); return name !== null && below_groups.indexOf(name) >= 0; })) {
+	const below_groups = lower.map(top_group).filter((name) => { return name !== null; });
+	if (upper.some((layer) => { const name = top_group(layer); return name !== null && below_groups.indexOf(name) >= 0; })) {
 		return null;
 	}
-	return {upper: upper, lower: lower};
+	return {upper, lower};
 }
 
 export const PREVIEW_PIXELS = 2 * 1000 * 1000;
@@ -137,8 +137,8 @@ export const PREVIEW_PIXELS = 2 * 1000 * 1000;
  * @returns {number} 1, or a number between 0.2 and 1
  */
 export function preview_scale(width, height, budget) {
-	var limit = budget || PREVIEW_PIXELS;
-	var pixels = Math.max(1, width) * Math.max(1, height);
+	const limit = budget || PREVIEW_PIXELS;
+	const pixels = Math.max(1, width) * Math.max(1, height);
 	if (pixels <= limit * 1.5) {
 		return 1;
 	}

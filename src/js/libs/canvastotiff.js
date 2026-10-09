@@ -13,7 +13,7 @@
  * @type {{toArrayBuffer: Function, toBlob: Function, toDataURL: Function}}
  * @namespace
  */
-var CanvasToTIFF = {
+const CanvasToTIFF = {
 
 	/**
 	 * @private
@@ -29,7 +29,7 @@ var CanvasToTIFF = {
 	 * Add error handler (function) in case of any error
 	 * @param fn
 	 */
-	setErrorHandler: function(fn) {
+	setErrorHandler(fn) {
 		this._error = fn
 	},
 
@@ -49,11 +49,11 @@ var CanvasToTIFF = {
 	 * @param {number} [options.dpiY=96] - DPI for Y directions (overrides options.dpi).
 	 * @static
 	 */
-	toArrayBuffer: function(canvas, callback, options) {
+	toArrayBuffer(canvas, callback, options) {
 
 		options = options || {};
 
-		var me = this;
+		const me = this;
 
 		try {
 			var w          = canvas.width,
@@ -126,15 +126,15 @@ var CanvasToTIFF = {
 			setStr(sid);
 
 			// date
-			dateStr = date.getFullYear() + ":" + pad2(date.getMonth() + 1) + ":" + pad2(date.getDate()) + " ";
-			dateStr += pad2(date.getHours()) + ":" + pad2(date.getMinutes()) + ":" + pad2(date.getSeconds());
+			dateStr = `${date.getFullYear()  }:${pad2(date.getMonth() + 1)}:${pad2(date.getDate())} `;
+			dateStr += `${pad2(date.getHours())  }:${pad2(date.getMinutes())}:${  pad2(date.getSeconds())}`;
 			setStr(dateStr);
 
 			// Image data here (todo if very large, split into block based copy)
 			file8.set(idata.data, iOffset);
 
 			// make actual async
-			setTimeout(function() { callback(file) }, me._dly);
+			setTimeout(() => { callback(file) }, me._dly);
 		}
 		catch(err) {
 			if (me._error) me._error(err.toString())
@@ -142,7 +142,7 @@ var CanvasToTIFF = {
 
 		function pad2(str) {
 			str += "";
-			return str.length === 1 ? "0" + str : str
+			return str.length === 1 ? `0${  str}` : str
 		}
 
 		// helper method to move current buffer position
@@ -157,13 +157,13 @@ var CanvasToTIFF = {
 		}
 
 		function setStr(str) {
-			var i = 0;
+			let i = 0;
 			while(i < str.length) view.setUint8(pos++, str.charCodeAt(i++) & 0xff, lsb);
 			if (pos & 1) pos++
 		}
 
 		function getStrLen(str) {
-			var l = str.length;
+			const l = str.length;
 			return l & 1 ? l + 1 : l
 		}
 
@@ -199,7 +199,7 @@ var CanvasToTIFF = {
 			view.setUint16(idfOffset, entries, lsb);
 			set32(0);
 
-			var delta = 14 + entries * 12; // 14 = offset to IDF (8) + IDF count (2) + end pointer (4)
+			const delta = 14 + entries * 12; // 14 = offset to IDF (8) + IDF count (2) + end pointer (4)
 
 			// compile offsets
 			for(var i = 0, p, o; i < offsetList.length; i++) {
@@ -224,8 +224,8 @@ var CanvasToTIFF = {
 	 * @param {object} [options] - an option object - see toArrayBuffer for details
 	 * @static
 	 */
-	toBlob: function(canvas, callback, options) {
-		this.toArrayBuffer(canvas, function(file) {
+	toBlob(canvas, callback, options) {
+		this.toArrayBuffer(canvas, (file) => {
 			callback(new Blob([file], {type: "image/tiff"}));
 		}, options || {});
 	},
@@ -248,9 +248,9 @@ var CanvasToTIFF = {
 	 * @param {object} [options] - an option object - see toArrayBuffer for details
 	 * @static
 	 */
-	toObjectURL: function(canvas, callback, options) {
-		this.toBlob(canvas, function(blob) {
-			var url = self.URL || self.webkitURL || self;
+	toObjectURL(canvas, callback, options) {
+		this.toBlob(canvas, (blob) => {
+			const url = self.URL || self.webkitURL || self;
 			callback(url.createObjectURL(blob))
 		}, options || {});
 	},
@@ -266,12 +266,12 @@ var CanvasToTIFF = {
 	 * @param {object} [options] - an option object - see toArrayBuffer for details
 	 * @static
 	 */
-	toDataURL: function(canvas, callback, options) {
+	toDataURL(canvas, callback, options) {
 
-		var me = this;
+		const me = this;
 
-		me.toArrayBuffer(canvas, function(file) {
-			var buffer = new Uint8Array(file),
+		me.toArrayBuffer(canvas, (file) => {
+			let buffer = new Uint8Array(file),
 				blockSize = 1<<20,
 				block = blockSize,
 				bs = "", base64 = "", i = 0, l = buffer.length;
@@ -298,7 +298,7 @@ var CanvasToTIFF = {
 						i += block;
 						(i < l)
 							? setTimeout(toBase64, me._dly)
-							: callback("data:image/tiff;base64," + base64);
+							: callback(`data:image/tiff;base64,${  base64}`);
 					})();
 				}
 			})();

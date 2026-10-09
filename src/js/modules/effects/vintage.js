@@ -15,7 +15,6 @@ class Effects_vintage_class {
 	}
 
 	vintage() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
@@ -24,18 +23,18 @@ class Effects_vintage_class {
 
 		this.Vintage.reset_random_values(config.WIDTH, config.HEIGHT);
 
-		var settings = {
+		const settings = {
 			title: 'Vintage',
 			preview: true,
 			effects: true,
 			params: [
 				{name: "level", title: "Level:", value: 50, range: [0, 100]},
 			],
-			on_change: function (params, canvas_preview, w, h, canvas_) {
-				_this.change(canvas_, params);
+			on_change: (params, canvas_preview, w, h, canvas_) => {
+				this.change(canvas_, params);
 			},
-			on_finish: function (params) {
-				_this.save(params);
+			on_finish: (params) => {
+				this.save(params);
 			},
 		};
 		this.POP.show(settings);
@@ -43,8 +42,7 @@ class Effects_vintage_class {
 
 	save(params) {
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
 
 		//change data
 		this.change(canvas, params);
@@ -56,18 +54,18 @@ class Effects_vintage_class {
 	}
 
 	change(canvas, params) {
-		var level = parseInt(params.level);
+		const level = parseInt(params.level);
 
 		this.Vintage.apply_all(canvas, level);
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 		ctx.drawImage(canvas_thumb, 0, 0);
 
 		//now update
-		var params = {
+		const params = {
 			level: 50,
 		};
 		this.change(canvas, params);

@@ -24,7 +24,7 @@
   It also simplifies some of the canvas context manipulation
   with a set of helper functions.
 */
-var CanvasImage = function (image) {
+const CanvasImage = function (image) {
     this.canvas  = document.createElement('canvas');
     this.context = this.canvas.getContext('2d');
 
@@ -57,7 +57,7 @@ CanvasImage.prototype.removeCanvas = function () {
 };
 
 
-var ColorThief = function () {};
+const ColorThief = function () {};
 
 /*
  * getColor(sourceImage[, quality])
@@ -73,8 +73,8 @@ var ColorThief = function () {};
  *
  * */
 ColorThief.prototype.getColor = function(sourceImage, quality) {
-    var palette       = this.getPalette(sourceImage, 5, quality);
-    var dominantColor = palette[0];
+    const palette       = this.getPalette(sourceImage, 5, quality);
+    const dominantColor = palette[0];
     return dominantColor;
 };
 
@@ -106,13 +106,13 @@ ColorThief.prototype.getPalette = function(sourceImage, colorCount, quality) {
     }
 
     // Create custom CanvasImage object
-    var image      = new CanvasImage(sourceImage);
-    var imageData  = image.getImageData();
-    var pixels     = imageData.data;
-    var pixelCount = image.getPixelCount();
+    const image      = new CanvasImage(sourceImage);
+    const imageData  = image.getImageData();
+    const pixels     = imageData.data;
+    const pixelCount = image.getPixelCount();
 
     // Store the RGB values in an array format suitable for quantize function
-    var pixelArray = [];
+    const pixelArray = [];
     for (var i = 0, offset, r, g, b, a; i < pixelCount; i = i + quality) {
         offset = i * 4;
         r = pixels[offset + 0];
@@ -129,8 +129,8 @@ ColorThief.prototype.getPalette = function(sourceImage, colorCount, quality) {
 
     // Send array to quantize function which clusters values
     // using median cut algorithm
-    var cmap    = MMCQ.quantize(pixelArray, colorCount);
-    var palette = cmap? cmap.palette() : null;
+    const cmap    = MMCQ.quantize(pixelArray, colorCount);
+    const palette = cmap? cmap.palette() : null;
 
     // Clean up
     image.removeCanvas();
@@ -140,10 +140,10 @@ ColorThief.prototype.getPalette = function(sourceImage, colorCount, quality) {
 
 ColorThief.prototype.getColorFromUrl = function(imageUrl, callback, quality) {
     sourceImage = document.createElement("img");
-    var thief = this;
-    sourceImage.addEventListener('load' , function(){
-        var palette = thief.getPalette(sourceImage, 5, quality);
-        var dominantColor = palette[0];
+    const thief = this;
+    sourceImage.addEventListener('load' , () =>{
+        const palette = thief.getPalette(sourceImage, 5, quality);
+        const dominantColor = palette[0];
         callback(dominantColor, imageUrl);
     });
     sourceImage.src = imageUrl
@@ -164,19 +164,19 @@ ColorThief.prototype.getImageData = function(imageUrl, callback) {
             }
             data = binaryString.join('')
             base64 = window.btoa(data)
-            callback ("data:image/png;base64,"+base64)
+            callback (`data:image/png;base64,${base64}`)
         }
     }
     xhr.send();
 };
 
 ColorThief.prototype.getColorAsync = function(imageUrl, callback, quality) {
-    var thief = this;
-    this.getImageData(imageUrl, function(imageData){
+    const thief = this;
+    this.getImageData(imageUrl, (imageData) =>{
         sourceImage = document.createElement("img");
         sourceImage.addEventListener('load' , function(){
-            var palette = thief.getPalette(sourceImage, 5, quality);
-            var dominantColor = palette[0];
+            const palette = thief.getPalette(sourceImage, 5, quality);
+            const dominantColor = palette[0];
             callback(dominantColor, this);
         });
         sourceImage.src = imageData;      
@@ -200,18 +200,18 @@ ColorThief.prototype.getColorAsync = function(imageUrl, callback, quality) {
  */
 if (!pv) {
     var pv = {
-        map: function(array, f) {
-          var o = {};
-          return f ? array.map(function(d, i) { o.index = i; return f.call(o, d); }) : array.slice();
+        map(array, f) {
+          const o = {};
+          return f ? array.map((d, i) => { o.index = i; return f.call(o, d); }) : array.slice();
         },
-        naturalOrder: function(a, b) {
+        naturalOrder(a, b) {
             return (a < b) ? -1 : ((a > b) ? 1 : 0);
         },
-        sum: function(array, f) {
-          var o = {};
-          return array.reduce(f ? function(p, d, i) { o.index = i; return p + f.call(o, d); } : function(p, d) { return p + d; }, 0);
+        sum(array, f) {
+          const o = {};
+          return array.reduce(f ? (p, d, i) => { o.index = i; return p + f.call(o, d); } : (p, d) => { return p + d; }, 0);
         },
-        max: function(array, f) {
+        max(array, f) {
           return Math.max.apply(null, f ? pv.map(array, f) : array);
         }
     };
@@ -243,7 +243,7 @@ var newPixels = myPixels.map(function(p) {
  */
 var MMCQ = (function() {
     // private constants
-    var sigbits = 5,
+    const sigbits = 5,
         rshift = 8 - sigbits,
         maxIterations = 1000,
         fractByPopulations = 0.75;
@@ -255,7 +255,7 @@ var MMCQ = (function() {
 
     // Simple priority queue
     function PQueue(comparator) {
-        var contents = [],
+        let contents = [],
             sorted = false;
 
         function sort() {
@@ -264,26 +264,26 @@ var MMCQ = (function() {
         }
 
         return {
-            push: function(o) {
+            push(o) {
                 contents.push(o);
                 sorted = false;
             },
-            peek: function(index) {
+            peek(index) {
                 if (!sorted) sort();
                 if (index===undefined) index = contents.length - 1;
                 return contents[index];
             },
-            pop: function() {
+            pop() {
                 if (!sorted) sort();
                 return contents.pop();
             },
-            size: function() {
+            size() {
                 return contents.length;
             },
-            map: function(f) {
+            map(f) {
                 return contents.map(f);
             },
-            debug: function() {
+            debug() {
                 if (!sorted) sort();
                 return contents;
             }
@@ -292,7 +292,7 @@ var MMCQ = (function() {
 
     // 3d color space box
     function VBox(r1, r2, g1, g2, b1, b2, histo) {
-        var vbox = this;
+        const vbox = this;
         vbox.r1 = r1;
         vbox.r2 = r2;
         vbox.g1 = g1;
@@ -302,18 +302,18 @@ var MMCQ = (function() {
         vbox.histo = histo;
     }
     VBox.prototype = {
-        volume: function(force) {
-            var vbox = this;
+        volume(force) {
+            const vbox = this;
             if (!vbox._volume || force) {
                 vbox._volume = ((vbox.r2 - vbox.r1 + 1) * (vbox.g2 - vbox.g1 + 1) * (vbox.b2 - vbox.b1 + 1));
             }
             return vbox._volume;
         },
-        count: function(force) {
-            var vbox = this,
+        count(force) {
+            const vbox = this,
                 histo = vbox.histo;
             if (!vbox._count_set || force) {
-                var npix = 0,
+                let npix = 0,
                     index, i, j, k;
                 for (i = vbox.r1; i <= vbox.r2; i++) {
                     for (j = vbox.g1; j <= vbox.g2; j++) {
@@ -328,15 +328,15 @@ var MMCQ = (function() {
             }
             return vbox._count;
         },
-        copy: function() {
-            var vbox = this;
+        copy() {
+            const vbox = this;
             return new VBox(vbox.r1, vbox.r2, vbox.g1, vbox.g2, vbox.b1, vbox.b2, vbox.histo);
         },
-        avg: function(force) {
-            var vbox = this,
+        avg(force) {
+            const vbox = this,
                 histo = vbox.histo;
             if (!vbox._avg || force) {
-                var ntot = 0,
+                let ntot = 0,
                     mult = 1 << (8 - sigbits),
                     rsum = 0,
                     gsum = 0,
@@ -367,8 +367,8 @@ var MMCQ = (function() {
             }
             return vbox._avg;
         },
-        contains: function(pixel) {
-            var vbox = this,
+        contains(pixel) {
+            const vbox = this,
                 rval = pixel[0] >> rshift;
                 gval = pixel[1] >> rshift;
                 bval = pixel[2] >> rshift;
@@ -380,7 +380,7 @@ var MMCQ = (function() {
 
     // Color map
     function CMap() {
-        this.vboxes = new PQueue(function(a,b) {
+        this.vboxes = new PQueue((a,b) => {
             return pv.naturalOrder(
                 a.vbox.count()*a.vbox.volume(),
                 b.vbox.count()*b.vbox.volume()
@@ -388,31 +388,31 @@ var MMCQ = (function() {
         });
     }
     CMap.prototype = {
-        push: function(vbox) {
+        push(vbox) {
             this.vboxes.push({
-                vbox: vbox,
+                vbox,
                 color: vbox.avg()
             });
         },
-        palette: function() {
-            return this.vboxes.map(function(vb) { return vb.color; });
+        palette() {
+            return this.vboxes.map((vb) => { return vb.color; });
         },
-        size: function() {
+        size() {
             return this.vboxes.size();
         },
-        map: function(color) {
-            var vboxes = this.vboxes;
-            for (var i=0; i<vboxes.size(); i++) {
+        map(color) {
+            const vboxes = this.vboxes;
+            for (let i=0; i<vboxes.size(); i++) {
                 if (vboxes.peek(i).vbox.contains(color)) {
                     return vboxes.peek(i).color;
                 }
             }
             return this.nearest(color);
         },
-        nearest: function(color) {
-            var vboxes = this.vboxes,
+        nearest(color) {
+            let vboxes = this.vboxes,
                 d1, d2, pColor;
-            for (var i=0; i<vboxes.size(); i++) {
+            for (let i=0; i<vboxes.size(); i++) {
                 d2 = Math.sqrt(
                     Math.pow(color[0] - vboxes.peek(i).color[0], 2) +
                     Math.pow(color[1] - vboxes.peek(i).color[1], 2) +
@@ -425,18 +425,18 @@ var MMCQ = (function() {
             }
             return pColor;
         },
-        forcebw: function() {
+        forcebw() {
             // XXX: won't  work yet
-            var vboxes = this.vboxes;
-            vboxes.sort(function(a,b) { return pv.naturalOrder(pv.sum(a.color), pv.sum(b.color));});
+            const vboxes = this.vboxes;
+            vboxes.sort((a,b) => { return pv.naturalOrder(pv.sum(a.color), pv.sum(b.color));});
 
             // force darkest color to black if everything < 5
-            var lowest = vboxes[0].color;
+            const lowest = vboxes[0].color;
             if (lowest[0] < 5 && lowest[1] < 5 && lowest[2] < 5)
                 vboxes[0].color = [0,0,0];
 
             // force lightest color to white if everything > 251
-            var idx = vboxes.length-1,
+            const idx = vboxes.length-1,
                 highest = vboxes[idx].color;
             if (highest[0] > 251 && highest[1] > 251 && highest[2] > 251)
                 vboxes[idx].color = [255,255,255];
@@ -446,10 +446,10 @@ var MMCQ = (function() {
     // histo (1-d array, giving the number of pixels in
     // each quantized region of color space), or null on error
     function getHisto(pixels) {
-        var histosize = 1 << (3 * sigbits),
+        let histosize = 1 << (3 * sigbits),
             histo = new Array(histosize),
             index, rval, gval, bval;
-        pixels.forEach(function(pixel) {
+        pixels.forEach((pixel) => {
             rval = pixel[0] >> rshift;
             gval = pixel[1] >> rshift;
             bval = pixel[2] >> rshift;
@@ -460,12 +460,12 @@ var MMCQ = (function() {
     }
 
     function vboxFromPixels(pixels, histo) {
-        var rmin=1000000, rmax=0,
+        let rmin=1000000, rmax=0,
             gmin=1000000, gmax=0,
             bmin=1000000, bmax=0,
             rval, gval, bval;
         // find min/max
-        pixels.forEach(function(pixel) {
+        pixels.forEach((pixel) => {
             rval = pixel[0] >> rshift;
             gval = pixel[1] >> rshift;
             bval = pixel[2] >> rshift;
@@ -482,7 +482,7 @@ var MMCQ = (function() {
     function medianCutApply(histo, vbox) {
         if (!vbox.count()) return;
 
-        var rw = vbox.r2 - vbox.r1 + 1,
+        const rw = vbox.r2 - vbox.r1 + 1,
             gw = vbox.g2 - vbox.g1 + 1,
             bw = vbox.b2 - vbox.b1 + 1,
             maxw = pv.max([rw, gw, bw]);
@@ -491,7 +491,7 @@ var MMCQ = (function() {
             return [vbox.copy()];
         }
         /* Find the partial sum arrays along the selected axis. */
-        var total = 0,
+        let total = 0,
             partialsum = [],
             lookaheadsum = [],
             i, j, k, sum, index;
@@ -534,12 +534,12 @@ var MMCQ = (function() {
                 partialsum[i] = total;
             }
         }
-        partialsum.forEach(function(d,i) {
+        partialsum.forEach((d,i) => {
             lookaheadsum[i] = total-d;
         });
         function doCut(color) {
-            var dim1 = color + '1',
-                dim2 = color + '2',
+            let dim1 = `${color  }1`,
+                dim2 = `${color  }2`,
                 left, right, vbox1, vbox2, d2, count2=0;
             for (i = vbox[dim1]; i <= vbox[dim2]; i++) {
                 if (partialsum[i] > total / 2) {
@@ -576,24 +576,24 @@ var MMCQ = (function() {
 
         // XXX: check color content and convert to grayscale if insufficient
 
-        var histo = getHisto(pixels),
+        const histo = getHisto(pixels),
             histosize = 1 << (3 * sigbits);
 
         // check that we aren't below maxcolors already
-        var nColors = 0;
-        histo.forEach(function() { nColors++; });
+        let nColors = 0;
+        histo.forEach(() => { nColors++; });
         if (nColors <= maxcolors) {
             // XXX: generate the new colors from the histo and return
         }
 
         // get the beginning vbox from the colors
-        var vbox = vboxFromPixels(pixels, histo),
-            pq = new PQueue(function(a,b) { return pv.naturalOrder(a.count(), b.count()); });
+        const vbox = vboxFromPixels(pixels, histo),
+            pq = new PQueue((a,b) => { return pv.naturalOrder(a.count(), b.count()); });
         pq.push(vbox);
 
         // inner function to do the iteration
         function iter(lh, target) {
-            var ncolors = 1,
+            let ncolors = 1,
                 niters = 0,
                 vbox;
             while (niters < maxIterations) {
@@ -604,7 +604,7 @@ var MMCQ = (function() {
                     continue;
                 }
                 // do the cut
-                var vboxes = medianCutApply(histo, vbox),
+                const vboxes = medianCutApply(histo, vbox),
                     vbox1 = vboxes[0],
                     vbox2 = vboxes[1];
 
@@ -627,7 +627,7 @@ var MMCQ = (function() {
         iter(pq, fractByPopulations * maxcolors);
 
         // Re-sort by the product of pixel occupancy times the size in color space.
-        var pq2 = new PQueue(function(a,b) {
+        const pq2 = new PQueue((a,b) => {
             return pv.naturalOrder(a.count()*a.volume(), b.count()*b.volume());
         });
         while (pq.size()) {
@@ -638,7 +638,7 @@ var MMCQ = (function() {
         iter(pq2, maxcolors - pq2.size());
 
         // calculate the actual colors
-        var cmap = new CMap();
+        const cmap = new CMap();
         while (pq2.size()) {
             cmap.push(pq2.pop());
         }
@@ -647,7 +647,7 @@ var MMCQ = (function() {
     }
 
     return {
-        quantize: quantize
+        quantize
     };
 })();
 export default ColorThief;

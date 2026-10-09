@@ -17,18 +17,19 @@ function clamp(value, min, max) {
  * @returns {Image_data}
  */
 export function pixelate(image, size) {
+	let y, x, p;
 	size = clamp(parseInt(size) || 8, 2, 200);
-	var w = image.width;
-	var h = image.height;
-	var data = image.data;
-	for (var by = 0; by < h; by += size) {
-		for (var bx = 0; bx < w; bx += size) {
-			var x_end = Math.min(bx + size, w);
-			var y_end = Math.min(by + size, h);
-			var r = 0, g = 0, b = 0, count = 0;
-			for (var y = by; y < y_end; y++) {
-				for (var x = bx; x < x_end; x++) {
-					var p = (y * w + x) * 4;
+	const w = image.width;
+	const h = image.height;
+	const data = image.data;
+	for (let by = 0; by < h; by += size) {
+		for (let bx = 0; bx < w; bx += size) {
+			const x_end = Math.min(bx + size, w);
+			const y_end = Math.min(by + size, h);
+			let r = 0, g = 0, b = 0, count = 0;
+			for (y = by; y < y_end; y++) {
+				for (x = bx; x < x_end; x++) {
+					p = (y * w + x) * 4;
 					r += data[p];
 					g += data[p + 1];
 					b += data[p + 2];
@@ -59,21 +60,21 @@ export function pixelate(image, size) {
  * @returns {Float32Array}
  */
 function box_blur(image, radius) {
-	var w = image.width;
-	var h = image.height;
-	var src = image.data;
-	var tmp = new Float32Array(src.length);
-	var out = new Float32Array(src.length);
-	var span = radius * 2 + 1;
+	const w = image.width;
+	const h = image.height;
+	const src = image.data;
+	const tmp = new Float32Array(src.length);
+	const out = new Float32Array(src.length);
+	const span = radius * 2 + 1;
 
 	//horizontal
-	for (var y = 0; y < h; y++) {
-		for (var c = 0; c < 3; c++) {
-			var sum = 0;
-			for (var k = -radius; k <= radius; k++) {
+	for (let y = 0; y < h; y++) {
+		for (let c = 0; c < 3; c++) {
+			let sum = 0;
+			for (let k = -radius; k <= radius; k++) {
 				sum += src[(y * w + clamp(k, 0, w - 1)) * 4 + c];
 			}
-			for (var x = 0; x < w; x++) {
+			for (let x = 0; x < w; x++) {
 				tmp[(y * w + x) * 4 + c] = sum / span;
 				sum += src[(y * w + clamp(x + radius + 1, 0, w - 1)) * 4 + c];
 				sum -= src[(y * w + clamp(x - radius, 0, w - 1)) * 4 + c];
@@ -81,13 +82,13 @@ function box_blur(image, radius) {
 		}
 	}
 	//vertical
-	for (var x2 = 0; x2 < w; x2++) {
-		for (var c2 = 0; c2 < 3; c2++) {
-			var sum2 = 0;
-			for (var k2 = -radius; k2 <= radius; k2++) {
+	for (let x2 = 0; x2 < w; x2++) {
+		for (let c2 = 0; c2 < 3; c2++) {
+			let sum2 = 0;
+			for (let k2 = -radius; k2 <= radius; k2++) {
 				sum2 += tmp[(clamp(k2, 0, h - 1) * w + x2) * 4 + c2];
 			}
-			for (var y2 = 0; y2 < h; y2++) {
+			for (let y2 = 0; y2 < h; y2++) {
 				out[(y2 * w + x2) * 4 + c2] = sum2 / span;
 				sum2 += tmp[(clamp(y2 + radius + 1, 0, h - 1) * w + x2) * 4 + c2];
 				sum2 -= tmp[(clamp(y2 - radius, 0, h - 1) * w + x2) * 4 + c2];
@@ -105,15 +106,15 @@ function box_blur(image, radius) {
  * @returns {Image_data}
  */
 export function unsharpMask(image, params) {
-	var amount = clamp(parseFloat(params.amount ?? 100) || 0, 0, 500) / 100;
-	var radius = clamp(parseInt(params.radius ?? 2) || 1, 1, 50);
-	var threshold = clamp(parseInt(params.threshold) || 0, 0, 255);
+	const amount = clamp(parseFloat(params.amount ?? 100) || 0, 0, 500) / 100;
+	const radius = clamp(parseInt(params.radius ?? 2) || 1, 1, 50);
+	const threshold = clamp(parseInt(params.threshold) || 0, 0, 255);
 
-	var blurred = box_blur(image, radius);
-	var data = image.data;
-	for (var i = 0; i < data.length; i += 4) {
-		for (var c = 0; c < 3; c++) {
-			var diff = data[i + c] - blurred[i + c];
+	const blurred = box_blur(image, radius);
+	const data = image.data;
+	for (let i = 0; i < data.length; i += 4) {
+		for (let c = 0; c < 3; c++) {
+			const diff = data[i + c] - blurred[i + c];
 			if (Math.abs(diff) >= threshold) {
 				data[i + c] += diff * amount;
 			}
@@ -131,10 +132,10 @@ export function unsharpMask(image, params) {
  */
 export function highPass(image, radius) {
 	radius = clamp(parseInt(radius) || 5, 1, 100);
-	var blurred = box_blur(image, radius);
-	var data = image.data;
-	for (var i = 0; i < data.length; i += 4) {
-		for (var c = 0; c < 3; c++) {
+	const blurred = box_blur(image, radius);
+	const data = image.data;
+	for (let i = 0; i < data.length; i += 4) {
+		for (let c = 0; c < 3; c++) {
 			data[i + c] = data[i + c] - blurred[i + c] + 128;
 		}
 	}
@@ -150,22 +151,22 @@ export function highPass(image, radius) {
  */
 export function median(image, radius) {
 	radius = clamp(parseInt(radius) || 1, 1, 5);
-	var w = image.width;
-	var h = image.height;
-	var src = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	var values = [];
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			for (var c = 0; c < 3; c++) {
+	const w = image.width;
+	const h = image.height;
+	const src = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	const values = [];
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			for (let c = 0; c < 3; c++) {
 				values.length = 0;
-				for (var dy = -radius; dy <= radius; dy++) {
-					var yy = clamp(y + dy, 0, h - 1);
-					for (var dx = -radius; dx <= radius; dx++) {
+				for (let dy = -radius; dy <= radius; dy++) {
+					const yy = clamp(y + dy, 0, h - 1);
+					for (let dx = -radius; dx <= radius; dx++) {
 						values.push(src[(yy * w + clamp(x + dx, 0, w - 1)) * 4 + c]);
 					}
 				}
-				values.sort(function (a, b) { return a - b; });
+				values.sort((a, b) => { return a - b; });
 				data[(y * w + x) * 4 + c] = values[values.length >> 1];
 			}
 		}
@@ -183,31 +184,31 @@ export function median(image, radius) {
  */
 export function maxMin(image, radius, mode) {
 	radius = clamp(parseInt(radius) || 1, 1, 10);
-	var is_max = mode == 'maximum';
-	var w = image.width;
-	var h = image.height;
-	var src = new Uint8ClampedArray(image.data);
-	var tmp = new Uint8ClampedArray(image.data.length);
-	var data = image.data;
-	var pick = is_max ? Math.max : Math.min;
+	const is_max = mode == 'maximum';
+	const w = image.width;
+	const h = image.height;
+	const src = new Uint8ClampedArray(image.data);
+	const tmp = new Uint8ClampedArray(image.data.length);
+	const data = image.data;
+	const pick = is_max ? Math.max : Math.min;
 
 	//separable: horizontal then vertical
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			for (var c = 0; c < 3; c++) {
-				var v = is_max ? 0 : 255;
-				for (var d = -radius; d <= radius; d++) {
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			for (let c = 0; c < 3; c++) {
+				let v = is_max ? 0 : 255;
+				for (let d = -radius; d <= radius; d++) {
 					v = pick(v, src[(y * w + clamp(x + d, 0, w - 1)) * 4 + c]);
 				}
 				tmp[(y * w + x) * 4 + c] = v;
 			}
 		}
 	}
-	for (var y2 = 0; y2 < h; y2++) {
-		for (var x2 = 0; x2 < w; x2++) {
-			for (var c2 = 0; c2 < 3; c2++) {
-				var v2 = is_max ? 0 : 255;
-				for (var d2 = -radius; d2 <= radius; d2++) {
+	for (let y2 = 0; y2 < h; y2++) {
+		for (let x2 = 0; x2 < w; x2++) {
+			for (let c2 = 0; c2 < 3; c2++) {
+				let v2 = is_max ? 0 : 255;
+				for (let d2 = -radius; d2 <= radius; d2++) {
 					v2 = pick(v2, tmp[(clamp(y2 + d2, 0, h - 1) * w + x2) * 4 + c2]);
 				}
 				data[(y2 * w + x2) * 4 + c2] = v2;
@@ -226,8 +227,8 @@ export function maxMin(image, radius, mode) {
  * @returns {Image_data}
  */
 export function offset(image, dx, dy) {
-	var w = image.width;
-	var h = image.height;
+	const w = image.width;
+	const h = image.height;
 	if (w == 0 || h == 0) {
 		return image;
 	}
@@ -236,13 +237,13 @@ export function offset(image, dx, dy) {
 	if (dx == 0 && dy == 0) {
 		return image;
 	}
-	var src = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	for (var y = 0; y < h; y++) {
-		var ny = (y + dy) % h;
-		for (var x = 0; x < w; x++) {
-			var from = (y * w + x) * 4;
-			var to = (ny * w + (x + dx) % w) * 4;
+	const src = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	for (let y = 0; y < h; y++) {
+		const ny = (y + dy) % h;
+		for (let x = 0; x < w; x++) {
+			const from = (y * w + x) * 4;
+			const to = (ny * w + (x + dx) % w) * 4;
 			data[to] = src[from];
 			data[to + 1] = src[from + 1];
 			data[to + 2] = src[from + 2];
@@ -260,28 +261,28 @@ export function offset(image, dx, dy) {
  * @returns {Image_data}
  */
 export function motionBlur(image, params) {
-	var angle = (parseFloat(params.angle) || 0) * Math.PI / 180;
-	var distance = clamp(parseInt(params.distance ?? 10) || 1, 1, 200);
-	var w = image.width;
-	var h = image.height;
-	var src = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	var dx = Math.cos(angle);
-	var dy = -Math.sin(angle);
-	var samples = distance * 2 + 1;
+	const angle = (parseFloat(params.angle) || 0) * Math.PI / 180;
+	const distance = clamp(parseInt(params.distance ?? 10) || 1, 1, 200);
+	const w = image.width;
+	const h = image.height;
+	const src = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	const dx = Math.cos(angle);
+	const dy = -Math.sin(angle);
+	const samples = distance * 2 + 1;
 
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var r = 0, g = 0, b = 0;
-			for (var s = -distance; s <= distance; s++) {
-				var sx = clamp(Math.round(x + dx * s), 0, w - 1);
-				var sy = clamp(Math.round(y + dy * s), 0, h - 1);
-				var p = (sy * w + sx) * 4;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			let r = 0, g = 0, b = 0;
+			for (let s = -distance; s <= distance; s++) {
+				const sx = clamp(Math.round(x + dx * s), 0, w - 1);
+				const sy = clamp(Math.round(y + dy * s), 0, h - 1);
+				const p = (sy * w + sx) * 4;
 				r += src[p];
 				g += src[p + 1];
 				b += src[p + 2];
 			}
-			var q = (y * w + x) * 4;
+			const q = (y * w + x) * 4;
 			data[q] = r / samples;
 			data[q + 1] = g / samples;
 			data[q + 2] = b / samples;
@@ -304,12 +305,12 @@ export function clarity(image, amount, radius) {
 	if (amount == 0) {
 		return image;
 	}
-	var blurred = box_blur(image, radius);
-	var data = image.data;
-	for (var i = 0; i < data.length; i += 4) {
-		for (var c = 0; c < 3; c++) {
-			var value = data[i + c];
-			var weight = 1 - Math.pow(Math.abs(value / 127.5 - 1), 2); //0 at black/white, 1 at mid gray
+	const blurred = box_blur(image, radius);
+	const data = image.data;
+	for (let i = 0; i < data.length; i += 4) {
+		for (let c = 0; c < 3; c++) {
+			const value = data[i + c];
+			const weight = 1 - Math.pow(Math.abs(value / 127.5 - 1), 2); //0 at black/white, 1 at mid gray
 			data[i + c] = value + (value - blurred[i + c]) * amount * weight * 1.5;
 		}
 	}
@@ -324,23 +325,23 @@ export function clarity(image, amount, radius) {
  * @returns {Image_data}
  */
 export function mirror(image, source) {
-	var w = image.width;
-	var h = image.height;
-	var data = image.data;
-	var horizontal = source == 'left' || source == 'right';
+	const w = image.width;
+	const h = image.height;
+	const data = image.data;
+	const horizontal = source == 'left' || source == 'right';
 	if (!horizontal && source != 'top' && source != 'bottom') {
 		return image;
 	}
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var sx = x, sy = y;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			let sx = x, sy = y;
 			if (source == 'left' && x >= w / 2) sx = w - 1 - x;
 			else if (source == 'right' && x < w / 2) sx = w - 1 - x;
 			else if (source == 'top' && y >= h / 2) sy = h - 1 - y;
 			else if (source == 'bottom' && y < h / 2) sy = h - 1 - y;
 			if (sx != x || sy != y) {
-				var from = (sy * w + sx) * 4;
-				var to = (y * w + x) * 4;
+				const from = (sy * w + sx) * 4;
+				const to = (y * w + x) * 4;
 				data[to] = data[from];
 				data[to + 1] = data[from + 1];
 				data[to + 2] = data[from + 2];
@@ -359,29 +360,29 @@ export function mirror(image, source) {
  * @returns {Image_data}
  */
 export function smartBlur(image, params) {
-	var radius = clamp(parseInt(params.radius ?? 3) || 1, 1, 10);
-	var threshold = clamp(parseInt(params.threshold ?? 25) || 1, 1, 255);
-	var w = image.width;
-	var h = image.height;
-	var src = new Uint8ClampedArray(image.data);
-	var data = image.data;
+	const radius = clamp(parseInt(params.radius ?? 3) || 1, 1, 10);
+	const threshold = clamp(parseInt(params.threshold ?? 25) || 1, 1, 255);
+	const w = image.width;
+	const h = image.height;
+	const src = new Uint8ClampedArray(image.data);
+	const data = image.data;
 
 	function lum(p) {
 		return 0.299 * src[p] + 0.587 * src[p + 1] + 0.114 * src[p + 2];
 	}
 
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var center = (y * w + x) * 4;
-			var center_lum = lum(center);
-			var r = 0, g = 0, b = 0, count = 0;
-			for (var dy = -radius; dy <= radius; dy++) {
-				var yy = y + dy;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const center = (y * w + x) * 4;
+			const center_lum = lum(center);
+			let r = 0, g = 0, b = 0, count = 0;
+			for (let dy = -radius; dy <= radius; dy++) {
+				const yy = y + dy;
 				if (yy < 0 || yy >= h) continue;
-				for (var dx = -radius; dx <= radius; dx++) {
-					var xx = x + dx;
+				for (let dx = -radius; dx <= radius; dx++) {
+					const xx = x + dx;
 					if (xx < 0 || xx >= w) continue;
-					var p = (yy * w + xx) * 4;
+					const p = (yy * w + xx) * 4;
 					if (Math.abs(lum(p) - center_lum) <= threshold) {
 						r += src[p];
 						g += src[p + 1];
@@ -407,17 +408,17 @@ export function smartBlur(image, params) {
  * @returns {Image_data}
  */
 function convolve3(image, kernel, offset) {
-	var w = image.width;
-	var h = image.height;
-	var src = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			for (var c = 0; c < 3; c++) {
-				var sum = 0;
-				for (var ky = -1; ky <= 1; ky++) {
-					var yy = clamp(y + ky, 0, h - 1);
-					for (var kx = -1; kx <= 1; kx++) {
+	const w = image.width;
+	const h = image.height;
+	const src = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			for (let c = 0; c < 3; c++) {
+				let sum = 0;
+				for (let ky = -1; ky <= 1; ky++) {
+					const yy = clamp(y + ky, 0, h - 1);
+					for (let kx = -1; kx <= 1; kx++) {
 						sum += kernel[(ky + 1) * 3 + kx + 1] * src[(yy * w + clamp(x + kx, 0, w - 1)) * 4 + c];
 					}
 				}
@@ -436,16 +437,16 @@ function convolve3(image, kernel, offset) {
  * @returns {Image_data}
  */
 export function emboss(image, params) {
-	var angle = (parseFloat(params.angle) || 0) * Math.PI / 180;
-	var amount = clamp(parseFloat(params.amount ?? 100) || 0, 1, 500) / 100;
+	const angle = (parseFloat(params.angle) || 0) * Math.PI / 180;
+	const amount = clamp(parseFloat(params.amount ?? 100) || 0, 1, 500) / 100;
 	//the gradient along the direction of the light (y goes down)
-	var dx = Math.cos(angle) * amount;
-	var dy = -Math.sin(angle) * amount;
-	var kernel = [
+	const dx = Math.cos(angle) * amount;
+	const dy = -Math.sin(angle) * amount;
+	const kernel = [
 		-dx - dy, -dy, dx - dy,
 		-dx, 0, dx,
 		-dx + dy, dy, dx + dy,
-	].map(function (value) { return value / 2; });
+	].map((value) => { return value / 2; });
 	desaturate_in_place(image);
 	return convolve3(image, kernel, 128);
 }
@@ -457,19 +458,20 @@ export function emboss(image, params) {
  * @returns {Image_data}
  */
 export function findEdges(image) {
-	var w = image.width;
-	var h = image.height;
-	var src = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var index = (y * w + x) * 4;
-			for (var c = 0; c < 3; c++) {
-				var p = function (dx, dy) {
+	let y, x, c;
+	const w = image.width;
+	const h = image.height;
+	const src = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	for (y = 0; y < h; y++) {
+		for (x = 0; x < w; x++) {
+			const index = (y * w + x) * 4;
+			for (c = 0; c < 3; c++) {
+				const p = function (dx, dy) {
 					return src[(clamp(y + dy, 0, h - 1) * w + clamp(x + dx, 0, w - 1)) * 4 + c];
 				};
-				var gx = -p(-1, -1) - 2 * p(-1, 0) - p(-1, 1) + p(1, -1) + 2 * p(1, 0) + p(1, 1);
-				var gy = -p(-1, -1) - 2 * p(0, -1) - p(1, -1) + p(-1, 1) + 2 * p(0, 1) + p(1, 1);
+				const gx = -p(-1, -1) - 2 * p(-1, 0) - p(-1, 1) + p(1, -1) + 2 * p(1, 0) + p(1, 1);
+				const gy = -p(-1, -1) - 2 * p(0, -1) - p(1, -1) + p(-1, 1) + 2 * p(0, 1) + p(1, 1);
 				data[index + c] = clamp(Math.round(255 - Math.hypot(gx, gy)), 0, 255);
 			}
 		}
@@ -478,9 +480,9 @@ export function findEdges(image) {
 }
 
 function desaturate_in_place(image) {
-	var data = image.data;
-	for (var i = 0; i < data.length; i += 4) {
-		var gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+	const data = image.data;
+	for (let i = 0; i < data.length; i += 4) {
+		const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
 		data[i] = data[i + 1] = data[i + 2] = gray;
 	}
 }
@@ -494,35 +496,35 @@ function desaturate_in_place(image) {
  * @returns {Image_data}
  */
 export function surfaceBlur(image, params) {
-	var radius = clamp(parseInt(params.radius ?? 3) || 3, 1, 10);
-	var threshold = clamp(parseFloat(params.threshold ?? 30) || 30, 1, 255);
-	var w = image.width;
-	var h = image.height;
-	var src = new Uint8ClampedArray(image.data);
-	var data = image.data;
+	const radius = clamp(parseInt(params.radius ?? 3) || 3, 1, 10);
+	const threshold = clamp(parseFloat(params.threshold ?? 30) || 30, 1, 255);
+	const w = image.width;
+	const h = image.height;
+	const src = new Uint8ClampedArray(image.data);
+	const data = image.data;
 	//big radii look at every second neighbor, it is enough for a blur
-	var step = radius > 5 ? 2 : 1;
-	var limit = threshold * 3;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var i = (y * w + x) * 4;
-			var r0 = src[i], g0 = src[i + 1], b0 = src[i + 2];
-			var sum_r = 0, sum_g = 0, sum_b = 0, total = 0;
-			for (var dy = -radius; dy <= radius; dy++) {
+	const step = radius > 5 ? 2 : 1;
+	const limit = threshold * 3;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const i = (y * w + x) * 4;
+			const r0 = src[i], g0 = src[i + 1], b0 = src[i + 2];
+			let sum_r = 0, sum_g = 0, sum_b = 0, total = 0;
+			for (let dy = -radius; dy <= radius; dy++) {
 				if (dy % step != 0) {
 					continue;
 				}
-				var yy = clamp(y + dy, 0, h - 1);
-				for (var dx = -radius; dx <= radius; dx++) {
+				const yy = clamp(y + dy, 0, h - 1);
+				for (let dx = -radius; dx <= radius; dx++) {
 					if (dx % step != 0) {
 						continue;
 					}
-					var j = (yy * w + clamp(x + dx, 0, w - 1)) * 4;
-					var difference = Math.abs(src[j] - r0) + Math.abs(src[j + 1] - g0) + Math.abs(src[j + 2] - b0);
+					const j = (yy * w + clamp(x + dx, 0, w - 1)) * 4;
+					const difference = Math.abs(src[j] - r0) + Math.abs(src[j + 1] - g0) + Math.abs(src[j + 2] - b0);
 					if (difference >= limit) {
 						continue;
 					}
-					var weight = 1 - difference / limit;
+					const weight = 1 - difference / limit;
 					sum_r += src[j] * weight;
 					sum_g += src[j + 1] * weight;
 					sum_b += src[j + 2] * weight;

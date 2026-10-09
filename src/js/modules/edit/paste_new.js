@@ -10,7 +10,7 @@ import { read_clipboard_canvas } from './../../libs/clipboard-image.js';
 class Edit_paste_new_class {
 
 	async paste_new() {
-		var canvas;
+		let canvas;
 		try {
 			canvas = await read_clipboard_canvas();
 		}
@@ -36,7 +36,7 @@ class Edit_paste_new_class {
 				])
 			);
 		}
-		catch (error) {
+		catch {
 			alertify.error(t('The clipboard could not be read.'));
 		}
 	}

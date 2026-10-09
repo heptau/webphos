@@ -17,9 +17,9 @@ class Effects_stroke_class extends Effects_layer_style_class {
 			return;
 		}
 
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'stroke');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'stroke');
 
-		var params = [
+		const params = [
 			{name: "size", title: "Size:", value: filter.size ??= 4, range: [1, 50]},
 			{name: "position", title: "Position:", value: filter.position ??= 'outside', values: ['outside', 'inside', 'center']},
 			{name: "color", title: "Color:", value: filter.color ??= "#ff0000", type: 'color'},
@@ -46,7 +46,7 @@ class Effects_stroke_class extends Effects_layer_style_class {
 	}
 
 	draw_preview(ctx, source, x, y, width, height, params, ratio) {
-		var sizes = this.split_size(Math.max(1, Math.round(params.size * ratio)), params.position);
+		const sizes = this.split_size(Math.max(1, Math.round(params.size * ratio)), params.position);
 		if (sizes.outside > 0) {
 			ctx.drawImage(this.build_outline(source, width, height, sizes.outside, params.color, 'outside'), x - sizes.outside, y - sizes.outside);
 		}
@@ -71,24 +71,24 @@ class Effects_stroke_class extends Effects_layer_style_class {
 	build_outline(source, width, height, size, color, mode) {
 		width = Math.max(1, Math.round(width));
 		height = Math.max(1, Math.round(height));
-		var out_width = width + size * 2;
-		var out_height = height + size * 2;
+		const out_width = width + size * 2;
+		const out_height = height + size * 2;
 
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = out_width;
 		canvas.height = out_height;
-		var ctx = canvas.getContext('2d', {willReadFrequently: true});
+		const ctx = canvas.getContext('2d', {willReadFrequently: true});
 		ctx.drawImage(source, size, size, width, height);
-		var image = ctx.getImageData(0, 0, out_width, out_height);
+		const image = ctx.getImageData(0, 0, out_width, out_height);
 
-		var alpha = new Uint8ClampedArray(out_width * out_height);
-		for (var p = 0; p < alpha.length; p++) {
+		const alpha = new Uint8ClampedArray(out_width * out_height);
+		for (let p = 0; p < alpha.length; p++) {
 			alpha[p] = image.data[p * 4 + 3];
 		}
-		var inside = mode === 'inside';
-		var coverage = inside ? inner_outline_alpha(alpha, out_width, out_height, size) : outline_alpha(alpha, out_width, out_height, size);
-		var rgb = parse_color(color);
-		for (var q = 0; q < coverage.length; q++) {
+		const inside = mode === 'inside';
+		const coverage = inside ? inner_outline_alpha(alpha, out_width, out_height, size) : outline_alpha(alpha, out_width, out_height, size);
+		const rgb = parse_color(color);
+		for (let q = 0; q < coverage.length; q++) {
 			image.data[q * 4] = rgb[0];
 			image.data[q * 4 + 1] = rgb[1];
 			image.data[q * 4 + 2] = rgb[2];
@@ -104,15 +104,15 @@ class Effects_stroke_class extends Effects_layer_style_class {
 	 * Cached outline of a layer
 	 */
 	get_outline(layer, size, color, mode) {
-		return this.cached(layer, size + '|' + color + '|' + mode,
+		return this.cached(layer, `${size  }|${color}|${  mode}`,
 			(source) => this.build_outline(source, layer.width, layer.height, size, color, mode), mode);
 	}
 
 	demo(canvas_id, canvas_thumb) {
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
-		var width = this.Effects_browser.preview_width - 20;
-		var height = this.Effects_browser.preview_height - 20;
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
+		const width = this.Effects_browser.preview_width - 20;
+		const height = this.Effects_browser.preview_height - 20;
 
 		ctx.drawImage(this.build_outline(canvas_thumb, width - 8, height - 8, 4, '#ff0000'), 6, 6);
 		ctx.drawImage(canvas_thumb, 10, 10, width - 8, height - 8);
@@ -133,14 +133,14 @@ class Effects_stroke_class extends Effects_layer_style_class {
 		if (!layer || layer.type != 'image') {
 			return;
 		}
-		var sizes = this.split_size(data.params.size, data.params.position);
-		var size = sizes[mode];
+		const sizes = this.split_size(data.params.size, data.params.position);
+		const size = sizes[mode];
 		if (size <= 0) {
 			return;
 		}
-		var outline = this.get_outline(layer, size, safe_color(data.params.color), mode);
+		const outline = this.get_outline(layer, size, safe_color(data.params.color), mode);
 
-		var previous_filter = ctx.filter;
+		const previous_filter = ctx.filter;
 		ctx.filter = 'none';
 		ctx.save();
 		this.transform_to_layer(ctx, layer);

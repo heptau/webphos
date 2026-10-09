@@ -26,14 +26,14 @@ class View_zoom_class {
 	 * View > Zoom > Zoom to Selection - the selected area fills the window
 	 */
 	async to_selection() {
-		var selection = new Selection_class().selection;
+		const selection = new Selection_class().selection;
 		if (!selection || !(selection.width > 0) || !(selection.height > 0)) {
 			alertify.warning(t('Nothing is selected.'));
 			return;
 		}
-		var visible_w = config.visible_width || 800;
-		var visible_h = config.visible_height || 600;
-		var percent = Math.min(visible_w / selection.width, visible_h / selection.height) * 100 * 0.9;
+		const visible_w = config.visible_width || 800;
+		const visible_h = config.visible_height || 600;
+		let percent = Math.min(visible_w / selection.width, visible_h / selection.height) * 100 * 0.9;
 		percent = Math.max(2, Math.min(3200, Math.round(percent)));
 		this.GUI_preview.set_center_zoom();
 		await this.GUI_preview.zoom(percent);

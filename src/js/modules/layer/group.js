@@ -26,19 +26,19 @@ class Layer_group_class {
 	 * Layer > Group > Set Group - puts the active layer into a group (a new one or an existing one)
 	 */
 	set_group() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type == null) {
 			alertify.error(t('Layer is empty.'));
 			return;
 		}
-		var names = group_names(config.layers);
-		var settings = {
+		const names = group_names(config.layers);
+		const settings = {
 			title: 'Set Group',
 			params: [
 				{name: "name", title: "Group name:", value: layer.group || (names.length ? names[0] : 'Group 1')},
 			],
 			on_finish: (params) => {
-				var name = clean_group_name(params.name);
+				const name = clean_group_name(params.name);
 				if (name === '') {
 					alertify.error(t('Name is required.'));
 					return;
@@ -48,7 +48,7 @@ class Layer_group_class {
 			},
 		};
 		if (names.length) {
-			settings.comment = t('Existing groups:') + ' ' + names.join(', ');
+			settings.comment = `${t('Existing groups:')  } ${  names.join(', ')}`;
 		}
 		this.Dialog.show(settings);
 	}
@@ -57,7 +57,7 @@ class Layer_group_class {
 	 * Layer > Group > Clear Group - takes the active layer out of its group
 	 */
 	clear_group() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || !layer.group) {
 			alertify.error(t('This layer is not in a group.'));
 			return;
@@ -69,7 +69,7 @@ class Layer_group_class {
 	 * Layer > Group > Show / Hide Group - toggles the visibility of all layers of the active layer's group
 	 */
 	toggle_visibility() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || !layer.group) {
 			alertify.error(t('This layer is not in a group.'));
 			return;
@@ -83,7 +83,7 @@ class Layer_group_class {
 	 * @param {string} name
 	 */
 	set_visibility(name) {
-		var toggles = group_visibility_toggles(config.layers, name);
+		const toggles = group_visibility_toggles(config.layers, name);
 		if (toggles.ids.length == 0) {
 			return;
 		}
@@ -100,15 +100,15 @@ class Layer_group_class {
 	 * @param {string} [path] path of the group, the group of the active layer when missing
 	 */
 	group_settings(path) {
-		var name = typeof path == 'string' && path !== '' ? path : (config.layer ? config.layer.group : null);
-		var members = name ? layers_in_group(config.layers, name) : [];
+		const name = typeof path == 'string' && path !== '' ? path : (config.layer ? config.layer.group : null);
+		const members = name ? layers_in_group(config.layers, name) : [];
 		if (!name || members.length == 0) {
 			alertify.error(t('This layer is not in a group.'));
 			return;
 		}
-		var current = group_props_of(members[0], name);
-		var apply = (values, final) => {
-			var props = {
+		const current = group_props_of(members[0], name);
+		const apply = (values, final) => {
+			const props = {
 				opacity: Math.min(100, Math.max(0, parseInt(values.opacity, 10) || 0)),
 				composition: GROUP_MODES.includes(values.mode) ? values.mode : 'source-over',
 				mask: current.mask,
@@ -121,8 +121,8 @@ class Layer_group_class {
 			});
 			config.need_render = true;
 		};
-		var before = members.map((item) => item.group_props);
-		var restore = () => {
+		const before = members.map((item) => item.group_props);
+		const restore = () => {
 			members.forEach((item, index) => {
 				item.group_props = before[index];
 			});
@@ -148,13 +148,13 @@ class Layer_group_class {
 	 * @returns {{name: string, members: object[]}|null}
 	 */
 	target_group(path) {
-		var name = typeof path == 'string' && path !== '' ? path : (config.layer ? config.layer.group : null);
-		var members = name ? layers_in_group(config.layers, name) : [];
+		const name = typeof path == 'string' && path !== '' ? path : (config.layer ? config.layer.group : null);
+		const members = name ? layers_in_group(config.layers, name) : [];
 		if (!name || members.length == 0) {
 			alertify.error(t('This layer is not in a group.'));
 			return null;
 		}
-		return {name: name, members: members};
+		return {name, members};
 	}
 
 	/**
@@ -164,16 +164,16 @@ class Layer_group_class {
 	 * @param {string} [path]
 	 */
 	mask_from_selection(path) {
-		var target = this.target_group(path);
+		const target = this.target_group(path);
 		if (target == null) {
 			return;
 		}
-		var selection = new Edit_selection_class().get_mask();
+		const selection = new Edit_selection_class().get_mask();
 		if (selection == null) {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var stored = serialize_layer_mask(layer_mask_from_selection(selection.mask, {x: 0, y: 0, width: config.WIDTH, height: config.HEIGHT}));
+		const stored = serialize_layer_mask(layer_mask_from_selection(selection.mask, {x: 0, y: 0, width: config.WIDTH, height: config.HEIGHT}));
 		return this.set_group_mask(target, stored, 'Group Mask');
 	}
 
@@ -183,7 +183,7 @@ class Layer_group_class {
 	 * @param {string} [path]
 	 */
 	delete_mask(path) {
-		var target = this.target_group(path);
+		const target = this.target_group(path);
 		if (target == null) {
 			return;
 		}
@@ -198,7 +198,7 @@ class Layer_group_class {
 		return app.State.do_action(
 			new app.Actions.Bundle_action('group_mask', label,
 				target.members.map((item) => {
-					var props = group_props_of(item, target.name);
+					const props = group_props_of(item, target.name);
 					return new app.Actions.Update_layer_action(item.id, {
 						group_props: with_group_props(item, target.name, {opacity: props.opacity, composition: props.composition, mask: stored}),
 					});
@@ -213,9 +213,9 @@ class Layer_group_class {
 	 * @param {[number|string, string|null]} arguments_ the id of the layer and the path of the group
 	 */
 	move_into_group(arguments_) {
-		var layer_id = arguments_[0];
-		var path = arguments_[1];
-		var layer = config.layers.find((item) => item.id == layer_id);
+		const layer_id = arguments_[0];
+		const path = arguments_[1];
+		const layer = config.layers.find((item) => item.id == layer_id);
 		if (layer == null || layer.type == null || (layer.group || null) === path) {
 			return;
 		}
@@ -226,33 +226,33 @@ class Layer_group_class {
 	 * Layer > Group > Merge Group - merges the visible layers of the group into one new layer
 	 */
 	merge_group() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || !layer.group) {
 			alertify.error(t('This layer is not in a group.'));
 			return;
 		}
-		var name = layer.group;
-		var members = layers_in_group(config.layers, name);
-		var ordered = this.Base_layers.get_sorted_layers().filter((item) => members.indexOf(item) >= 0);
+		const name = layer.group;
+		const members = layers_in_group(config.layers, name);
+		const ordered = this.Base_layers.get_sorted_layers().filter((item) => members.indexOf(item) >= 0);
 		if (ordered.length < 2) {
 			alertify.error(t('At least 2 layers are needed.'));
 			return;
 		}
 
 		//the layers of the group, drawn the way they look in the picture (inner groups with their settings too)
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
-		var ctx = canvas.getContext('2d');
-		var inner = plan_groups(ordered, group_ancestors(name).length);
-		var merged = this.Base_layers.create_new_canvas(ctx);
+		const ctx = canvas.getContext('2d');
+		const inner = plan_groups(ordered, group_ancestors(name).length);
+		const merged = this.Base_layers.create_new_canvas(ctx);
 		this.Base_layers.render_objects_flat(ctx, merged, inner, () => {
 			ctx.save();
 		}, (item) => item.visible == false || item.type == null);
 
 		//the merged layer keeps the opacity and blend mode of the group
-		var props = group_props_of(members[0], name);
-		var actions = [
+		const props = group_props_of(members[0], name);
+		const actions = [
 			new app.Actions.Insert_layer_action({
 				type: 'image',
 				name: name.split('/').pop(),
@@ -278,8 +278,8 @@ class Layer_group_class {
 	 * @param {string} name
 	 */
 	toggle_collapsed(name) {
-		var list = config.collapsed_groups || [];
-		var index = list.indexOf(name);
+		const list = config.collapsed_groups || [];
+		const index = list.indexOf(name);
 		if (index >= 0) {
 			list.splice(index, 1);
 		}

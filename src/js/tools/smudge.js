@@ -35,8 +35,8 @@ class Smudge_class extends Base_tools_class {
 		this.mousemove(event);
 
 		//mouse cursor
-		var mouse = this.get_mouse_info(event);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(event);
+		const params = this.getParams();
 		this.show_mouse_cursor(mouse.x, mouse.y, params.size, 'circle');
 	}
 
@@ -52,7 +52,7 @@ class Smudge_class extends Base_tools_class {
 
 	mousedown(e) {
 		this.started = false;
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -81,20 +81,20 @@ class Smudge_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false || mouse.click_valid == false || this.started == false) {
 			return;
 		}
-		var params = this.getParams();
-		var position = this.to_layer_position(mouse);
+		const params = this.getParams();
+		const position = this.to_layer_position(mouse);
 
 		//interpolate between the last and the current position
-		var size = Math.max(1, this.adaptSize(params.size, 'width'));
-		var spacing = Math.max(1, size / 4);
-		var distance = Math.hypot(position.x - this.last.x, position.y - this.last.y);
-		var steps = Math.max(1, Math.ceil(distance / spacing));
-		for (var s = 1; s <= steps; s++) {
-			var next = {
+		const size = Math.max(1, this.adaptSize(params.size, 'width'));
+		const spacing = Math.max(1, size / 4);
+		const distance = Math.hypot(position.x - this.last.x, position.y - this.last.y);
+		const steps = Math.max(1, Math.ceil(distance / spacing));
+		for (let s = 1; s <= steps; s++) {
+			const next = {
 				x: this.last.x + (position.x - this.last.x) * s / steps,
 				y: this.last.y + (position.y - this.last.y) * s / steps,
 			};
@@ -104,7 +104,7 @@ class Smudge_class extends Base_tools_class {
 		config.need_render = true;
 	}
 
-	mouseup(e) {
+	mouseup() {
 		if (this.started == false) {
 			return;
 		}
@@ -128,16 +128,16 @@ class Smudge_class extends Base_tools_class {
 	 * One step: the colors from the previous position are carried to the next one
 	 */
 	smudge(from, to, params) {
-		var ctx = this.tmpCanvasCtx;
-		var size_w = Math.max(1, this.adaptSize(params.size, 'width'));
-		var size_h = Math.max(1, this.adaptSize(params.size, 'height'));
-		var from_x = Math.round(from.x - Math.round(size_w / 2));
-		var from_y = Math.round(from.y - Math.round(size_h / 2));
-		var to_x = Math.round(to.x - Math.round(size_w / 2));
-		var to_y = Math.round(to.y - Math.round(size_h / 2));
+		const ctx = this.tmpCanvasCtx;
+		const size_w = Math.max(1, this.adaptSize(params.size, 'width'));
+		const size_h = Math.max(1, this.adaptSize(params.size, 'height'));
+		const from_x = Math.round(from.x - Math.round(size_w / 2));
+		const from_y = Math.round(from.y - Math.round(size_h / 2));
+		const to_x = Math.round(to.x - Math.round(size_w / 2));
+		const to_y = Math.round(to.y - Math.round(size_h / 2));
 
-		var source = ctx.getImageData(from_x, from_y, size_w, size_h);
-		var target = ctx.getImageData(to_x, to_y, size_w, size_h);
+		const source = ctx.getImageData(from_x, from_y, size_w, size_h);
+		const target = ctx.getImageData(to_x, to_y, size_w, size_h);
 		smudgeBlend(target, source, params.strength);
 		this.Helper.image_round(ctx, Math.round(to.x), Math.round(to.y), size_w, size_h, target, params.anti_aliasing);
 	}

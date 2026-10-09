@@ -12,17 +12,17 @@
  * @returns {Bounds}
  */
 export function layer_bounds(layer) {
-	var angle = (layer.rotate || 0) * Math.PI / 180;
-	var cos = Math.abs(Math.cos(angle));
-	var sin = Math.abs(Math.sin(angle));
-	var half_width = (layer.width * cos + layer.height * sin) / 2;
-	var half_height = (layer.width * sin + layer.height * cos) / 2;
-	var center_x = layer.x + layer.width / 2;
-	var center_y = layer.y + layer.height / 2;
+	const angle = (layer.rotate || 0) * Math.PI / 180;
+	const cos = Math.abs(Math.cos(angle));
+	const sin = Math.abs(Math.sin(angle));
+	const half_width = (layer.width * cos + layer.height * sin) / 2;
+	const half_height = (layer.width * sin + layer.height * cos) / 2;
+	const center_x = layer.x + layer.width / 2;
+	const center_y = layer.y + layer.height / 2;
 	return {left: center_x - half_width, top: center_y - half_height, right: center_x + half_width, bottom: center_y + half_height};
 }
 
-export var ALIGN_MODES = ['left', 'center', 'right', 'top', 'middle', 'bottom'];
+export const ALIGN_MODES = ['left', 'center', 'right', 'top', 'middle', 'bottom'];
 
 /**
  * How far a layer has to move to be aligned to a reference rectangle (canvas or selection).
@@ -33,8 +33,8 @@ export var ALIGN_MODES = ['left', 'center', 'right', 'top', 'middle', 'bottom'];
  * @returns {{dx: number, dy: number}} whole pixels
  */
 export function align_delta(bounds, mode, reference) {
-	var dx = 0;
-	var dy = 0;
+	let dx = 0;
+	let dy = 0;
 	switch (mode) {
 		case 'left':
 			dx = reference.left - bounds.left;
@@ -67,27 +67,27 @@ export function align_delta(bounds, mode, reference) {
  * @returns {{id: *, dx: number, dy: number}[]} movement of each layer (whole pixels, zero for the ones that stay)
  */
 export function distribute_deltas(items, axis) {
-	var start = axis == 'x' ? 'left' : 'top';
-	var end = axis == 'x' ? 'right' : 'bottom';
-	var sorted = items.slice().sort(function (a, b) {
+	const start = axis == 'x' ? 'left' : 'top';
+	const end = axis == 'x' ? 'right' : 'bottom';
+	const sorted = items.slice().sort((a, b) => {
 		return (a.bounds[start] + a.bounds[end]) - (b.bounds[start] + b.bounds[end]);
 	});
-	var result = [];
+	const result = [];
 	if (sorted.length < 3) {
-		return sorted.map(function (item) { return {id: item.id, dx: 0, dy: 0}; });
+		return sorted.map((item) => { return {id: item.id, dx: 0, dy: 0}; });
 	}
-	var span_start = sorted[0].bounds[start];
-	var span_end = sorted[sorted.length - 1].bounds[end];
-	var total_size = 0;
-	sorted.forEach(function (item) {
+	const span_start = sorted[0].bounds[start];
+	const span_end = sorted[sorted.length - 1].bounds[end];
+	let total_size = 0;
+	sorted.forEach((item) => {
 		total_size += item.bounds[end] - item.bounds[start];
 	});
-	var gap = (span_end - span_start - total_size) / (sorted.length - 1);
+	const gap = (span_end - span_start - total_size) / (sorted.length - 1);
 
-	var position = span_start;
-	sorted.forEach(function (item, index) {
-		var size = item.bounds[end] - item.bounds[start];
-		var move = index == 0 || index == sorted.length - 1 ? 0 : Math.round(position - item.bounds[start]);
+	let position = span_start;
+	sorted.forEach((item, index) => {
+		const size = item.bounds[end] - item.bounds[start];
+		const move = index == 0 || index == sorted.length - 1 ? 0 : Math.round(position - item.bounds[start]);
 		result.push({id: item.id, dx: axis == 'x' ? move : 0, dy: axis == 'y' ? move : 0});
 		position += size + gap;
 	});

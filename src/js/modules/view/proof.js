@@ -24,8 +24,8 @@ class View_proof_class {
 	 * @param {string} name protanopia, deuteranopia, tritanopia, achromatopsia or "none"
 	 */
 	proof(name) {
-		var canvas = document.getElementById('canvas_minipaint');
-		var holder = document.getElementById('proof_filters');
+		const canvas = document.getElementById('canvas_minipaint');
+		let holder = document.getElementById('proof_filters');
 		if (!holder) {
 			holder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			holder.setAttribute('id', 'proof_filters');
@@ -34,11 +34,11 @@ class View_proof_class {
 			holder.setAttribute('aria-hidden', 'true');
 			holder.style.position = 'absolute';
 			Object.keys(MATRICES).forEach((key) => {
-				var filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
-				filter.setAttribute('id', 'proof_' + key);
+				const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+				filter.setAttribute('id', `proof_${  key}`);
 				filter.setAttribute('color-interpolation-filters', 'linearRGB');
-				var matrix = document.createElementNS('http://www.w3.org/2000/svg', 'feColorMatrix');
-				var v = MATRICES[key].split(/\s+/);
+				const matrix = document.createElementNS('http://www.w3.org/2000/svg', 'feColorMatrix');
+				const v = MATRICES[key].split(/\s+/);
 				matrix.setAttribute('type', 'matrix');
 				matrix.setAttribute('values', [v[0], v[1], v[2], 0, 0, v[3], v[4], v[5], 0, 0, v[6], v[7], v[8], 0, 0, 0, 0, 0, 1, 0].join(' '));
 				filter.appendChild(matrix);
@@ -52,7 +52,7 @@ class View_proof_class {
 			config.proof = null;
 			return;
 		}
-		canvas.style.filter = 'url(#proof_' + name + ')';
+		canvas.style.filter = `url(#proof_${name})`;
 		this.current = name;
 		config.proof = name;
 		alertify.message(t('Proof colors is on - it only changes the view. Choose it again to turn it off.'), 4);

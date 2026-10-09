@@ -22,9 +22,9 @@ class Layer_adjustment_class {
 		if (!is_adjustment(key)) {
 			return;
 		}
-		var definition = ADJUSTMENTS[key];
-		var geometry = {x: 0, y: 0, width: config.WIDTH, height: config.HEIGHT};
-		var settings = Object.assign({
+		const definition = ADJUSTMENTS[key];
+		const geometry = {x: 0, y: 0, width: config.WIDTH, height: config.HEIGHT};
+		const settings = Object.assign({
 			name: t(definition.title),
 			type: 'adjustment',
 			width_original: config.WIDTH,
@@ -35,8 +35,8 @@ class Layer_adjustment_class {
 			params: {adjustment: key, settings: default_settings(key)},
 		}, geometry);
 
-		var actions = [new app.Actions.Insert_layer_action(settings, false)];
-		var selection = new Edit_selection_class().get_mask();
+		const actions = [new app.Actions.Insert_layer_action(settings, false)];
+		const selection = new Edit_selection_class().get_mask();
 		if (selection != null) {
 			//the new layer gets the next free id
 			actions.push(new app.Actions.Update_layer_action(app.Layers.auto_increment, {
@@ -51,7 +51,7 @@ class Layer_adjustment_class {
 	}
 
 	edit() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'adjustment' || !is_adjustment(layer.params && layer.params.adjustment)) {
 			alertify.warning(t('Select an adjustment layer first.'));
 			return;
@@ -64,14 +64,14 @@ class Layer_adjustment_class {
 	 * and for a layer that was just made it also takes the layer away.
 	 */
 	open_dialog(layer, is_new) {
-		var key = layer.params.adjustment;
-		var definition = ADJUSTMENTS[key];
-		var original = layer.params;
-		var current = clean_settings(key, original.settings);
+		const key = layer.params.adjustment;
+		const definition = ADJUSTMENTS[key];
+		const original = layer.params;
+		const current = clean_settings(key, original.settings);
 		//settings that have their own editor (the curves graph) are edited in place and added to the dialog values
-		var state = definition.state;
-		var state_value = state ? JSON.parse(JSON.stringify(current[state.name])) : null;
-		var build = (values) => clean_settings(key, state ? Object.assign({}, values, {[state.name]: state_value}) : values);
+		const state = definition.state;
+		const state_value = state ? JSON.parse(JSON.stringify(current[state.name])) : null;
+		const build = (values) => clean_settings(key, state ? Object.assign({}, values, {[state.name]: state_value}) : values);
 
 		new Dialog_class().show({
 			title: definition.title,
@@ -83,7 +83,7 @@ class Layer_adjustment_class {
 			},
 			on_finish: (values) => {
 				layer.params = original;
-				var next = Object.assign({}, original, {settings: build(values)});
+				const next = Object.assign({}, original, {settings: build(values)});
 				return app.State.do_action(
 					new app.Actions.Bundle_action('edit_adjustment_layer', 'Edit Adjustment Layer', [
 						new app.Actions.Update_layer_action(layer.id, {params: next}),

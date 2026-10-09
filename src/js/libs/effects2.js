@@ -8,35 +8,35 @@ function clamp(value, min, max) {
 }
 
 function hex_to_rgb(hex) {
-	var match = /^#?([0-9a-f]{6})$/i.exec(String(hex));
+	const match = /^#?([0-9a-f]{6})$/i.exec(String(hex));
 	if (!match) {
 		return [128, 128, 128];
 	}
-	var n = parseInt(match[1], 16);
+	const n = parseInt(match[1], 16);
 	return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
 //one pass of a box blur on a single float channel (edges are repeated)
 function box_blur_channel(values, width, height, radius) {
-	var temp = new Float32Array(values.length);
-	var out = new Float32Array(values.length);
-	var size = radius * 2 + 1;
-	for (var y = 0; y < height; y++) {
-		var sum = 0;
-		for (var k = -radius; k <= radius; k++) {
+	const temp = new Float32Array(values.length);
+	const out = new Float32Array(values.length);
+	const size = radius * 2 + 1;
+	for (let y = 0; y < height; y++) {
+		let sum = 0;
+		for (let k = -radius; k <= radius; k++) {
 			sum += values[y * width + clamp(k, 0, width - 1)];
 		}
-		for (var x = 0; x < width; x++) {
+		for (let x = 0; x < width; x++) {
 			temp[y * width + x] = sum / size;
 			sum += values[y * width + clamp(x + radius + 1, 0, width - 1)] - values[y * width + clamp(x - radius, 0, width - 1)];
 		}
 	}
-	for (var x2 = 0; x2 < width; x2++) {
-		var sum2 = 0;
-		for (var k2 = -radius; k2 <= radius; k2++) {
+	for (let x2 = 0; x2 < width; x2++) {
+		let sum2 = 0;
+		for (let k2 = -radius; k2 <= radius; k2++) {
 			sum2 += temp[clamp(k2, 0, height - 1) * width + x2];
 		}
-		for (var y2 = 0; y2 < height; y2++) {
+		for (let y2 = 0; y2 < height; y2++) {
 			out[y2 * width + x2] = sum2 / size;
 			sum2 += temp[clamp(y2 + radius + 1, 0, height - 1) * width + x2] - temp[clamp(y2 - radius, 0, height - 1) * width + x2];
 		}
@@ -49,22 +49,22 @@ function box_blur_channel(values, width, height, radius) {
  */
 export function blur_rgba(image, radius) {
 	radius = Math.round(clamp(radius, 0, 100));
-	var w = image.width;
-	var h = image.height;
-	var result = new Uint8ClampedArray(image.data);
+	const w = image.width;
+	const h = image.height;
+	const result = new Uint8ClampedArray(image.data);
 	if (radius < 1) {
 		return result;
 	}
-	var channel = new Float32Array(w * h);
-	for (var c = 0; c < 4; c++) {
-		for (var p = 0; p < channel.length; p++) {
+	const channel = new Float32Array(w * h);
+	for (let c = 0; c < 4; c++) {
+		for (let p = 0; p < channel.length; p++) {
 			channel[p] = image.data[p * 4 + c];
 		}
-		var blurred = channel;
-		for (var pass = 0; pass < 3; pass++) {
+		let blurred = channel;
+		for (let pass = 0; pass < 3; pass++) {
 			blurred = box_blur_channel(blurred, w, h, Math.max(1, Math.round(radius / 2)));
 		}
-		for (var q = 0; q < blurred.length; q++) {
+		for (let q = 0; q < blurred.length; q++) {
 			result[q * 4 + c] = blurred[q];
 		}
 	}
@@ -82,26 +82,26 @@ export function vignette(image, amount, size, softness) {
 	amount = clamp(parseFloat(amount) || 0, -100, 100) / 100;
 	size = clamp(parseFloat(size == undefined ? 50 : size), 5, 100) / 100;
 	softness = clamp(parseFloat(softness == undefined ? 50 : softness), 1, 100) / 100;
-	var w = image.width;
-	var h = image.height;
-	var cx = (w - 1) / 2;
-	var cy = (h - 1) / 2;
-	var max = Math.hypot(cx, cy) || 1;
-	var data = image.data;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var d = Math.hypot(x - cx, y - cy) / max;
-			var t = clamp((d - size) / Math.max(0.01, softness * (1 - size + 0.3)), 0, 1);
+	const w = image.width;
+	const h = image.height;
+	const cx = (w - 1) / 2;
+	const cy = (h - 1) / 2;
+	const max = Math.hypot(cx, cy) || 1;
+	const data = image.data;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const d = Math.hypot(x - cx, y - cy) / max;
+			let t = clamp((d - size) / Math.max(0.01, softness * (1 - size + 0.3)), 0, 1);
 			t = t * t * (3 - 2 * t);
-			var i = (y * w + x) * 4;
+			const i = (y * w + x) * 4;
 			if (amount >= 0) {
-				var factor = 1 - amount * t;
+				const factor = 1 - amount * t;
 				data[i] *= factor;
 				data[i + 1] *= factor;
 				data[i + 2] *= factor;
 			}
 			else {
-				var lift = -amount * t;
+				const lift = -amount * t;
 				data[i] += (255 - data[i]) * lift;
 				data[i + 1] += (255 - data[i + 1]) * lift;
 				data[i + 2] += (255 - data[i + 2]) * lift;
@@ -121,19 +121,19 @@ export function dehaze(image, strength) {
 	if (strength == 0) {
 		return image;
 	}
-	var w = image.width;
-	var h = image.height;
-	var data = image.data;
-	var dark = new Float32Array(w * h);
-	for (var p = 0; p < dark.length; p++) {
+	const w = image.width;
+	const h = image.height;
+	const data = image.data;
+	const dark = new Float32Array(w * h);
+	for (let p = 0; p < dark.length; p++) {
 		dark[p] = Math.min(data[p * 4], data[p * 4 + 1], data[p * 4 + 2]);
 	}
-	var haze = box_blur_channel(dark, w, h, Math.max(2, Math.round(Math.min(w, h) / 40)));
-	var light = 245;
-	for (var q = 0; q < haze.length; q++) {
-		var transmission = clamp(1 - strength * 0.9 * haze[q] / light, 0.25, 1);
-		var i = q * 4;
-		for (var c = 0; c < 3; c++) {
+	const haze = box_blur_channel(dark, w, h, Math.max(2, Math.round(Math.min(w, h) / 40)));
+	const light = 245;
+	for (let q = 0; q < haze.length; q++) {
+		const transmission = clamp(1 - strength * 0.9 * haze[q] / light, 0.25, 1);
+		const i = q * 4;
+		for (let c = 0; c < 3; c++) {
 			data[i + c] = clamp((data[i + c] - light * (1 - transmission)) / transmission, 0, 255);
 		}
 	}
@@ -148,21 +148,21 @@ export function dehaze(image, strength) {
  * @param {number} blur radius of the blur in pixels
  */
 export function tilt_shift(image, focus_y, band, blur) {
-	var w = image.width;
-	var h = image.height;
-	var center = clamp(parseFloat(focus_y == undefined ? 50 : focus_y), 0, 100) / 100 * h;
-	var half = clamp(parseFloat(band == undefined ? 20 : band), 0, 100) / 200 * h;
-	var blurred = blur_rgba(image, blur == undefined ? 8 : blur);
-	var data = image.data;
-	for (var y = 0; y < h; y++) {
-		var distance = Math.max(0, Math.abs(y - center) - half);
-		var amount = clamp(distance / Math.max(1, h * 0.25), 0, 1);
+	const w = image.width;
+	const h = image.height;
+	const center = clamp(parseFloat(focus_y == undefined ? 50 : focus_y), 0, 100) / 100 * h;
+	const half = clamp(parseFloat(band == undefined ? 20 : band), 0, 100) / 200 * h;
+	const blurred = blur_rgba(image, blur == undefined ? 8 : blur);
+	const data = image.data;
+	for (let y = 0; y < h; y++) {
+		const distance = Math.max(0, Math.abs(y - center) - half);
+		const amount = clamp(distance / Math.max(1, h * 0.25), 0, 1);
 		if (amount == 0) {
 			continue;
 		}
-		for (var x = 0; x < w; x++) {
-			var i = (y * w + x) * 4;
-			for (var c = 0; c < 4; c++) {
+		for (let x = 0; x < w; x++) {
+			const i = (y * w + x) * 4;
+			for (let c = 0; c < 4; c++) {
 				data[i + c] = data[i + c] * (1 - amount) + blurred[i + c] * amount;
 			}
 		}
@@ -179,18 +179,18 @@ export function tilt_shift(image, focus_y, band, blur) {
  * @param {number} strength 0 .. 100
  */
 export function split_toning(image, shadow_color, highlight_color, balance, strength) {
-	var shadow = hex_to_rgb(shadow_color);
-	var highlight = hex_to_rgb(highlight_color);
-	var shift = clamp(parseFloat(balance) || 0, -100, 100) / 200;
+	const shadow = hex_to_rgb(shadow_color);
+	const highlight = hex_to_rgb(highlight_color);
+	const shift = clamp(parseFloat(balance) || 0, -100, 100) / 200;
 	strength = clamp(parseFloat(strength == undefined ? 50 : strength), 0, 100) / 100;
-	var data = image.data;
-	for (var i = 0; i < data.length; i += 4) {
-		var luma = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
-		var t = clamp(luma + shift, 0, 1);
-		for (var c = 0; c < 3; c++) {
-			var tint = shadow[c] * (1 - t) + highlight[c] * t;
+	const data = image.data;
+	for (let i = 0; i < data.length; i += 4) {
+		const luma = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
+		const t = clamp(luma + shift, 0, 1);
+		for (let c = 0; c < 3; c++) {
+			const tint = shadow[c] * (1 - t) + highlight[c] * t;
 			//the tint is mixed in as a soft light so that the brightness stays
-			var mixed = data[i + c] * (1 - strength * 0.5) + tint * strength * 0.5 + (data[i + c] - 128) * 0;
+			const mixed = data[i + c] * (1 - strength * 0.5) + tint * strength * 0.5 + (data[i + c] - 128) * 0;
 			data[i + c] = clamp(mixed, 0, 255);
 		}
 	}
@@ -203,17 +203,17 @@ export function split_toning(image, shadow_color, highlight_color, balance, stre
  * @param {number} amount -50 .. 50 shift in pixels
  */
 export function chromatic_aberration(image, amount) {
-	var shift = Math.round(clamp(parseFloat(amount) || 0, -50, 50));
+	const shift = Math.round(clamp(parseFloat(amount) || 0, -50, 50));
 	if (shift == 0) {
 		return image;
 	}
-	var w = image.width;
-	var h = image.height;
-	var source = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var i = (y * w + x) * 4;
+	const w = image.width;
+	const h = image.height;
+	const source = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const i = (y * w + x) * 4;
 			data[i] = source[(y * w + clamp(x - shift, 0, w - 1)) * 4];
 			data[i + 2] = source[(y * w + clamp(x + shift, 0, w - 1)) * 4 + 2];
 		}
@@ -229,29 +229,29 @@ export function chromatic_aberration(image, amount) {
  */
 export function halftone(image, cell, color) {
 	cell = Math.round(clamp(parseFloat(cell) || 8, 3, 40));
-	var w = image.width;
-	var h = image.height;
-	var source = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	for (var cy = 0; cy < h; cy += cell) {
-		for (var cx = 0; cx < w; cx += cell) {
-			var r = 0, g = 0, b = 0, a = 0, count = 0;
-			for (var y = cy; y < Math.min(h, cy + cell); y++) {
-				for (var x = cx; x < Math.min(w, cx + cell); x++) {
-					var i = (y * w + x) * 4;
+	const w = image.width;
+	const h = image.height;
+	const source = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	for (let cy = 0; cy < h; cy += cell) {
+		for (let cx = 0; cx < w; cx += cell) {
+			let r = 0, g = 0, b = 0, a = 0, count = 0;
+			for (let y = cy; y < Math.min(h, cy + cell); y++) {
+				for (let x = cx; x < Math.min(w, cx + cell); x++) {
+					const i = (y * w + x) * 4;
 					r += source[i]; g += source[i + 1]; b += source[i + 2]; a += source[i + 3];
 					count++;
 				}
 			}
 			r /= count; g /= count; b /= count; a /= count;
-			var dark = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-			var radius = Math.sqrt(dark) * cell * 0.72;
-			var mx = cx + cell / 2;
-			var my = cy + cell / 2;
-			for (var y2 = cy; y2 < Math.min(h, cy + cell); y2++) {
-				for (var x2 = cx; x2 < Math.min(w, cx + cell); x2++) {
-					var j = (y2 * w + x2) * 4;
-					var inside = Math.hypot(x2 + 0.5 - mx, y2 + 0.5 - my) <= radius;
+			const dark = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+			const radius = Math.sqrt(dark) * cell * 0.72;
+			const mx = cx + cell / 2;
+			const my = cy + cell / 2;
+			for (let y2 = cy; y2 < Math.min(h, cy + cell); y2++) {
+				for (let x2 = cx; x2 < Math.min(w, cx + cell); x2++) {
+					const j = (y2 * w + x2) * 4;
+					const inside = Math.hypot(x2 + 0.5 - mx, y2 + 0.5 - my) <= radius;
 					if (color) {
 						data[j] = inside ? r : 255;
 						data[j + 1] = inside ? g : 255;
@@ -279,21 +279,21 @@ export function film_grain(image, amount, size, random) {
 	amount = clamp(parseFloat(amount) || 0, 0, 100) / 100 * 60;
 	size = Math.round(clamp(parseFloat(size) || 1, 1, 6));
 	random = random || Math.random;
-	var w = image.width;
-	var h = image.height;
-	var gw = Math.ceil(w / size);
-	var gh = Math.ceil(h / size);
-	var grain = new Float32Array(gw * gh);
-	for (var g = 0; g < grain.length; g++) {
+	const w = image.width;
+	const h = image.height;
+	const gw = Math.ceil(w / size);
+	const gh = Math.ceil(h / size);
+	const grain = new Float32Array(gw * gh);
+	for (let g = 0; g < grain.length; g++) {
 		grain[g] = (random() + random() + random()) / 3 - 0.5;
 	}
-	var data = image.data;
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var i = (y * w + x) * 4;
-			var luma = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
-			var weight = 1 - Math.abs(luma - 0.5) * 1.4;
-			var delta = grain[Math.floor(y / size) * gw + Math.floor(x / size)] * amount * 2 * Math.max(0.2, weight);
+	const data = image.data;
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const i = (y * w + x) * 4;
+			const luma = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
+			const weight = 1 - Math.abs(luma - 0.5) * 1.4;
+			const delta = grain[Math.floor(y / size) * gw + Math.floor(x / size)] * amount * 2 * Math.max(0.2, weight);
 			data[i] = clamp(data[i] + delta, 0, 255);
 			data[i + 1] = clamp(data[i + 1] + delta, 0, 255);
 			data[i + 2] = clamp(data[i + 2] + delta, 0, 255);
@@ -311,25 +311,25 @@ export function film_grain(image, amount, size, random) {
 export function dust_scratches(image, radius, threshold) {
 	radius = Math.round(clamp(parseFloat(radius) || 1, 1, 4));
 	threshold = clamp(parseFloat(threshold) || 0, 0, 255);
-	var w = image.width;
-	var h = image.height;
-	var source = new Uint8ClampedArray(image.data);
-	var data = image.data;
-	var values = [];
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var i = (y * w + x) * 4;
-			var medians = [0, 0, 0];
-			var dirty = false;
-			for (var c = 0; c < 3; c++) {
+	const w = image.width;
+	const h = image.height;
+	const source = new Uint8ClampedArray(image.data);
+	const data = image.data;
+	const values = [];
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const i = (y * w + x) * 4;
+			const medians = [0, 0, 0];
+			let dirty = false;
+			for (let c = 0; c < 3; c++) {
 				values.length = 0;
-				for (var dy = -radius; dy <= radius; dy++) {
-					var yy = clamp(y + dy, 0, h - 1);
-					for (var dx = -radius; dx <= radius; dx++) {
+				for (let dy = -radius; dy <= radius; dy++) {
+					const yy = clamp(y + dy, 0, h - 1);
+					for (let dx = -radius; dx <= radius; dx++) {
 						values.push(source[(yy * w + clamp(x + dx, 0, w - 1)) * 4 + c]);
 					}
 				}
-				values.sort(function (a, b) {
+				values.sort((a, b) => {
 					return a - b;
 				});
 				medians[c] = values[values.length >> 1];

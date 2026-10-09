@@ -1,14 +1,16 @@
-# WebPhos
+# Lumifex
 
-[![GitHub License](https://img.shields.io/github/license/heptau/webphos?label=License)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-488%20passed-brightgreen)](https://github.com/heptau/webphos/actions)
-[![PWA](https://img.shields.io/badge/PWA-Installable-blue?logo=pwa)](https://webphos.80.cz)
+[![GitHub License](https://img.shields.io/github/license/heptau/lumifex?label=License)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-488%20passed-brightgreen)](https://github.com/heptau/lumifex/actions)
+[![PWA](https://img.shields.io/badge/PWA-Installable-blue?logo=pwa)](https://lumifex.80.cz)
 
-WebPhos is an image editor that runs directly in the browser. It is built with plain JavaScript and HTML5 canvas (no framework), looks like a native macOS application and works like Photoshop: layers, masks, selections, adjustments and effects with live preview, document tabs and history.
+Lumifex is an image editor that runs directly in the browser. It is built with plain JavaScript and HTML5 canvas (no framework), looks like a native macOS application and works like Photoshop: layers, masks, selections, adjustments and effects with live preview, document tabs and history.
 
 Nothing is sent to any server. Everything stays in your browser.
 
-**Try it:** https://webphos.80.cz/
+**Try it:** https://lumifex.80.cz/
+
+[![Lumifex screenshot](images/lumifex-preview.webp)](https://lumifex.80.cz/)
 
 ## Features
 
@@ -37,4 +39,4 @@ Bug reports, ideas and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBU
 
 ## License
 
-MIT License, see [LICENSE](LICENSE). WebPhos is based on [miniPaint](https://github.com/viliusle/miniPaint) by ViliusL.
+MIT License, see [LICENSE](LICENSE). Lumifex is based on [miniPaint](https://github.com/viliusle/miniPaint) by ViliusL.

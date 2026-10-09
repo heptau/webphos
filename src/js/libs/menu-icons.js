@@ -3,10 +3,10 @@
  * Keys are English names of the menu items, values are SVG path data inside a 24x24 box.
  */
 const ICONS = {
-	'About WebPhos': '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+	'About Lumifex': '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
 	'Support the Project': '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
 	'Settings': '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
-	'Quit WebPhos': '<path d="M12 3v8"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/>',
+	'Quit Lumifex': '<path d="M12 3v8"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/>',
 	'New': '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/>',
 	'Open': '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
 	'Open File': '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
@@ -104,11 +104,11 @@ const ICONS = {
  * @returns {string} svg markup or an empty string
  */
 export function menu_icon(name) {
-	var path = ICONS[name];
+	const path = ICONS[name];
 	if (!path) {
 		return '';
 	}
-	return '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>';
+	return `<svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;
 }
 
 export default ICONS;

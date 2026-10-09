@@ -19,12 +19,12 @@ class Effects_heatmap_class {
 		}
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = this.change(img);
+		const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const data = this.change(img);
 		ctx.putImageData(data, 0, 0);
 
 		//save
@@ -34,10 +34,10 @@ class Effects_heatmap_class {
 	}
 
 	change(data) {
-		var imgData = data.data;
-		var grey, RGB;
+		const imgData = data.data;
+		let grey, RGB;
 
-		for (var i = 0; i < imgData.length; i += 4) {
+		for (let i = 0; i < imgData.length; i += 4) {
 			if (imgData[i + 3] == 0)
 				continue;	//transparent
 			grey = Math.round(0.2126 * imgData[i] + 0.7152 * imgData[i + 1] + 0.0722 * imgData[i + 2]);
@@ -51,7 +51,7 @@ class Effects_heatmap_class {
 	}
 
 	color2heat(value) {
-		var RGB = {R: 0, G: 0, B: 0};
+		const RGB = {R: 0, G: 0, B: 0};
 		value = value / 255;
 		if (0 <= value && value <= 1 / 8) {
 			RGB.R = 0;
@@ -97,13 +97,13 @@ class Effects_heatmap_class {
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 		ctx.drawImage(canvas_thumb, 0, 0);
 
 		//now update
-		var img = ctx.getImageData(0, 0, canvas_thumb.width, canvas_thumb.height);
-		var data = this.change(img);
+		const img = ctx.getImageData(0, 0, canvas_thumb.width, canvas_thumb.height);
+		const data = this.change(img);
 		ctx.putImageData(data, 0, 0);
 	}
 

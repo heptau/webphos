@@ -70,7 +70,7 @@ class Lasso_class extends Base_mask_tool_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false || mouse.valid == false) {
 			return;
 		}
@@ -78,7 +78,7 @@ class Lasso_class extends Base_mask_tool_class {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
-		var point = {x: mouse.x, y: mouse.y};
+		const point = {x: mouse.x, y: mouse.y};
 
 		if (this.is_polygonal()) {
 			if (this.drawing == false) {
@@ -105,15 +105,15 @@ class Lasso_class extends Base_mask_tool_class {
 		if (this.drawing == false) {
 			return;
 		}
-		var mouse = this.get_mouse_info(e);
-		var point = {x: mouse.x, y: mouse.y};
+		const mouse = this.get_mouse_info(e);
+		const point = {x: mouse.x, y: mouse.y};
 		this.cursor = point;
 
 		if (this.is_polygonal() == false) {
 			if (mouse.is_drag == false) {
 				return;
 			}
-			var last = this.points[this.points.length - 1];
+			const last = this.points[this.points.length - 1];
 			if (Math.abs(last.x - point.x) >= 1 || Math.abs(last.y - point.y) >= 1) {
 				this.points.push(point);
 			}
@@ -134,8 +134,8 @@ class Lasso_class extends Base_mask_tool_class {
 	}
 
 	is_near_start(point) {
-		var start = this.points[0];
-		var distance = Math.hypot(point.x - start.x, point.y - start.y);
+		const start = this.points[0];
+		const distance = Math.hypot(point.x - start.x, point.y - start.y);
 		return this.points.length >= 3 && distance <= 8 / config.ZOOM;
 	}
 
@@ -152,7 +152,7 @@ class Lasso_class extends Base_mask_tool_class {
 	 * @param {Event} e used for modifier keys
 	 */
 	async finish(e) {
-		var points = this.points;
+		const points = this.points;
 		this.cancel();
 		if (points == null || points.length < 3) {
 			return;
@@ -170,14 +170,14 @@ class Lasso_class extends Base_mask_tool_class {
 		if (this.points == null || this.points.length == 0) {
 			return;
 		}
-		var line = 2 / config.ZOOM;
-		var points = this.points;
-		var polygonal = this.is_polygonal();
+		const line = 2 / config.ZOOM;
+		const points = this.points;
+		const polygonal = this.is_polygonal();
 
 		ctx.save();
 		ctx.beginPath();
 		ctx.moveTo(points[0].x, points[0].y);
-		for (var i = 1; i < points.length; i++) {
+		for (let i = 1; i < points.length; i++) {
 			ctx.lineTo(points[i].x, points[i].y);
 		}
 		if (polygonal && this.cursor) {

@@ -3,7 +3,7 @@
  * Visibility, opacity, name, order, filters and the lock itself can still be changed.
  */
 
-export var LOCKED_PROPERTIES = ['x', 'y', 'width', 'height', 'rotate', 'width_original', 'height_original', 'params', 'data'];
+export const LOCKED_PROPERTIES = ['x', 'y', 'width', 'height', 'rotate', 'width_original', 'height_original', 'params', 'data'];
 
 /**
  * @param {object} layer
@@ -14,7 +14,7 @@ export function blocks_update(layer, settings) {
 	if (!layer || layer.locked !== true || !settings) {
 		return false;
 	}
-	return Object.keys(settings).some(function (key) {
+	return Object.keys(settings).some((key) => {
 		return LOCKED_PROPERTIES.indexOf(key) >= 0;
 	});
 }

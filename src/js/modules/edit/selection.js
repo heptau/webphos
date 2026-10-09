@@ -3,7 +3,6 @@ import app from './../../app.js';
 import config from './../../config.js';
 import Dialog_class from './../../libs/popup.js';
 import Helper_class from './../../libs/helpers.js';
-import { has_modifier } from './../../libs/shortcuts.js';
 import { grow_rect } from './../../libs/selection-area.js';
 import {
 	invert_mask, ellipse_mask, feather_mask, morph_mask, mask_bounds, color_range_mask, alpha_mask, keep_with_mask, resize_mask, combine_masks, select_similar_mask, select_subject_mask, luminosity_mask, edges_mask, select_sky_mask, rect_mask, rounded_rect_mask, transform_mask, smooth_mask, border_mask, refine_mask, stroke_mask, translate_mask
@@ -21,7 +20,7 @@ import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.j
 import { clean_anchors, path_mask } from './../../libs/pen-path.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * Select menu. The selection tool keeps a rectangle, Selection_mask_class adds an alpha mask on top of it
@@ -51,7 +50,7 @@ class Edit_selection_class {
 	 * Select > Quick Mask (Q) - toggles the quick mask (selection brush) tool and the previous tool
 	 */
 	quick_mask() {
-		var target = 'quick_mask';
+		let target = 'quick_mask';
 		if (config.TOOL.name == 'quick_mask') {
 			target = this.tool_before_quick_mask && this.tool_before_quick_mask != 'quick_mask' ? this.tool_before_quick_mask : 'selection';
 		}
@@ -76,7 +75,7 @@ class Edit_selection_class {
 			return;
 		}
 		//remember the selection for Select > Reselect
-		var current = this.get_mask();
+		const current = this.get_mask();
 		if (current != null) {
 			this.last_deselected = {width: current.mask.width, height: current.mask.height, data: new Uint8ClampedArray(current.mask.data)};
 		}
@@ -91,12 +90,12 @@ class Edit_selection_class {
 			alertify.error(t('There is no selection to restore.'));
 			return;
 		}
-		var mask = resize_mask(this.last_deselected, config.WIDTH, config.HEIGHT);
+		const mask = resize_mask(this.last_deselected, config.WIDTH, config.HEIGHT);
 		return this.set_mask(mask, true);
 	}
 
 	has_selection() {
-		var selection = this.Selection.selection;
+		const selection = this.Selection.selection;
 		return selection != null && Boolean(selection.width) && Boolean(selection.height);
 	}
 
@@ -119,7 +118,7 @@ class Edit_selection_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var Edit_fill_class = (await import('./fill.js')).default;
+		const Edit_fill_class = (await import('./fill.js')).default;
 		this.Dialog.show({
 			title: 'Stroke Selection',
 			params: [
@@ -127,11 +126,11 @@ class Edit_selection_class {
 				{name: "location", title: "Location:", type: 'select', values: ['Inside', 'Center', 'Outside'], value: 'Center'},
 			],
 			on_finish: (params) => {
-				var current = this.get_mask();
+				const current = this.get_mask();
 				if (current == null) {
 					return;
 				}
-				var outline = stroke_mask(current.mask, params.width, String(params.location).toLowerCase());
+				const outline = stroke_mask(current.mask, params.width, String(params.location).toLowerCase());
 				new Edit_fill_class().fill(outline);
 			},
 		});
@@ -141,12 +140,12 @@ class Edit_selection_class {
 	 * Select > Inverse (Shift+Ctrl+I). Everything that was selected becomes unselected and vice versa.
 	 */
 	invert() {
-		var current = this.get_mask();
+		const current = this.get_mask();
 		if (current == null) {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var s = this.Selection.selection;
+		const s = this.Selection.selection;
 		return app.State.do_action(
 			new app.Actions.Set_selection_mask_action(invert_mask(current.mask), {x: s.x, y: s.y, width: s.width, height: s.height})
 		);
@@ -160,8 +159,8 @@ class Edit_selection_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var s = this.Selection.selection;
-		var rect = {x: s.x, y: s.y, width: s.width, height: s.height};
+		const s = this.Selection.selection;
+		const rect = {x: s.x, y: s.y, width: s.width, height: s.height};
 		return app.State.do_action(
 			new app.Actions.Set_selection_mask_action(ellipse_mask(rect, config.WIDTH, config.HEIGHT), rect)
 		);
@@ -186,16 +185,16 @@ class Edit_selection_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var base = this.get_mask();
+		const base = this.get_mask();
 		this.preview_dialog({
-			title: title,
+			title,
 			params: [
 				{name: "amount", title: "Amount:", value: 10, range: [1, 100]},
 			],
 			compute: (params) => {
-				var amount = sign * (parseInt(params.amount) || 0);
+				const amount = sign * (parseInt(params.amount) || 0);
 				if (base.kind == 'rect') {
-					var rect = grow_rect(base.rect, amount, config.WIDTH, config.HEIGHT);
+					const rect = grow_rect(base.rect, amount, config.WIDTH, config.HEIGHT);
 					return rect ? rect_mask(rect, config.WIDTH, config.HEIGHT) : null;
 				}
 				return morph_mask(base.mask, amount);
@@ -207,12 +206,12 @@ class Edit_selection_class {
 	}
 
 	grow(amount) {
-		var current = this.get_mask();
+		const current = this.get_mask();
 		if (current == null) {
 			return;
 		}
 		if (current.kind == 'rect') {
-			var rect = grow_rect(this.Selection.selection, amount, config.WIDTH, config.HEIGHT);
+			const rect = grow_rect(this.Selection.selection, amount, config.WIDTH, config.HEIGHT);
 			if (rect == null) {
 				alertify.error(t('Empty selection'));
 				return;
@@ -237,7 +236,7 @@ class Edit_selection_class {
 	 * Select > Color Range - selects pixels of the active layer similar to a color
 	 */
 	async color_range() {
-		var layer = this.get_image_layer();
+		const layer = this.get_image_layer();
 		if (layer == null) {
 			return;
 		}
@@ -245,7 +244,7 @@ class Edit_selection_class {
 			//the selection (and its preview) is only drawn by the selection tools
 			await app.State.do_action(new app.Actions.Activate_tool_action(this.Selection.name));
 		}
-		var image = this.layer_on_canvas(layer);
+		const image = this.layer_on_canvas(layer);
 		this.preview_dialog({
 			title: 'Color Range',
 			params: [
@@ -263,14 +262,14 @@ class Edit_selection_class {
 	 * Select > Subject - selects the object in front of a calm background (the background is found from the edges)
 	 */
 	async select_subject() {
-		var layer = this.get_image_layer();
+		const layer = this.get_image_layer();
 		if (layer == null) {
 			return;
 		}
 		if (!config.TOOL.keep_selection) {
 			await app.State.do_action(new app.Actions.Activate_tool_action(this.Selection.name));
 		}
-		var image = this.layer_on_canvas(layer);
+		const image = this.layer_on_canvas(layer);
 		this.preview_dialog({
 			title: 'Select Subject',
 			params: [
@@ -288,17 +287,17 @@ class Edit_selection_class {
 	 * a dialog with live preview for a selection computed from the picture of the active layer
 	 */
 	async image_mask_dialog(title, params, compute) {
-		var layer = this.get_image_layer();
+		const layer = this.get_image_layer();
 		if (layer == null) {
 			return;
 		}
 		if (!config.TOOL.keep_selection) {
 			await app.State.do_action(new app.Actions.Activate_tool_action(this.Selection.name));
 		}
-		var image = this.layer_on_canvas(layer);
+		const image = this.layer_on_canvas(layer);
 		this.preview_dialog({
-			title: title,
-			params: params,
+			title,
+			params,
 			compute: (values) => compute(image, values),
 			on_finish: (values) => {
 				this.set_mask(compute(image, values), true);
@@ -323,7 +322,7 @@ class Edit_selection_class {
 			{name: "sensitivity", title: "Sensitivity:", value: 40, range: [1, 100]},
 			{name: "soften", title: "Soften:", value: 1, range: [0, 10]},
 		], (image, params) => {
-			var mask = edges_mask(image, params.sensitivity);
+			const mask = edges_mask(image, params.sensitivity);
 			return params.soften > 0 ? feather_mask(mask, parseInt(params.soften)) : mask;
 		});
 	}
@@ -342,18 +341,18 @@ class Edit_selection_class {
 	 * Select > Selection to New Layer - the selection as a black and white picture on a new layer
 	 */
 	mask_to_layer() {
-		var current = this.get_mask();
+		const current = this.get_mask();
 		if (current == null) {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var mask = current.mask;
-		var canvas = document.createElement('canvas');
+		const mask = current.mask;
+		const canvas = document.createElement('canvas');
 		canvas.width = mask.width;
 		canvas.height = mask.height;
-		var ctx = canvas.getContext('2d');
-		var image = ctx.createImageData(mask.width, mask.height);
-		for (var p = 0, i = 0; p < mask.data.length; p++, i += 4) {
+		const ctx = canvas.getContext('2d');
+		const image = ctx.createImageData(mask.width, mask.height);
+		for (let p = 0, i = 0; p < mask.data.length; p++, i += 4) {
 			image.data[i] = image.data[i + 1] = image.data[i + 2] = mask.data[p];
 			image.data[i + 3] = 255;
 		}
@@ -379,7 +378,7 @@ class Edit_selection_class {
 	 * Select > Layer Transparency - selects all non transparent pixels of the active layer
 	 */
 	layer_transparency() {
-		var layer = this.get_image_layer();
+		const layer = this.get_image_layer();
 		if (layer == null) {
 			return;
 		}
@@ -392,10 +391,10 @@ class Edit_selection_class {
 	 * @returns {HTMLCanvasElement}
 	 */
 	get_merged_canvas() {
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		//the same way the canvas is drawn: clipping masks, Blend If and adjustment layers count
 		this.Base_layers.convert_layers_to_canvas(ctx, null, false);
 		ctx.globalAlpha = 1;
@@ -419,24 +418,24 @@ class Edit_selection_class {
 				width_original: config.WIDTH, height_original: config.HEIGHT,
 			};
 		}
-		var current = this.get_mask();
+		const current = this.get_mask();
 		if (current == null || !layer || layer.type != 'image') {
 			return null;
 		}
-		var bounds = current.kind == 'custom' ? mask_bounds(current.mask) : current.rect;
-		var rect = bounds ? selection_to_layer_rect(bounds, layer) : null;
+		const bounds = current.kind == 'custom' ? mask_bounds(current.mask) : current.rect;
+		const rect = bounds ? selection_to_layer_rect(bounds, layer) : null;
 		if (rect == null) {
 			return null;
 		}
 
-		var full = document.createElement('canvas');
+		const full = document.createElement('canvas');
 		full.width = layer.width_original;
 		full.height = layer.height_original;
-		var full_ctx = full.getContext('2d');
+		const full_ctx = full.getContext('2d');
 		full_ctx.drawImage(layer.link, 0, 0);
-		var layer_mask = !merged && layer.mask && layer.mask_enabled !== false ? deserialize_layer_mask(layer.mask) : null;
+		const layer_mask = !merged && layer.mask && layer.mask_enabled !== false ? deserialize_layer_mask(layer.mask) : null;
 		if (current.kind == 'custom' || layer_mask) {
-			var image = full_ctx.getImageData(0, 0, full.width, full.height);
+			const image = full_ctx.getImageData(0, 0, full.width, full.height);
 			if (layer_mask) {
 				//what the layer mask hides is not copied
 				apply_layer_mask(image, layer_mask);
@@ -447,15 +446,15 @@ class Edit_selection_class {
 			full_ctx.putImageData(image, 0, 0);
 		}
 
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = rect.width;
 		canvas.height = rect.height;
 		canvas.getContext('2d').drawImage(full, -rect.x, -rect.y);
 
-		var scale_x = layer.width / layer.width_original;
-		var scale_y = layer.height / layer.height_original;
+		const scale_x = layer.width / layer.width_original;
+		const scale_y = layer.height / layer.height_original;
 		return {
-			canvas: canvas,
+			canvas,
 			x: Math.round(layer.x + rect.x * scale_x),
 			y: Math.round(layer.y + rect.y * scale_y),
 			width: Math.round(rect.width * scale_x),
@@ -469,12 +468,12 @@ class Edit_selection_class {
 	 * Select > Selection from Path - the inside of the active path layer (made by the Pen tool) becomes the selection
 	 */
 	selection_from_path() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type != 'pen') {
 			alertify.error(t('Select a path layer first.'));
 			return;
 		}
-		var moved = clean_anchors(layer.data).map((a) => ({
+		const moved = clean_anchors(layer.data).map((a) => ({
 			x: layer.x + a.x * layer.width / (layer.width_original || layer.width),
 			y: layer.y + a.y * layer.height / (layer.height_original || layer.height),
 			in: a.in ? {x: layer.x + a.in.x * layer.width / (layer.width_original || layer.width), y: layer.y + a.in.y * layer.height / (layer.height_original || layer.height)} : null,
@@ -519,7 +518,7 @@ class Edit_selection_class {
 		this.mask_dialog('Round Corners', [
 			{name: "radius", title: "Radius:", value: 20, range: [1, 500]},
 		], (mask, params) => {
-			var bounds = mask_bounds(mask);
+			const bounds = mask_bounds(mask);
 			return bounds ? rounded_rect_mask(bounds, parseInt(params.radius) || 0, mask.width, mask.height) : mask;
 		});
 	}
@@ -557,9 +556,9 @@ class Edit_selection_class {
 	 */
 	refine_edge() {
 		//the image of the active layer guides the edge aware part (Snap to edges)
-		var layer = config.layer && config.layer.type == 'image' ? config.layer : null;
-		var guide = layer ? this.layer_on_canvas(layer) : null;
-		var params = [];
+		const layer = config.layer && config.layer.type == 'image' ? config.layer : null;
+		const guide = layer ? this.layer_on_canvas(layer) : null;
+		const params = [];
 		if (guide) {
 			params.push(
 				{name: "edge_radius", title: "Snap to edges:", value: 0, range: [0, 50]},
@@ -583,13 +582,13 @@ class Edit_selection_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var base = this.get_mask();
+		const base = this.get_mask();
 		this.preview_dialog({
-			title: title,
+			title,
 			params: params_definition,
 			compute: (params) => change(base.mask, params),
 			on_finish: (params) => {
-				var current = this.get_mask();
+				const current = this.get_mask();
 				if (current != null) {
 					this.set_mask(change(current.mask, params), false);
 				}
@@ -604,15 +603,15 @@ class Edit_selection_class {
 	 *   when the parameters change), on_finish(params)
 	 */
 	preview_dialog(options) {
-		var timer = null;
-		var show_preview = (params) => {
+		let timer = null;
+		const show_preview = (params) => {
 			clearTimeout(timer);
 			timer = setTimeout(() => {
 				if (!this.Dialog.active) {
 					return;
 				}
 				try {
-					var mask = options.compute(params);
+					const mask = options.compute(params);
 					if (mask) {
 						this.Selection_mask.set_preview(mask, () => this.Dialog.active);
 					}
@@ -623,13 +622,13 @@ class Edit_selection_class {
 				config.need_render = true;
 			}, 120);
 		};
-		var finish = () => {
+		const finish = () => {
 			clearTimeout(timer);
 			this.Selection_mask.clear_preview();
 			config.need_render = true;
 		};
 
-		var defaults = {};
+		const defaults = {};
 		options.params.forEach((param) => {
 			defaults[param.name] = param.value !== undefined ? param.value : (param.values ? param.values[0] : undefined);
 		});
@@ -666,20 +665,20 @@ class Edit_selection_class {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var layer = this.get_image_layer();
+		const layer = this.get_image_layer();
 		if (layer == null) {
 			return;
 		}
-		var base = this.get_mask();
-		var image = this.layer_on_canvas(layer);
+		const base = this.get_mask();
+		const image = this.layer_on_canvas(layer);
 		this.preview_dialog({
-			title: title,
+			title,
 			params: [
 				{name: "tolerance", title: "Tolerance:", value: 32, range: [0, 255]},
 			],
 			compute: (params) => select_similar_mask(image, base.mask, params.tolerance, contiguous),
 			on_finish: (params) => {
-				var current = this.get_mask();
+				const current = this.get_mask();
 				if (current != null) {
 					this.set_mask(select_similar_mask(image, current.mask, params.tolerance, contiguous), false);
 				}
@@ -692,32 +691,32 @@ class Edit_selection_class {
 	 */
 	async save_selection() {
 		await this.Selection_mask.restore_saved();
-		var current = this.get_mask();
+		const current = this.get_mask();
 		if (current == null) {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var names = this.Selection_mask.saved_names();
-		var number = names.length + 1;
-		while (names.indexOf('Selection ' + number) >= 0) {
+		const names = this.Selection_mask.saved_names();
+		let number = names.length + 1;
+		while (names.indexOf(`Selection ${  number}`) >= 0) {
 			number++;
 		}
 		this.Dialog.show({
 			title: 'Save Selection',
 			params: [
-				{name: "name", title: "Name:", value: 'Selection ' + number},
+				{name: "name", title: "Name:", value: `Selection ${  number}`},
 			],
 			on_finish: (params) => {
-				var name = String(params.name || '').trim();
+				const name = String(params.name || '').trim();
 				if (name == '') {
 					alertify.error(t('Name is required.'));
 					return;
 				}
-				var mask = this.get_mask();
+				const mask = this.get_mask();
 				if (mask == null) {
 					return;
 				}
-				var overwritten = this.Selection_mask.save(name, mask.mask);
+				const overwritten = this.Selection_mask.save(name, mask.mask);
 				alertify.success(t(overwritten ? 'Saved selection replaced.' : 'Selection saved.'));
 			},
 		});
@@ -728,7 +727,7 @@ class Edit_selection_class {
 	 */
 	async load_selection() {
 		await this.Selection_mask.restore_saved();
-		var names = this.Selection_mask.saved_names();
+		const names = this.Selection_mask.saved_names();
 		if (names.length == 0) {
 			alertify.error(t('No saved selections.'));
 			return;
@@ -741,7 +740,7 @@ class Edit_selection_class {
 				{name: "invert", title: "Invert:", value: false},
 			],
 			on_finish: (params) => {
-				var mask = this.Selection_mask.load(params.name);
+				let mask = this.Selection_mask.load(params.name);
 				if (mask == null) {
 					return;
 				}
@@ -749,7 +748,7 @@ class Edit_selection_class {
 				if (params.invert) {
 					mask = invert_mask(mask);
 				}
-				var current = this.get_mask();
+				const current = this.get_mask();
 				if (params.operation != 'replace' && current != null) {
 					mask = combine_masks(current.mask, mask, params.operation);
 				}
@@ -763,7 +762,7 @@ class Edit_selection_class {
 	 */
 	async delete_saved_selection() {
 		await this.Selection_mask.restore_saved();
-		var names = this.Selection_mask.saved_names();
+		const names = this.Selection_mask.saved_names();
 		if (names.length == 0) {
 			alertify.error(t('No saved selections.'));
 			return;
@@ -784,7 +783,7 @@ class Edit_selection_class {
 	 */
 	async export_saved_selections() {
 		await this.Selection_mask.restore_saved();
-		var names = this.Selection_mask.saved_names();
+		const names = this.Selection_mask.saved_names();
 		if (names.length == 0) {
 			alertify.error(t('No saved selections.'));
 			return;
@@ -795,12 +794,12 @@ class Edit_selection_class {
 				{name: "which", title: "Selection:", values: ['(all)', ...names]},
 			],
 			on_finish: (params) => {
-				var chosen = params.which == '(all)' ? names : [params.which];
-				var list = chosen
-					.map((name) => ({name: name, mask: this.Selection_mask.load(name)}))
+				const chosen = params.which == '(all)' ? names : [params.which];
+				const list = chosen
+					.map((name) => ({name, mask: this.Selection_mask.load(name)}))
 					.filter((item) => item.mask != null);
-				var blob = new Blob([serialize_selections(list)], {type: 'application/json'});
-				this.download(blob, chosen.length == 1 ? chosen[0] + '.selection.json' : 'minipaint-selections.json');
+				const blob = new Blob([serialize_selections(list)], {type: 'application/json'});
+				this.download(blob, chosen.length == 1 ? `${chosen[0]  }.selection.json` : 'minipaint-selections.json');
 			},
 		});
 	}
@@ -809,7 +808,7 @@ class Edit_selection_class {
 	 * Select > Import Saved Selections - adds selections from a JSON file to the saved ones
 	 */
 	async import_saved_selections() {
-		var file = await this.pick_file('.json,application/json');
+		const file = await this.pick_file('.json,application/json');
 		if (file == null) {
 			return;
 		}
@@ -817,15 +816,15 @@ class Edit_selection_class {
 			alertify.error(t('File is too large.'));
 			return;
 		}
-		var parsed = parse_selections(await file.text());
+		const parsed = parse_selections(await file.text());
 		if (parsed.error) {
-			alertify.error(t('This is not a WebPhos selections file.'));
+			alertify.error(t('This is not a Lumifex selections file.'));
 			return;
 		}
 		await this.Selection_mask.restore_saved();
-		var names = this.Selection_mask.saved_names();
+		const names = this.Selection_mask.saved_names();
 		parsed.selections.forEach((item) => {
-			var name = unique_name(item.name, names);
+			const name = unique_name(item.name, names);
 			this.Selection_mask.save(name, item.mask);
 			names.push(name);
 		});
@@ -833,8 +832,7 @@ class Edit_selection_class {
 			alertify.error(t('No valid selections in the file.'));
 		}
 		else {
-			alertify.success(t('Imported selections:') + ' ' + parsed.selections.length
-				+ (parsed.skipped ? ' (' + t('skipped:') + ' ' + parsed.skipped + ')' : ''));
+			alertify.success(`${t('Imported selections:')  } ${parsed.selections.length}${parsed.skipped ? ` (${t('skipped:')} ${parsed.skipped})` : ''}`);
 		}
 	}
 
@@ -842,16 +840,16 @@ class Edit_selection_class {
 	 * Select > Export Selection as Image - grayscale PNG of the selection (white = selected)
 	 */
 	export_selection_image() {
-		var current = this.get_mask();
+		const current = this.get_mask();
 		if (current == null) {
 			alertify.error(t('Empty selection'));
 			return;
 		}
-		var mask = current.mask;
-		var canvas = document.createElement('canvas');
+		const mask = current.mask;
+		const canvas = document.createElement('canvas');
 		canvas.width = mask.width;
 		canvas.height = mask.height;
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		ctx.putImageData(new ImageData(mask_to_pixels(mask), mask.width, mask.height), 0, 0);
 		canvas.toBlob((blob) => {
 			if (blob) {
@@ -864,21 +862,21 @@ class Edit_selection_class {
 	 * Select > Import Selection from Image - brightness (or alpha of an image with transparency) becomes the selection
 	 */
 	async import_selection_image() {
-		var file = await this.pick_file('image/*');
+		const file = await this.pick_file('image/*');
 		if (file == null) {
 			return;
 		}
 		try {
-			var image = await this.load_image(file);
-			var canvas = document.createElement('canvas');
+			const image = await this.load_image(file);
+			const canvas = document.createElement('canvas');
 			canvas.width = config.WIDTH;
 			canvas.height = config.HEIGHT;
-			var ctx = canvas.getContext('2d');
+			const ctx = canvas.getContext('2d');
 			ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-			var mask = image_to_mask(ctx.getImageData(0, 0, canvas.width, canvas.height));
+			const mask = image_to_mask(ctx.getImageData(0, 0, canvas.width, canvas.height));
 			await this.set_mask(mask, true);
 		}
-		catch (error) {
+		catch {
 			alertify.error(t('Image could not be loaded'));
 		}
 	}
@@ -893,14 +891,14 @@ class Edit_selection_class {
 		if (typeof createImageBitmap === 'function') {
 			return createImageBitmap(file);
 		}
-		var data_url = await new Promise((resolve, reject) => {
-			var reader = new FileReader();
+		const data_url = await new Promise((resolve, reject) => {
+			const reader = new FileReader();
 			reader.onload = () => resolve(reader.result);
 			reader.onerror = () => reject(reader.error);
 			reader.readAsDataURL(file);
 		});
 		return new Promise((resolve, reject) => {
-			var img = new Image();
+			const img = new Image();
 			img.onload = () => resolve(img);
 			img.onerror = () => reject(new Error('Image could not be loaded'));
 			img.src = data_url;
@@ -915,11 +913,11 @@ class Edit_selection_class {
 	 */
 	pick_file(accept) {
 		return new Promise((resolve) => {
-			var input = document.createElement('input');
+			const input = document.createElement('input');
 			input.type = 'file';
 			input.accept = accept;
 			input.style.display = 'none';
-			var done = (file) => {
+			const done = (file) => {
 				input.remove();
 				resolve(file);
 			};
@@ -931,8 +929,8 @@ class Edit_selection_class {
 	}
 
 	download(blob, filename) {
-		var url = URL.createObjectURL(blob);
-		var link = document.createElement('a');
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
 		link.href = url;
 		link.download = filename;
 		document.body.appendChild(link);
@@ -942,7 +940,7 @@ class Edit_selection_class {
 	}
 
 	get_image_layer() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return null;
@@ -956,10 +954,10 @@ class Edit_selection_class {
 	 * @returns {ImageData}
 	 */
 	layer_on_canvas(layer) {
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		ctx.drawImage(layer.link, layer.x, layer.y, layer.width, layer.height);
 		return ctx.getImageData(0, 0, canvas.width, canvas.height);
 	}
@@ -971,7 +969,7 @@ class Edit_selection_class {
 	 * @param {boolean} [activate_tool] switch to the selection tool first (needed when there is no selection yet)
 	 */
 	async set_mask(mask, activate_tool) {
-		var actions = this.mask_actions(mask);
+		const actions = this.mask_actions(mask);
 		if (actions == null) {
 			alertify.error(t('Empty selection'));
 			return;
@@ -1001,7 +999,7 @@ class Edit_selection_class {
 	 * @returns {object[]|null} null when the mask is empty
 	 */
 	mask_actions(mask) {
-		var bounds = mask_bounds(mask);
+		const bounds = mask_bounds(mask);
 		if (bounds == null) {
 			return null;
 		}

@@ -1,5 +1,3 @@
-import app from './../../app.js';
-import config from './../../config.js';
 import Base_tools_class from './../../core/base-tools.js';
 import Base_layers_class from './../../core/base-layers.js';
 
@@ -32,7 +30,7 @@ class Human_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
@@ -41,7 +39,7 @@ class Human_class extends Base_tools_class {
 		ctx.strokeStyle = '#555';
 		ctx.lineWidth = 2;
 
-		var width_all = width + x * 2;
+		const width_all = width + x * 2;
 		width = height * this.best_ratio;
 		x = (width_all - width) / 2;
 
@@ -52,8 +50,7 @@ class Human_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
-		var fill = params.fill;
+		const params = layer.params;
 
 		ctx.save();
 
@@ -80,9 +77,9 @@ class Human_class extends Base_tools_class {
 
 		ctx.translate(-width / 2, -height / 2);
 
-		var radius = Math.sqrt(width * height) * 0.28;
-		var neck_height = height * 0.07;
-		var leg_height = height * 0.3;
+		let radius = Math.sqrt(width * height) * 0.28;
+		const neck_height = height * 0.07;
+		const leg_height = height * 0.3;
 		if(radius * 2 + neck_height + leg_height > height){
 			radius = (height - leg_height - neck_height) / 2;
 		}

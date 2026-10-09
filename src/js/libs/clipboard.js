@@ -2,32 +2,29 @@ import Helper_class from './helpers.js';
 
 /**
  * image pasting into canvas
- * 
+ *
  * @param {string} canvas_id - canvas id
  * @param {boolean} autoresize - if canvas will be resized
  */
 class Clipboard_class {
 
 	constructor(on_paste) {
-		var _self = this;
 
 		this.Helper = new Helper_class();
 
 		this.on_paste = on_paste;
 		this.ctrl_pressed = false;
 		this.command_pressed = false;
-		this.pasteCatcher;
-		this.paste_mode;
 
 		//handlers
-		document.addEventListener('keydown', function (e) {
-			_self.on_keyboard_action(e);
+		document.addEventListener('keydown', (e) => {
+			this.on_keyboard_action(e);
 		}, false); //firefox fix
-		document.addEventListener('keyup', function (e) {
-			_self.on_keyboardup_action(e);
+		document.addEventListener('keyup', (e) => {
+			this.on_keyboardup_action(e);
 		}, false); //firefox fix
-		document.addEventListener('paste', function (e) {
-			_self.paste_auto(e);
+		document.addEventListener('paste', (e) => {
+			this.paste_auto(e);
 		}, false); //official paste handler
 
 		this.init();
@@ -35,8 +32,6 @@ class Clipboard_class {
 
 	//constructor - prepare
 	init() {
-		var _self = this;
-
 		//if using auto
 		if (window.Clipboard)
 			return true;
@@ -50,8 +45,8 @@ class Clipboard_class {
 		document.body.appendChild(this.pasteCatcher);
 
 		// create an observer instance
-		var observer = new MutationObserver(function (mutations) {
-			mutations.forEach(function (mutation) {
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
 				if (this.paste_mode == 'auto' || this.ctrl_pressed == false || mutation.type != 'childList')
 					return true;
 
@@ -59,17 +54,17 @@ class Clipboard_class {
 				if (mutation.addedNodes.length == 1) {
 					if (mutation.addedNodes[0].src != undefined) {
 						//image
-						_self.paste_createImage(mutation.addedNodes[0].src);
+						this.paste_createImage(mutation.addedNodes[0].src);
 					}
 					//register cleanup after some time.
-					setTimeout(function () {
+					setTimeout(() => {
 						this.pasteCatcher.innerHTML = '';
 					}, 20);
 				}
 			});
 		});
-		var target = document.getElementById('paste_ff');
-		var config = {attributes: true, childList: true, characterData: true};
+		const target = document.getElementById('paste_ff');
+		const config = {attributes: true, childList: true, characterData: true};
 		observer.observe(target, config);
 	}
 
@@ -83,16 +78,16 @@ class Clipboard_class {
 			this.pasteCatcher.innerHTML = '';
 		}
 		if (e.clipboardData) {
-			var items = e.clipboardData.items;
+			const items = e.clipboardData.items;
 			if (items) {
 				this.paste_mode = 'auto';
 				//access data directly
-				for (var i = 0; i < items.length; i++) {
+				for (let i = 0; i < items.length; i++) {
 					if (items[i].type.indexOf("image") !== -1) {
 						//image
-						var blob = items[i].getAsFile();
-						var URLObj = window.URL || window.webkitURL;
-						var source = URLObj.createObjectURL(blob);
+						const blob = items[i].getAsFile();
+						const URLObj = window.URL || window.webkitURL;
+						const source = URLObj.createObjectURL(blob);
 						this.paste_createImage(source);
 					}
 				}
@@ -107,7 +102,7 @@ class Clipboard_class {
 
 	//on keyboard press
 	on_keyboard_action(event) {
-		var k = event.keyCode;
+		const k = event.keyCode;
 		//ctrl
 		if (k == 17 || event.metaKey || event.ctrlKey) {
 			if (this.ctrl_pressed == false)
@@ -139,11 +134,10 @@ class Clipboard_class {
 
 	//draw image
 	paste_createImage(source) {
-		var pastedImage = new Image();
-		var _this = this;
+		const pastedImage = new Image();
 
-		pastedImage.onload = function () {
-			_this.on_paste(source, pastedImage.width, pastedImage.height);
+		pastedImage.onload = () => {
+			this.on_paste(source, pastedImage.width, pastedImage.height);
 		};
 		pastedImage.src = source;
 	}

@@ -1,12 +1,11 @@
-import config from './../../config.js';
 import File_save_class from './save.js';
 import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../tools/translate.js';
 
-/** 
+/**
  * manages files / quick-save
- * 
+ *
  * @author ViliusL
  */
 class File_quicksave_class {
@@ -19,13 +18,12 @@ class File_quicksave_class {
 	}
 
 	set_events() {
-		var _this = this;
 
 	}
 
 	quicksave() {
 		//save image data
-		var data_json = this.File_save.export_as_json();
+		const data_json = this.File_save.export_as_json();
 		if (data_json.length > 5000000) {
 			alertify.error(t('Sorry, image is too big, max 5 MB.'));
 			return false;

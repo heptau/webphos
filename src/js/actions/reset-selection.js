@@ -6,8 +6,8 @@ import { Base_action } from './base.js';
 export class Reset_selection_action extends Base_action {
 	/**
 	 * Sets the selection to empty
-	 * 
-	 * @prop {object} [mirror_selection_settings] - Optional object to also set to an empty selection object 
+	 *
+	 * @prop {object} [mirror_selection_settings] - Optional object to also set to an empty selection object
 	 */
 	constructor(mirror_selection_settings) {
 		super('reset_selection', 'Reset Selection');
@@ -35,7 +35,7 @@ export class Reset_selection_action extends Base_action {
 			this.mirror_selection_settings.width = null;
 			this.mirror_selection_settings.height = null;
 		}
-		var mask_state = new Selection_mask_class();
+		const mask_state = new Selection_mask_class();
 		this.old_custom_mask = mask_state.get_custom_state();
 		mask_state.set_custom_state(null);
 		this.memory_estimate = this.old_custom_mask ? this.old_custom_mask.mask.data.length : 0;
@@ -45,7 +45,7 @@ export class Reset_selection_action extends Base_action {
 	async undo() {
 		super.undo();
 		if (this.old_settings_data) {
-			for (let prop of ['x', 'y', 'width', 'height']) {
+			for (const prop of ['x', 'y', 'width', 'height']) {
 				this.settings_reference.data[prop] = this.old_settings_data[prop];
 				if (this.mirror_selection_settings) {
 					this.mirror_selection_settings[prop] = this.old_settings_data[prop];

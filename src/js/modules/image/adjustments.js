@@ -14,7 +14,7 @@ import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.j
 import { build_curve_editor } from './curve_editor.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * Photoshop-like Image > Adjustments: Levels, Brightness/Contrast, Hue/Saturation, Exposure, Auto Contrast, Invert, Desaturate, Threshold, Posterize, Add Noise
@@ -48,25 +48,25 @@ class Image_adjustments_class {
 		if (this.can_apply() == false) {
 			return;
 		}
-		var others = config.layers.filter((layer) => layer.type == 'image' && layer.id != config.layer.id);
+		const others = config.layers.filter((layer) => layer.type == 'image' && layer.id != config.layer.id);
 		if (others.length == 0) {
 			alertify.warning(t('Add another image layer first - its colors will be used.'));
 			return;
 		}
-		var names = others.map((layer) => layer.name + ' #' + layer.id);
-		var cache = {};
-		var reference_for = (value) => {
+		const names = others.map((layer) => `${layer.name  } #${  layer.id}`);
+		const cache = {};
+		const reference_for = (value) => {
 			if (cache[value]) {
 				return cache[value];
 			}
-			var layer = others[names.indexOf(value)] || others[0];
-			var canvas = this.Base_layers.convert_layer_to_canvas(layer.id, true);
+			const layer = others[names.indexOf(value)] || others[0];
+			const canvas = this.Base_layers.convert_layer_to_canvas(layer.id, true);
 			//statistics do not need full resolution
-			var scale = Math.min(1, 256 / Math.max(canvas.width, canvas.height));
-			var small = document.createElement('canvas');
+			const scale = Math.min(1, 256 / Math.max(canvas.width, canvas.height));
+			const small = document.createElement('canvas');
 			small.width = Math.max(1, Math.round(canvas.width * scale));
 			small.height = Math.max(1, Math.round(canvas.height * scale));
-			var ctx = small.getContext('2d', {willReadFrequently: true});
+			const ctx = small.getContext('2d', {willReadFrequently: true});
 			ctx.drawImage(canvas, 0, 0, small.width, small.height);
 			cache[value] = ctx.getImageData(0, 0, small.width, small.height);
 			return cache[value];
@@ -349,25 +349,24 @@ class Image_adjustments_class {
 	 * and blue curves; all four are applied together.
 	 */
 	curves() {
-		var curves = {
+		const curves = {
 			rgb: [[0, 0], [255, 255]],
 			red: [[0, 0], [255, 255]],
 			green: [[0, 0], [255, 255]],
 			blue: [[0, 0], [255, 255]],
 		};
-		var _this = this;
 		this.show_dialog('Curves', [
 			{name: "channel", title: "Channel:", values: ['rgb', 'red', 'green', 'blue']},
 		], (img) => Adjustments.curvesFromPoints(img, curves), {
-			on_load: function (params, popup) {
-				var layer_canvas = null;
+			on_load: (params, popup) => {
+				let layer_canvas;
 				try {
-					layer_canvas = _this.Base_layers.convert_layer_to_canvas(null, true);
+					layer_canvas = this.Base_layers.convert_layer_to_canvas(null, true);
 				}
-				catch (error) {
+				catch {
 					layer_canvas = null;
 				}
-				_this.curve_editor = build_curve_editor(popup, curves, layer_canvas);
+				this.curve_editor = build_curve_editor(popup, curves, layer_canvas);
 			},
 		});
 	}
@@ -473,10 +472,9 @@ class Image_adjustments_class {
 		if (this.can_apply() == false) {
 			return;
 		}
-		var _this = this;
 		//values used the last time (in this session) are offered again
 		this.remembered = this.remembered || {};
-		var last = this.remembered[title];
+		const last = this.remembered[title];
 		if (last) {
 			params.forEach((param) => {
 				if (param.name != undefined && last[param.name] !== undefined && param.type != 'color'
@@ -486,18 +484,18 @@ class Image_adjustments_class {
 				}
 			});
 		}
-		var settings = {
-			title: title,
+		const settings = {
+			title,
 			preview: true,
 			effects: true,
-			params: params,
-			on_change: function (params, canvas_preview, w, h) {
-				var img = canvas_preview.getImageData(0, 0, w, h);
+			params,
+			on_change (params, canvas_preview, w, h) {
+				const img = canvas_preview.getImageData(0, 0, w, h);
 				canvas_preview.putImageData(change(img, params), 0, 0);
 			},
-			on_finish: function (params) {
-				_this.remembered[title] = Object.assign({}, params);
-				_this.apply_direct((img) => change(img, params));
+			on_finish: (params) => {
+				this.remembered[title] = Object.assign({}, params);
+				this.apply_direct((img) => change(img, params));
 			},
 		};
 		Object.assign(settings, extra || {});
@@ -523,38 +521,38 @@ class Image_adjustments_class {
 		this.last_change = change;
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//keep the layer as it was, Edit > Fade can mix it back
-		var before = document.createElement('canvas');
+		const before = document.createElement('canvas');
 		before.width = canvas.width;
 		before.height = canvas.height;
 		before.getContext('2d').drawImage(canvas, 0, 0);
 
 		//change data - only inside the selection (rectangle fast path, otherwise blended through the selection mask)
-		var selection = this.Edit_selection.get_mask();
+		const selection = this.Edit_selection.get_mask();
 		if (selection == null) {
-			var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
 			ctx.putImageData(change(img), 0, 0);
 		}
 		else if (selection.kind == 'rect') {
-			var rect = selection_to_layer_rect(selection.rect, config.layer);
+			const rect = selection_to_layer_rect(selection.rect, config.layer);
 			if (rect == null) {
 				return; //selection does not touch this layer
 			}
-			var part = ctx.getImageData(rect.x, rect.y, rect.width, rect.height);
+			const part = ctx.getImageData(rect.x, rect.y, rect.width, rect.height);
 			ctx.putImageData(change(part), rect.x, rect.y);
 		}
 		else {
-			var original = ctx.getImageData(0, 0, canvas.width, canvas.height);
-			var changed = change(ctx.getImageData(0, 0, canvas.width, canvas.height));
+			const original = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const changed = change(ctx.getImageData(0, 0, canvas.width, canvas.height));
 			ctx.putImageData(blend_with_mask(original, changed, selection.mask, config.layer), 0, 0);
 		}
 
 		//save
-		var action = new app.Actions.Update_layer_image_action(canvas);
-		this.last_adjustment = {layer_id: config.layer.id, before: before, action: action};
+		const action = new app.Actions.Update_layer_image_action(canvas);
+		this.last_adjustment = {layer_id: config.layer.id, before, action};
 		return app.State.do_action(action);
 	}
 
@@ -564,11 +562,11 @@ class Image_adjustments_class {
 	 * @returns {{layer_id: number, before: HTMLCanvasElement, action: object}|null}
 	 */
 	get_fadeable() {
-		var last = this.last_adjustment;
+		const last = this.last_adjustment;
 		if (!last) {
 			return null;
 		}
-		var state = app.State;
+		const state = app.State;
 		if (state.action_history[state.action_history_index - 1] !== last.action
 			|| !app.Layers.get_layer(last.layer_id)) {
 			return null;
@@ -580,25 +578,24 @@ class Image_adjustments_class {
 	 * Edit > Fade (Shift+Ctrl+F) - weakens the last adjustment or filter by mixing the layer with how it was before
 	 */
 	fade() {
-		var last = this.get_fadeable();
+		const last = this.get_fadeable();
 		if (last == null) {
 			alertify.error(t('There is no adjustment to fade.'));
 			return;
 		}
-		var layer_id = last.layer_id;
-		var before = last.before;
-		var mix = (current_canvas, opacity) => {
-			var ctx = current_canvas.getContext('2d');
-			var current = ctx.getImageData(0, 0, current_canvas.width, current_canvas.height);
+		const layer_id = last.layer_id;
+		const before = last.before;
+		const mix = (current_canvas, opacity) => {
+			const ctx = current_canvas.getContext('2d');
+			const current = ctx.getImageData(0, 0, current_canvas.width, current_canvas.height);
 			//the earlier state is scaled to the size of the picture it is mixed with (the dialog preview is small)
-			var scaled = document.createElement('canvas');
+			const scaled = document.createElement('canvas');
 			scaled.width = current_canvas.width;
 			scaled.height = current_canvas.height;
 			scaled.getContext('2d').drawImage(before, 0, 0, scaled.width, scaled.height);
-			var earlier = scaled.getContext('2d').getImageData(0, 0, scaled.width, scaled.height);
+			const earlier = scaled.getContext('2d').getImageData(0, 0, scaled.width, scaled.height);
 			return smudgeBlend(current, earlier, 100 - opacity);
 		};
-		var _this = this;
 		this.POP.show({
 			title: 'Fade',
 			preview: true,
@@ -606,18 +603,18 @@ class Image_adjustments_class {
 			params: [
 				{name: "opacity", title: "Opacity:", value: 50, range: [0, 100]},
 			],
-			on_change: function (params, canvas_preview, w, h) {
-				var img = canvas_preview.getImageData(0, 0, w, h);
-				var small = document.createElement('canvas');
+			on_change (params, canvas_preview, w, h) {
+				const img = canvas_preview.getImageData(0, 0, w, h);
+				const small = document.createElement('canvas');
 				small.width = w;
 				small.height = h;
 				small.getContext('2d').putImageData(img, 0, 0);
 				canvas_preview.putImageData(mix(small, params.opacity), 0, 0);
 			},
-			on_finish: function (params) {
-				var canvas = _this.Base_layers.convert_layer_to_canvas(layer_id, true);
+			on_finish: (params) => {
+				const canvas = this.Base_layers.convert_layer_to_canvas(layer_id, true);
 				canvas.getContext('2d').putImageData(mix(canvas, params.opacity), 0, 0);
-				_this.last_adjustment = null;
+				this.last_adjustment = null;
 				app.State.do_action(new app.Actions.Update_layer_image_action(canvas, layer_id));
 			},
 		});

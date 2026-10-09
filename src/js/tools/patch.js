@@ -51,7 +51,7 @@ class Patch_class extends Base_tools_class {
 	}
 
 	usable_layer() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return false;
@@ -60,7 +60,7 @@ class Patch_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false || this.usable_layer() == false) {
 			return;
 		}
@@ -79,12 +79,12 @@ class Patch_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false || mouse.click_valid == false) {
 			return;
 		}
 		if (this.state == 'drawing') {
-			var last = this.points[this.points.length - 1];
+			const last = this.points[this.points.length - 1];
 			if (Math.hypot(mouse.x - last.x, mouse.y - last.y) > 2 / (config.ZOOM || 1)) {
 				this.points.push({x: mouse.x, y: mouse.y});
 				config.need_render = true;
@@ -122,15 +122,15 @@ class Patch_class extends Base_tools_class {
 	 * What is covered, and where the cover comes from, in pixels of the layer
 	 */
 	plan() {
-		var layer = config.layer;
-		var destination = this.getParams().mode;
+		const layer = config.layer;
+		let destination = this.getParams().mode;
 		destination = (destination && destination.value !== undefined ? destination.value : destination) == 'Destination';
-		var shift = destination ? this.offset : {x: 0, y: 0};
+		const shift = destination ? this.offset : {x: 0, y: 0};
 		//the shape and the move are on the picture, the patch is computed in the pixels of the layer (turned or stretched too)
-		var points = this.polygon.map((p) => picture_to_layer(layer, p.x + shift.x, p.y + shift.y));
-		var move = vector_to_layer(layer, this.offset.x, this.offset.y);
+		const points = this.polygon.map((p) => picture_to_layer(layer, p.x + shift.x, p.y + shift.y));
+		const move = vector_to_layer(layer, this.offset.x, this.offset.y);
 		return {
-			points: points,
+			points,
 			dx: destination ? -move.x : move.x,
 			dy: destination ? -move.y : move.y,
 		};
@@ -142,19 +142,19 @@ class Patch_class extends Base_tools_class {
 	 * @returns {{x: number, y: number, image: ImageData, before: ImageData}|null} x, y = top left corner in the layer
 	 */
 	compute() {
-		var layer = config.layer;
-		var plan = this.plan();
-		var xs = plan.points.map((p) => p.x);
-		var ys = plan.points.map((p) => p.y);
-		var left = Math.min.apply(null, xs), right = Math.max.apply(null, xs);
-		var top = Math.min.apply(null, ys), bottom = Math.max.apply(null, ys);
+		const layer = config.layer;
+		const plan = this.plan();
+		const xs = plan.points.map((p) => p.x);
+		const ys = plan.points.map((p) => p.y);
+		const left = Math.min.apply(null, xs), right = Math.max.apply(null, xs);
+		const top = Math.min.apply(null, ys), bottom = Math.max.apply(null, ys);
 		//the part, the place it is copied from and some room around them
-		var x0 = Math.floor(Math.max(0, Math.min(left, left + plan.dx) - MARGIN));
-		var y0 = Math.floor(Math.max(0, Math.min(top, top + plan.dy) - MARGIN));
-		var x1 = Math.ceil(Math.min(layer.width_original, Math.max(right, right + plan.dx) + MARGIN));
-		var y1 = Math.ceil(Math.min(layer.height_original, Math.max(bottom, bottom + plan.dy) + MARGIN));
-		var width = x1 - x0;
-		var height = y1 - y0;
+		const x0 = Math.floor(Math.max(0, Math.min(left, left + plan.dx) - MARGIN));
+		const y0 = Math.floor(Math.max(0, Math.min(top, top + plan.dy) - MARGIN));
+		const x1 = Math.ceil(Math.min(layer.width_original, Math.max(right, right + plan.dx) + MARGIN));
+		const y1 = Math.ceil(Math.min(layer.height_original, Math.max(bottom, bottom + plan.dy) + MARGIN));
+		const width = x1 - x0;
+		const height = y1 - y0;
 		if (width < 1 || height < 1) {
 			return null;
 		}
@@ -164,13 +164,13 @@ class Patch_class extends Base_tools_class {
 			this.layer_canvas.height = layer.height_original;
 			this.layer_canvas.getContext('2d', {willReadFrequently: true}).drawImage(layer.link, 0, 0);
 		}
-		var ctx = this.layer_canvas.getContext('2d');
-		var image = ctx.getImageData(x0, y0, width, height);
-		var before = new ImageData(new Uint8ClampedArray(image.data), width, height);
-		var mask = polygon_mask(plan.points.map((p) => ({x: p.x - x0, y: p.y - y0})), width, height);
-		var params = this.getParams();
+		const ctx = this.layer_canvas.getContext('2d');
+		const image = ctx.getImageData(x0, y0, width, height);
+		const before = new ImageData(new Uint8ClampedArray(image.data), width, height);
+		const mask = polygon_mask(plan.points.map((p) => ({x: p.x - x0, y: p.y - y0})), width, height);
+		const params = this.getParams();
 		patch_region(image, mask, plan.dx, plan.dy, {adapt: params.adapt});
-		return {x: x0, y: y0, image: image, before: before};
+		return {x: x0, y: y0, image, before};
 	}
 
 	schedule_preview() {
@@ -183,15 +183,15 @@ class Patch_class extends Base_tools_class {
 			if (this.state != 'dragging') {
 				return;
 			}
-			var result = this.compute();
+			const result = this.compute();
 			if (result == null) {
 				this.preview = null;
 			}
 			else {
 				//only the pixels that changed are shown, the rest of the picture is not drawn again
-				var changed = new Uint8ClampedArray(result.image.data.length);
-				for (var i = 0; i < changed.length; i += 4) {
-					var same = result.image.data[i] == result.before.data[i] && result.image.data[i + 1] == result.before.data[i + 1]
+				const changed = new Uint8ClampedArray(result.image.data.length);
+				for (let i = 0; i < changed.length; i += 4) {
+					const same = result.image.data[i] == result.before.data[i] && result.image.data[i + 1] == result.before.data[i + 1]
 						&& result.image.data[i + 2] == result.before.data[i + 2] && result.image.data[i + 3] == result.before.data[i + 3];
 					if (!same) {
 						changed[i] = result.image.data[i];
@@ -200,27 +200,27 @@ class Patch_class extends Base_tools_class {
 						changed[i + 3] = 255;
 					}
 				}
-				var canvas = document.createElement('canvas');
+				const canvas = document.createElement('canvas');
 				canvas.width = result.image.width;
 				canvas.height = result.image.height;
 				canvas.getContext('2d').putImageData(new ImageData(changed, canvas.width, canvas.height), 0, 0);
-				this.preview = {canvas: canvas, x: result.x, y: result.y, layer: {x: config.layer.x, y: config.layer.y, width: config.layer.width, height: config.layer.height, width_original: config.layer.width_original, height_original: config.layer.height_original, rotate: config.layer.rotate}};
+				this.preview = {canvas, x: result.x, y: result.y, layer: {x: config.layer.x, y: config.layer.y, width: config.layer.width, height: config.layer.height, width_original: config.layer.width_original, height_original: config.layer.height_original, rotate: config.layer.rotate}};
 			}
 			config.need_render = true;
 		});
 	}
 
 	apply() {
-		var layer = config.layer;
-		var result = this.compute();
+		const layer = config.layer;
+		const result = this.compute();
 		if (result == null) {
 			this.reset_state();
 			return;
 		}
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = layer.width_original;
 		canvas.height = layer.height_original;
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		ctx.drawImage(this.layer_canvas, 0, 0);
 		ctx.putImageData(result.image, result.x, result.y);
 		this.reset_state();
@@ -236,10 +236,10 @@ class Patch_class extends Base_tools_class {
 		if (this.state == 'idle') {
 			return;
 		}
-		var scale = 1 / (config.ZOOM || 1);
+		const scale = 1 / (config.ZOOM || 1);
 		if (this.preview) {
 			//the changed pixels are in the pixels of the layer, so they are drawn the way the layer is
-			var layer = this.preview.layer;
+			const layer = this.preview.layer;
 			ctx.save();
 			ctx.translate(layer.x + layer.width / 2, layer.y + layer.height / 2);
 			ctx.rotate((layer.rotate || 0) * Math.PI / 180);
@@ -247,7 +247,7 @@ class Patch_class extends Base_tools_class {
 			ctx.drawImage(this.preview.canvas, this.preview.x - layer.width_original / 2, this.preview.y - layer.height_original / 2);
 			ctx.restore();
 		}
-		var outline = (points, dx, dy, strong) => {
+		const outline = (points, dx, dy, strong) => {
 			ctx.beginPath();
 			points.forEach((p, i) => {
 				if (i == 0) {

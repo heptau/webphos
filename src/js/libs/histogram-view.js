@@ -11,10 +11,10 @@
  * @returns {number} value that is drawn at full height (0 when all histograms are empty)
  */
 export function histogram_scale(channels) {
-	var values = [];
-	var maximum = 0;
-	for (var c = 0; c < channels.length; c++) {
-		for (var i = 0; i < channels[c].length; i++) {
+	const values = [];
+	let maximum = 0;
+	for (let c = 0; c < channels.length; c++) {
+		for (let i = 0; i < channels[c].length; i++) {
 			values.push(channels[c][i]);
 			if (channels[c][i] > maximum) {
 				maximum = channels[c][i];
@@ -25,7 +25,7 @@ export function histogram_scale(channels) {
 		return 0;
 	}
 	values.sort((a, b) => a - b);
-	var robust = values[Math.floor(values.length * 0.99)] || maximum;
+	const robust = values[Math.floor(values.length * 0.99)] || maximum;
 	//clip only strong outliers
 	return maximum > robust * 4 ? Math.max(robust * 2, 1) : maximum;
 }

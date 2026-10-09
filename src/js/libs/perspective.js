@@ -23,26 +23,26 @@ function clamp(value, min, max) {
  * @returns {Quad}
  */
 export function quad_for(mode, params, width, height) {
-	var w = width;
-	var h = height;
-	var number = function (name) {
+	const w = width;
+	const h = height;
+	const number = function (name) {
 		return parseFloat(params[name]) || 0;
 	};
-	var corners = [[0, 0], [w, 0], [w, h], [0, h]];
+	const corners = [[0, 0], [w, 0], [w, h], [0, h]];
 
 	if (mode == 'skew') {
 		//turning the picture's edges: the lines that were horizontal lean by the first angle, the vertical ones by the second
-		var tan_h = Math.tan(clamp(number('horizontal'), -80, 80) * Math.PI / 180);
-		var tan_v = Math.tan(clamp(number('vertical'), -80, 80) * Math.PI / 180);
-		return corners.map(function (corner) {
+		const tan_h = Math.tan(clamp(number('horizontal'), -80, 80) * Math.PI / 180);
+		const tan_v = Math.tan(clamp(number('vertical'), -80, 80) * Math.PI / 180);
+		return corners.map((corner) => {
 			return [corner[0] + (corner[1] - h / 2) * tan_h, corner[1] + (corner[0] - w / 2) * tan_v];
 		});
 	}
 	if (mode == 'perspective') {
 		//a positive horizontal value makes the right edge shorter (it goes away), a positive vertical one the bottom edge narrower
-		var p = clamp(number('horizontal'), -100, 100) / 400;
-		var q = clamp(number('vertical'), -100, 100) / 400;
-		var tl = [0, 0], tr = [w, 0], br = [w, h], bl = [0, h];
+		const p = clamp(number('horizontal'), -100, 100) / 400;
+		const q = clamp(number('vertical'), -100, 100) / 400;
+		const tl = [0, 0], tr = [w, 0], br = [w, h], bl = [0, h];
 		if (p > 0) {
 			tr[1] = h * p;
 			br[1] = h - h * p;
@@ -62,9 +62,9 @@ export function quad_for(mode, params, width, height) {
 		return [tl, tr, br, bl];
 	}
 	if (mode == 'distort') {
-		return corners.map(function (corner, i) {
-			var key = DISTORT_CORNERS[i];
-			return [corner[0] + number(key + '_x'), corner[1] + number(key + '_y')];
+		return corners.map((corner, i) => {
+			const key = DISTORT_CORNERS[i];
+			return [corner[0] + number(`${key  }_x`), corner[1] + number(`${key  }_y`)];
 		});
 	}
 	return corners;
@@ -75,13 +75,13 @@ export function quad_for(mode, params, width, height) {
  * @returns {{x: number, y: number, width: number, height: number}} the smallest whole-pixel rectangle around the shape
  */
 export function quad_bounds(quad) {
-	var xs = quad.map(function (c) { return c[0]; });
-	var ys = quad.map(function (c) { return c[1]; });
-	var x = Math.floor(Math.min.apply(null, xs));
-	var y = Math.floor(Math.min.apply(null, ys));
+	const xs = quad.map((c) => { return c[0]; });
+	const ys = quad.map((c) => { return c[1]; });
+	const x = Math.floor(Math.min.apply(null, xs));
+	const y = Math.floor(Math.min.apply(null, ys));
 	return {
-		x: x,
-		y: y,
+		x,
+		y,
 		width: Math.max(1, Math.ceil(Math.max.apply(null, xs)) - x),
 		height: Math.max(1, Math.ceil(Math.max.apply(null, ys)) - y),
 	};
@@ -92,12 +92,12 @@ export function quad_bounds(quad) {
  * @returns {boolean} the shape is a proper four-cornered shape: it does not fold over itself and has an area
  */
 export function is_valid_quad(quad) {
-	var sign = 0;
-	for (var i = 0; i < 4; i++) {
-		var a = quad[i];
-		var b = quad[(i + 1) % 4];
-		var c = quad[(i + 2) % 4];
-		var cross = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
+	let sign = 0;
+	for (let i = 0; i < 4; i++) {
+		const a = quad[i];
+		const b = quad[(i + 1) % 4];
+		const c = quad[(i + 2) % 4];
+		const cross = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
 		if (Math.abs(cross) < 1e-6) {
 			return false;
 		}
@@ -120,16 +120,16 @@ export function is_valid_quad(quad) {
  */
 export function solve_homography(from, to) {
 	//8 equations: to_x = (a x + b y + c) / (g x + h y + 1), to_y = (d x + e y + f) / (g x + h y + 1)
-	var m = [];
-	for (var i = 0; i < 4; i++) {
-		var x = from[i][0], y = from[i][1], u = to[i][0], v = to[i][1];
+	const m = [];
+	for (let i = 0; i < 4; i++) {
+		const x = from[i][0], y = from[i][1], u = to[i][0], v = to[i][1];
 		m.push([x, y, 1, 0, 0, 0, -u * x, -u * y, u]);
 		m.push([0, 0, 0, x, y, 1, -v * x, -v * y, v]);
 	}
 	//Gaussian elimination with the pivot of the largest value
-	for (var col = 0; col < 8; col++) {
-		var pivot = col;
-		for (var r = col + 1; r < 8; r++) {
+	for (let col = 0; col < 8; col++) {
+		let pivot = col;
+		for (let r = col + 1; r < 8; r++) {
 			if (Math.abs(m[r][col]) > Math.abs(m[pivot][col])) {
 				pivot = r;
 			}
@@ -137,20 +137,20 @@ export function solve_homography(from, to) {
 		if (Math.abs(m[pivot][col]) < 1e-10) {
 			return null;
 		}
-		var swap = m[col];
+		const swap = m[col];
 		m[col] = m[pivot];
 		m[pivot] = swap;
-		for (var row = 0; row < 8; row++) {
+		for (let row = 0; row < 8; row++) {
 			if (row == col) {
 				continue;
 			}
-			var factor = m[row][col] / m[col][col];
-			for (var k = col; k < 9; k++) {
+			const factor = m[row][col] / m[col][col];
+			for (let k = col; k < 9; k++) {
 				m[row][k] -= factor * m[col][k];
 			}
 		}
 	}
-	return m.map(function (row, index) { return row[8] / row[index]; });
+	return m.map((row, index) => { return row[8] / row[index]; });
 }
 
 /**
@@ -165,46 +165,46 @@ export function warp_to_quad(image, quad) {
 	if (!is_valid_quad(quad)) {
 		return null;
 	}
-	var bounds = quad_bounds(quad);
-	var local = quad.map(function (c) { return [c[0] - bounds.x, c[1] - bounds.y]; });
-	var w = image.width;
-	var h = image.height;
+	const bounds = quad_bounds(quad);
+	const local = quad.map((c) => { return [c[0] - bounds.x, c[1] - bounds.y]; });
+	const w = image.width;
+	const h = image.height;
 	//from the result back to the picture
-	var H = solve_homography(local, [[0, 0], [w, 0], [w, h], [0, h]]);
+	const H = solve_homography(local, [[0, 0], [w, 0], [w, h], [0, h]]);
 	if (H == null) {
 		return null;
 	}
-	var out = new Uint8ClampedArray(bounds.width * bounds.height * 4);
-	var src = image.data;
-	for (var y = 0; y < bounds.height; y++) {
-		for (var x = 0; x < bounds.width; x++) {
-			var px = x + 0.5;
-			var py = y + 0.5;
-			var d = H[6] * px + H[7] * py + 1;
+	const out = new Uint8ClampedArray(bounds.width * bounds.height * 4);
+	const src = image.data;
+	for (let y = 0; y < bounds.height; y++) {
+		for (let x = 0; x < bounds.width; x++) {
+			const px = x + 0.5;
+			const py = y + 0.5;
+			const d = H[6] * px + H[7] * py + 1;
 			if (Math.abs(d) < 1e-12) {
 				continue;
 			}
-			var u = (H[0] * px + H[1] * py + H[2]) / d;
-			var v = (H[3] * px + H[4] * py + H[5]) / d;
+			const u = (H[0] * px + H[1] * py + H[2]) / d;
+			const v = (H[3] * px + H[4] * py + H[5]) / d;
 			//half a pixel of soft edge
-			var coverage = clamp(Math.min(u, w - u, v, h - v) + 0.5, 0, 1);
+			const coverage = clamp(Math.min(u, w - u, v, h - v) + 0.5, 0, 1);
 			if (coverage <= 0) {
 				continue;
 			}
-			var fx = clamp(u - 0.5, 0, w - 1);
-			var fy = clamp(v - 0.5, 0, h - 1);
-			var x0 = Math.floor(fx), y0 = Math.floor(fy);
-			var x1 = Math.min(x0 + 1, w - 1), y1 = Math.min(y0 + 1, h - 1);
-			var tx = fx - x0, ty = fy - y0;
-			var i00 = (y0 * w + x0) * 4, i10 = (y0 * w + x1) * 4, i01 = (y1 * w + x0) * 4, i11 = (y1 * w + x1) * 4;
-			var w00 = (1 - tx) * (1 - ty), w10 = tx * (1 - ty), w01 = (1 - tx) * ty, w11 = tx * ty;
+			const fx = clamp(u - 0.5, 0, w - 1);
+			const fy = clamp(v - 0.5, 0, h - 1);
+			const x0 = Math.floor(fx), y0 = Math.floor(fy);
+			const x1 = Math.min(x0 + 1, w - 1), y1 = Math.min(y0 + 1, h - 1);
+			const tx = fx - x0, ty = fy - y0;
+			const i00 = (y0 * w + x0) * 4, i10 = (y0 * w + x1) * 4, i01 = (y1 * w + x0) * 4, i11 = (y1 * w + x1) * 4;
+			const w00 = (1 - tx) * (1 - ty), w10 = tx * (1 - ty), w01 = (1 - tx) * ty, w11 = tx * ty;
 			//colors are mixed in premultiplied alpha, so transparent pixels do not bleed color into the edge
-			var a = src[i00 + 3] * w00 + src[i10 + 3] * w10 + src[i01 + 3] * w01 + src[i11 + 3] * w11;
+			const a = src[i00 + 3] * w00 + src[i10 + 3] * w10 + src[i01 + 3] * w01 + src[i11 + 3] * w11;
 			if (a <= 0) {
 				continue;
 			}
-			var o = (y * bounds.width + x) * 4;
-			for (var c = 0; c < 3; c++) {
+			const o = (y * bounds.width + x) * 4;
+			for (let c = 0; c < 3; c++) {
 				out[o + c] = (src[i00 + c] * src[i00 + 3] * w00 + src[i10 + c] * src[i10 + 3] * w10
 					+ src[i01 + c] * src[i01 + 3] * w01 + src[i11 + c] * src[i11 + 3] * w11) / a;
 			}
@@ -236,13 +236,13 @@ export function handles_for(mode) {
  * @returns {{x: number, y: number}} where the handle is
  */
 export function handle_position(quad, handle) {
-	var corner = CORNER_HANDLES.indexOf(handle);
+	const corner = CORNER_HANDLES.indexOf(handle);
 	if (corner >= 0) {
 		return {x: quad[corner][0], y: quad[corner][1]};
 	}
-	var edge = EDGE_HANDLES.indexOf(handle); //top: tl-tr, right: tr-br, bottom: br-bl, left: bl-tl
-	var a = quad[edge];
-	var b = quad[(edge + 1) % 4];
+	const edge = EDGE_HANDLES.indexOf(handle); //top: tl-tr, right: tr-br, bottom: br-bl, left: bl-tl
+	const a = quad[edge];
+	const b = quad[(edge + 1) % 4];
 	return {x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2};
 }
 
@@ -256,11 +256,11 @@ export function handle_position(quad, handle) {
  * @returns {string|null} the nearest handle of the mode within reach
  */
 export function find_handle(quad, mode, point, reach) {
-	var best = null;
-	var best_distance = reach;
-	handles_for(mode).forEach(function (handle) {
-		var p = handle_position(quad, handle);
-		var distance = Math.hypot(p.x - point.x, p.y - point.y);
+	let best = null;
+	let best_distance = reach;
+	handles_for(mode).forEach((handle) => {
+		const p = handle_position(quad, handle);
+		const distance = Math.hypot(p.x - point.x, p.y - point.y);
 		if (distance <= best_distance) {
 			best = handle;
 			best_distance = distance;
@@ -285,16 +285,16 @@ export function find_handle(quad, mode, point, reach) {
  * @returns {Quad} a new shape
  */
 export function drag_handle(start, mode, handle, dx, dy) {
-	var quad = start.map(function (c) { return [c[0], c[1]]; });
-	var move = function (index, x, y) {
+	const quad = start.map((c) => { return [c[0], c[1]]; });
+	const move = function (index, x, y) {
 		quad[index][0] += x;
 		quad[index][1] += y;
 	};
-	var corner = CORNER_HANDLES.indexOf(handle);
+	const corner = CORNER_HANDLES.indexOf(handle);
 	if (mode == 'skew') {
-		var edge = EDGE_HANDLES.indexOf(handle);
+		const edge = EDGE_HANDLES.indexOf(handle);
 		if (edge >= 0) {
-			var horizontal = edge == 0 || edge == 2; //the top and the bottom edge slide sideways
+			const horizontal = edge == 0 || edge == 2; //the top and the bottom edge slide sideways
 			move(edge, horizontal ? dx : 0, horizontal ? 0 : dy);
 			move((edge + 1) % 4, horizontal ? dx : 0, horizontal ? 0 : dy);
 		}
@@ -306,8 +306,8 @@ export function drag_handle(start, mode, handle, dx, dy) {
 	move(corner, dx, dy);
 	if (mode == 'perspective') {
 		//corners are in the order tl, tr, br, bl: the horizontal neighbor of 0 is 1, of 2 is 3, the vertical one of 0 is 3, of 1 is 2
-		var horizontal_neighbor = [1, 0, 3, 2][corner];
-		var vertical_neighbor = [3, 2, 1, 0][corner];
+		const horizontal_neighbor = [1, 0, 3, 2][corner];
+		const vertical_neighbor = [3, 2, 1, 0][corner];
 		move(horizontal_neighbor, -dx, 0);
 		move(vertical_neighbor, 0, -dy);
 	}

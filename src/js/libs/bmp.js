@@ -8,14 +8,14 @@
  * @returns {Uint8Array} BMP file
  */
 export function encode_bmp(image) {
-	var width = Math.max(1, parseInt(image.width, 10) || 1);
-	var height = Math.max(1, parseInt(image.height, 10) || 1);
-	var row_size = Math.ceil(width * 3 / 4) * 4;
-	var pixels_size = row_size * height;
-	var file_size = 54 + pixels_size;
+	const width = Math.max(1, parseInt(image.width, 10) || 1);
+	const height = Math.max(1, parseInt(image.height, 10) || 1);
+	const row_size = Math.ceil(width * 3 / 4) * 4;
+	const pixels_size = row_size * height;
+	const file_size = 54 + pixels_size;
 
-	var bytes = new Uint8Array(file_size);
-	var view = new DataView(bytes.buffer);
+	const bytes = new Uint8Array(file_size);
+	const view = new DataView(bytes.buffer);
 
 	//file header
 	bytes[0] = 0x42; //B
@@ -34,12 +34,12 @@ export function encode_bmp(image) {
 	view.setInt32(38, 2835, true); //72 dpi
 	view.setInt32(42, 2835, true);
 
-	var data = image.data;
-	for (var y = 0; y < height; y++) {
-		var target = 54 + (height - 1 - y) * row_size;
-		for (var x = 0; x < width; x++) {
-			var source = (y * width + x) * 4;
-			var alpha = data[source + 3] / 255;
+	const data = image.data;
+	for (let y = 0; y < height; y++) {
+		let target = 54 + (height - 1 - y) * row_size;
+		for (let x = 0; x < width; x++) {
+			const source = (y * width + x) * 4;
+			const alpha = data[source + 3] / 255;
 			bytes[target++] = Math.round(data[source + 2] * alpha + 255 * (1 - alpha));
 			bytes[target++] = Math.round(data[source + 1] * alpha + 255 * (1 - alpha));
 			bytes[target++] = Math.round(data[source] * alpha + 255 * (1 - alpha));
@@ -53,6 +53,6 @@ export function encode_bmp(image) {
  * @returns {Blob}
  */
 export function canvas_to_bmp_blob(canvas) {
-	var image = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+	const image = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
 	return new Blob([encode_bmp(image)], {type: 'image/bmp'});
 }

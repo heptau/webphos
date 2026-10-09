@@ -8,7 +8,7 @@ import { t } from '../tools/translate.js';
 class Edit_repeat_class {
 
 	repeat_last() {
-		var last = app.GUI.last_command;
+		const last = app.GUI.last_command;
 		if (!last) {
 			alertify.warning(t('There is nothing to repeat.'));
 			return;

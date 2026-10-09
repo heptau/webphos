@@ -15,20 +15,19 @@ class Layer_rename_class {
 	}
 
 	rename(id = null) {
-		var _this = this;
 
-		var name_ = this.Helper.escapeHtml(config.layer.name);
+		const name_ = this.Helper.escapeHtml(config.layer.name);
 
-		var settings = {
+		const settings = {
 			title: 'Rename',
 			params: [
 				{name: "name", title: "Name:", value: name_},
 			],
-			on_load: function () {
+			on_load () {
 				document.querySelector('#pop_data_name').select();
 			},
-			on_finish: function (params) {
-				var validation = validate_layer_name(params.name);
+			on_finish (params) {
+				const validation = validate_layer_name(params.name);
 				if (!validation.valid) {
 					alertify.error(validation.error);
 					return;

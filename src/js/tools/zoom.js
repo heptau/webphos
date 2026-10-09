@@ -2,7 +2,6 @@ import config from './../config.js';
 import Base_tools_class from './../core/base-tools.js';
 import GUI_preview_class from './../core/gui/gui-preview.js';
 import Helper_class from './../libs/helpers.js';
-import { has_modifier } from './../libs/shortcuts.js';
 
 /**
  * Zoom tool - click zooms in at the pointer, Alt + click zooms out (Z selects the tool)
@@ -22,8 +21,8 @@ class Zoom_class extends Base_tools_class {
 				return;
 			}
 			event.preventDefault();
-			var preview = new GUI_preview_class();
-			var rect = document.getElementById('canvas_minipaint').getBoundingClientRect();
+			const preview = new GUI_preview_class();
+			const rect = document.getElementById('canvas_minipaint').getBoundingClientRect();
 			preview.zoom_data.x = event.clientX - rect.left;
 			preview.zoom_data.y = event.clientY - rect.top;
 			preview.zoom(event.altKey ? -1 : 1);
@@ -31,7 +30,7 @@ class Zoom_class extends Base_tools_class {
 
 
 		//Alt turns the zoom cursor into zoom out
-		var update_cursor = (event) => {
+		const update_cursor = (event) => {
 			if (config.TOOL.name == this.name) {
 				document.getElementById('main_wrapper').style.cursor = event.altKey ? 'zoom-out' : 'zoom-in';
 			}

@@ -15,29 +15,29 @@ class Layer_link_class {
 	 * Layer > Link Layers - choose the layers that belong to the active layer
 	 */
 	link() {
-		var active = config.layer;
-		var others = config.layers.filter((layer) => layer.type != null && layer.id != active.id);
+		const active = config.layer;
+		const others = config.layers.filter((layer) => layer.type != null && layer.id != active.id);
 		if (active == null || active.type == null || others.length == 0) {
 			alertify.warning(t('There is no other layer to link with.'));
 			return;
 		}
-		var current = linked_with(config.layers, active).map((layer) => layer.id);
+		const current = linked_with(config.layers, active).map((layer) => layer.id);
 		new Dialog_class().show({
 			title: 'Link Layers',
 			params: others.map((layer) => ({
-				name: 'layer_' + layer.id,
+				name: `layer_${  layer.id}`,
 				title: layer.name,
 				value: current.includes(layer.id),
 			})),
 			on_finish: (params) => {
-				var chosen = others.filter((layer) => params['layer_' + layer.id] === true).map((layer) => layer.id);
+				const chosen = others.filter((layer) => params[`layer_${  layer.id}`] === true).map((layer) => layer.id);
 				this.apply(link_changes(config.layers, active, chosen), 'Link Layers');
 			},
 		});
 	}
 
 	unlink() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.link_id == null) {
 			alertify.warning(t('This layer is not linked.'));
 			return;

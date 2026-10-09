@@ -19,9 +19,9 @@ class Effects_blur_class extends Effects_common_class {
 			return;
 		}
 
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'blur');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'blur');
 
-		var params = [
+		const params = [
 			{name: "value", title: "Percentage:", value: filter.value ??= 5, range: [0, 50]},
 		];
 		this.show_dialog('blur', params, filter_id);
@@ -31,36 +31,36 @@ class Effects_blur_class extends Effects_common_class {
 
 		//adapt size to real canvas dimensions
 		if (type == 'preview') {
-			var diff = (this.POP.width_mini / this.POP.height_mini) / (config.WIDTH / config.HEIGHT);
+			const diff = (this.POP.width_mini / this.POP.height_mini) / (config.WIDTH / config.HEIGHT);
 
 			value = value * diff;
 		}
 
-		return value + 'px';
+		return `${value  }px`;
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//draw
-		var size = this.convert_value(5, null, 'preview');
-		ctx.filter = "blur("+size+")";
+		const size = this.convert_value(5, null, 'preview');
+		ctx.filter = `blur(${size})`;
 		ctx.drawImage(canvas_thumb, 0, 0);
 		ctx.filter = 'none';
 	}
 
 	render_pre(ctx, data) {
-		var value = this.convert_value(data.params.value, data.params, 'save');
-		var filter = 'blur(' + value + ')';
+		const value = this.convert_value(data.params.value, data.params, 'save');
+		const filter = `blur(${value})`;
 
 		if(ctx.filter == 'none')
 			ctx.filter = filter;
 		else
-			ctx.filter += ' ' + filter;
+			ctx.filter += ` ${  filter}`;
 	}
 
-	render_post(ctx, data){
+	render_post(ctx){
 		ctx.filter = 'none';
 	}
 

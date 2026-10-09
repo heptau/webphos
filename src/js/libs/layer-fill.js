@@ -9,7 +9,7 @@ export function fill_alpha(layer) {
 	if (!layer || layer.fill_opacity === undefined || layer.fill_opacity === null) {
 		return 1;
 	}
-	var value = parseFloat(layer.fill_opacity);
+	const value = parseFloat(layer.fill_opacity);
 	if (isNaN(value)) {
 		return 1;
 	}
@@ -26,9 +26,9 @@ const HALO_FILTERS = ['shadow', 'drop-shadow', 'glow'];
  * @returns {{halo: any[], rest: any[]}} the shadows and glows, and all the other filters (order kept)
  */
 export function split_halo_filters(filters) {
-	var halo = [];
-	var rest = [];
-	(Array.isArray(filters) ? filters : []).forEach(function (filter) {
+	const halo = [];
+	const rest = [];
+	(Array.isArray(filters) ? filters : []).forEach((filter) => {
 		if (filter && HALO_FILTERS.includes(filter.name)) {
 			halo.push(filter);
 		}
@@ -36,5 +36,5 @@ export function split_halo_filters(filters) {
 			rest.push(filter);
 		}
 	});
-	return {halo: halo, rest: rest};
+	return {halo, rest};
 }

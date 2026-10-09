@@ -9,9 +9,27 @@ Only changes since version 5.0.0 are listed here.
 
 ## [Unreleased]
 
+## [26.1.1] - 2026-10-09
+
+### Fixed
+
+- The main menu and its dropdowns are shown above open dialogs (they were hidden behind the dialog and its dimming).
+- The fallback paste handler (`libs/clipboard.js`) used `this` in callbacks where it was not defined.
+
 ### Changed
 
+- The application is renamed from WebPhos to Lumifex (name, dialogs, menus, icons, exported file names, internal identifiers such as the storage keys `lumifex_*`, documentation, `package.json`); the domain is now `lumifex.80.cz` (CNAME, sharing preview, `security.txt`), the GitHub repository is `heptau/lumifex`.
 - The license file uses standard copyright lines, so GitHub recognizes the MIT license.
+- Fewer app icons: the manifest has only 192 and 512 px (normal and maskable), the extra sizes, `favicon.png`, `favicon-32.png`, `logo.png` and `logo-colors.png` and `apple-touch-icon.png` are gone (the favicon and the About dialog use `manifest/192x192.png`, the iOS home screen icon uses `manifest/192x192-maskable.png`); icons are regenerated from the new full-bleed `lumifex-source.webp`. Added a social preview image (Open Graph / Twitter card) and a screenshot in the README.
+- Code cleanup: `npm run lint` reports nothing (no `var`, no unused variables and imports, no `_this` aliases; vendored libraries are excluded from style rules).
+- Menu items that work only with pixels (adjustments, most effects, Warp, Skew…, some selections) are disabled when the active layer is not a picture, like the tools in the toolbar.
+- Files are formatted according to `.editorconfig` (tabs, LF, no trailing whitespace, a newline at the end of the file); the rules are described in `CONTRIBUTING.md`. Third-party libraries and the build output are not reformatted.
+- The Code Style section of `CONTRIBUTING.md` and `AGENTS.md` ask for `const` / `let` and arrow functions instead of `var` and `var _this = this`.
+
+## [26.1.0] - 2026-10-07
+
+### Changed
+
 - Dialogs with fields have OK, Cancel and Preview in a column on the right, like in Photoshop.
 - Toolbar and menus follow the order of Photoshop: retouching, painting, blur and dodge tools form one group; File, Edit, Image (Adjustments), Layer, Select and View items are regrouped, all exports are in File > Export, Content Fill moved to Edit and Search to Help. The Effects menu is split into categories like the Photoshop Filter menu (Blur, Distort, Noise, Pixelate, Render, Sharpen, Stylize, Other).
 
@@ -153,7 +171,7 @@ Only changes since version 5.0.0 are listed here.
 
 - Keyboard shortcuts: holding a key no longer runs a command over and over (a shortcut that switches something, like the rulers, switched back and forth), and the shortcuts work after a click on a checkbox, slider or button.
 
-## [26.0.1]
+## [26.0.1] - 2026-10-07
 
 ### Security
 
@@ -169,7 +187,7 @@ Only changes since version 5.0.0 are listed here.
 - The published site has a `security.txt`, and the build no longer ships the unused `effect-worker.js`.
 - The bundle analysis step of the CI writes clean webpack stats.
 
-## [26.0.0]
+## [26.0.0] - 2026-10-06
 
 ### Added
 

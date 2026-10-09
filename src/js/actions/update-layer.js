@@ -11,7 +11,7 @@ export class Update_layer_action extends Base_action {
 	 * WARNING: If passing objects or arrays into settings, make sure these are new or cloned objects, and not a modified existing object!
 	 *
 	 * @param {string} layer_id
-	 * @param {object} settings 
+	 * @param {object} settings
 	 */
 	constructor(layer_id, settings) {
 		super('update_layer', 'Update Layer');
@@ -32,7 +32,7 @@ export class Update_layer_action extends Base_action {
 			this.reference_layer = null;
 			throw new Error('Aborted - layer is locked');
 		}
-		for (let i in this.settings) {
+		for (const i in this.settings) {
 			if (i == 'id')
 				continue;
 			if (i == 'order')
@@ -55,7 +55,7 @@ export class Update_layer_action extends Base_action {
 	async undo() {
 		super.undo();
 		if (this.reference_layer) {
-			for (let i in this.old_settings) {
+			for (const i in this.old_settings) {
 				this.reference_layer[i] = this.old_settings[i];
 			}
 			if (this.reference_layer.type === 'text') {

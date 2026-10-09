@@ -11,37 +11,37 @@ import { t } from '../tools/translate.js';
 class Tools_swatches_class {
 
 	current_colors() {
-		var colors = app.GUI.GUI_colors.inputs.swatches.uiSwatches('get_all_hex');
+		const colors = app.GUI.GUI_colors.inputs.swatches.uiSwatches('get_all_hex');
 		return (Array.isArray(colors) ? colors : [colors]).filter((color) => /^#[0-9a-f]{6}$/i.test(color || ''));
 	}
 
 	export_swatches() {
-		var colors = this.current_colors();
+		const colors = this.current_colors();
 		if (colors.length == 0) {
 			alertify.warning(t('There are no swatches to export.'));
 			return;
 		}
-		var blob = new Blob([build_gpl('WebPhos', colors)], {type: 'text/plain'});
-		save_blob(blob, 'WebPhos-swatches.gpl', false);
+		const blob = new Blob([build_gpl('Lumifex', colors)], {type: 'text/plain'});
+		save_blob(blob, 'Lumifex-swatches.gpl', false);
 	}
 
 	import_swatches() {
-		var input = document.createElement('input');
+		const input = document.createElement('input');
 		input.type = 'file';
 		input.accept = '.gpl,text/plain';
 		input.addEventListener('change', () => {
-			var file = input.files && input.files[0];
+			const file = input.files && input.files[0];
 			if (!file || file.size > 1024 * 1024) {
 				return;
 			}
-			var reader = new FileReader();
+			const reader = new FileReader();
 			reader.onload = () => {
-				var colors = parse_gpl(String(reader.result));
+				const colors = parse_gpl(String(reader.result));
 				if (!colors) {
 					alertify.error(t('This is not a valid .gpl palette.'));
 					return;
 				}
-				var swatches = app.GUI.GUI_colors.inputs.swatches;
+				const swatches = app.GUI.GUI_colors.inputs.swatches;
 				swatches.uiSwatches('set_all_hex', colors.slice(0, 21));
 				config.swatches.default = swatches.uiSwatches('get_all_hex');
 				alertify.success(t('Swatches loaded.'));

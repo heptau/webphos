@@ -38,76 +38,72 @@ class Base_tools_class {
 	}
 
 	dragStart(event) {
-		var _this = this;
 
-		var mouse = _this.get_mouse_info(event, true);
-		_this.mouse_click_pos[0] = mouse.x;
-		_this.mouse_click_pos[1] = mouse.y;
+		let mouse = this.get_mouse_info(event, true);
+		this.mouse_click_pos[0] = mouse.x;
+		this.mouse_click_pos[1] = mouse.y;
 
 		//update
-		_this.set_mouse_info(event);
+		this.set_mouse_info(event);
 
-		_this.is_drag = true;
-		_this.speed_average = 0;
+		this.is_drag = true;
+		this.speed_average = 0;
 
-		var mouse = _this.get_mouse_info(event, true);
-		_this.mouse_last_click_pos[0] = mouse.x;
-		_this.mouse_last_click_pos[1] = mouse.y;
+		mouse = this.get_mouse_info(event, true);
+		this.mouse_last_click_pos[0] = mouse.x;
+		this.mouse_last_click_pos[1] = mouse.y;
 	}
 
 	dragMove(event) {
-		var _this = this;
-		_this.set_mouse_info(event);
+		this.set_mouse_info(event);
 
-		_this.speed_average = _this.calc_average_mouse_speed(event);
+		this.speed_average = this.calc_average_mouse_speed(event);
 	}
 
 	dragEnd(event) {
-		var _this = this;
-		_this.is_drag = false;
-		_this.set_mouse_info(event);
+		this.is_drag = false;
+		this.set_mouse_info(event);
 	}
 
 	events() {
-		var _this = this;
-		
+
 		//collect mouse info
-		document.addEventListener('mousedown', function (event) {
-			if(_this.is_touch == true)
+		document.addEventListener('mousedown', (event) => {
+			if(this.is_touch == true)
 				return;
 
-			_this.dragStart(event);
+			this.dragStart(event);
 		});
-		document.addEventListener('mousemove', function (event) {
-			if(_this.is_touch == true)
+		document.addEventListener('mousemove', (event) => {
+			if(this.is_touch == true)
 				return;
 
-			_this.dragMove(event);
+			this.dragMove(event);
 		});
-		document.addEventListener('mouseup', function (event) {
-			if(_this.is_touch == true)
+		document.addEventListener('mouseup', (event) => {
+			if(this.is_touch == true)
 				return;
 
-			_this.dragEnd(event);
+			this.dragEnd(event);
 		});
 
 		// collect touch info
-		document.addEventListener('touchstart', function (event) {
-			_this.is_touch = true;
-			_this.dragStart(event);
+		document.addEventListener('touchstart', (event) => {
+			this.is_touch = true;
+			this.dragStart(event);
 		});
-		document.addEventListener('touchmove', function (event) {
-			_this.dragMove(event);
+		document.addEventListener('touchmove', (event) => {
+			this.dragMove(event);
 			if (event.target.id === "canvas_minipaint" && !$('.scroll').has($(event.target)).length)
 				event.preventDefault();
 		}, {passive: false});
-		document.addEventListener('touchend', function (event) {
-			_this.dragEnd(event);
+		document.addEventListener('touchend', (event) => {
+			this.dragEnd(event);
 		});
-		
+
 		//on resize
-		window.addEventListener('resize', function (event) {
-			_this.prepare();
+		window.addEventListener('resize', () => {
+			this.prepare();
 		});
 	}
 
@@ -124,7 +120,7 @@ class Base_tools_class {
 			return false;
 		}
 
-		var eventType = event.type;
+		const eventType = event.type;
 
 		if (event.target.id != 'canvas_minipaint' && event.target.id != 'main_wrapper') {
 			//outside canvas
@@ -149,20 +145,20 @@ class Base_tools_class {
 			event = event.changedTouches[0];
 		}
 
-		var mouse_coords = this.get_mouse_coordinates_from_event(event);
-		var mouse_x = mouse_coords.x;
-		var mouse_y = mouse_coords.y;
+		const mouse_coords = this.get_mouse_coordinates_from_event(event);
+		const mouse_x = mouse_coords.x;
+		const mouse_y = mouse_coords.y;
 
-		var start_pos = this.Base_layers.get_world_coords(0, 0);
-		var x_rel = mouse_x - start_pos.x;
-		var y_rel = mouse_y - start_pos.y;
+		const start_pos = this.Base_layers.get_world_coords(0, 0);
+		const x_rel = mouse_x - start_pos.x;
+		const y_rel = mouse_y - start_pos.y;
 
 		//save
 		config.mouse = {
 			x: mouse_x,
 			y: mouse_y,
-			x_rel: x_rel,
-			y_rel: y_rel,
+			x_rel,
+			y_rel,
 			last_click_x: this.mouse_last_click_pos[0], //last click
 			last_click_y: this.mouse_last_click_pos[1], //last click
 			click_x: this.mouse_click_pos[0],
@@ -183,14 +179,14 @@ class Base_tools_class {
 	}
 
 	get_mouse_coordinates_from_event(event){
-		var mouse_x = event.pageX - this.Base_gui.canvas_offset.x;
-		var mouse_y = event.pageY - this.Base_gui.canvas_offset.y;
+		let mouse_x = event.pageX - this.Base_gui.canvas_offset.x;
+		let mouse_y = event.pageY - this.Base_gui.canvas_offset.y;
 
 		if (is_transformed(config.view)) {
 			//Rotate View / Flip View: the place on the screen is mapped back onto the canvas
-			var canvas = document.getElementById('canvas_minipaint');
-			var rect = canvas.getBoundingClientRect();
-			var local = screen_to_picture(
+			const canvas = document.getElementById('canvas_minipaint');
+			const rect = canvas.getBoundingClientRect();
+			const local = screen_to_picture(
 				{x: event.clientX, y: event.clientY},
 				{x: rect.left + rect.width / 2, y: rect.top + rect.height / 2},
 				{width: canvas.offsetWidth, height: canvas.offsetHeight},
@@ -201,7 +197,7 @@ class Base_tools_class {
 		}
 
 		//adapt coords to ZOOM
-		var global_pos = this.Base_layers.get_world_coords(mouse_x, mouse_y);
+		const global_pos = this.Base_layers.get_world_coords(mouse_x, mouse_y);
 		mouse_x = global_pos.x;
 		mouse_y = global_pos.y;
 
@@ -224,14 +220,14 @@ class Base_tools_class {
 			return null;
 
 		//calc average speed
-		var avg_speed_max = 30;
-		var avg_speed_changing_power = 2;
-		var mouse = this.get_mouse_info(event, true);
+		const avg_speed_max = 30;
+		const avg_speed_changing_power = 2;
+		const mouse = this.get_mouse_info(event, true);
 
-		var dx = Math.abs(mouse.x - mouse.last_x);
-		var dy = Math.abs(mouse.y - mouse.last_y);
-		var delta = Math.sqrt(dx * dx + dy * dy);
-		var mouse_average_speed = this.speed_average;
+		const dx = Math.abs(mouse.x - mouse.last_x);
+		const dy = Math.abs(mouse.y - mouse.last_y);
+		const delta = Math.sqrt(dx * dx + dy * dy);
+		let mouse_average_speed = this.speed_average;
 		if (delta > avg_speed_max / 2) {
 			mouse_average_speed += avg_speed_changing_power;
 		}
@@ -245,7 +241,7 @@ class Base_tools_class {
 	}
 
 	get_params_hash() {
-		var data = [
+		const data = [
 			this.getParams(),
 			config.COLOR,
 			config.ALPHA,
@@ -268,11 +264,11 @@ class Base_tools_class {
 	show_mouse_cursor(x, y, size, type) {
 
 		//fix coordinates, because of scroll
-		var start_pos = this.Base_layers.get_world_coords(0, 0);
+		const start_pos = this.Base_layers.get_world_coords(0, 0);
 		x = x - start_pos.x;
 		y = y - start_pos.y;
 
-		var element = document.getElementById('mouse');
+		const element = document.getElementById('mouse');
 		size = size * config.ZOOM;
 		x = x * config.ZOOM;
 		y = y * config.ZOOM;
@@ -283,11 +279,11 @@ class Base_tools_class {
 			return;
 		}
 
-		element.style.width = size + 'px';
-		element.style.height = size + 'px';
+		element.style.width = `${size  }px`;
+		element.style.height = `${size  }px`;
 
-		element.style.left = x - Math.ceil(size / 2) + 'px';
-		element.style.top = y - Math.ceil(size / 2) + 'px';
+		element.style.left = `${x - Math.ceil(size / 2)  }px`;
+		element.style.top = `${y - Math.ceil(size / 2)  }px`;
 
 		//add style
 		element.className = '';
@@ -297,7 +293,7 @@ class Base_tools_class {
 	getParams() {
 		const params = {};
 		// Number inputs return the .value if defined as objects.
-		for (let attributeName in config.TOOL.attributes) {
+		for (const attributeName in config.TOOL.attributes) {
 			const attribute = config.TOOL.attributes[attributeName];
 			if (!isNaN(attribute.value) && attribute.value != null) {
 				if (typeof attribute.value === 'string') {
@@ -313,7 +309,7 @@ class Base_tools_class {
 	}
 
 	adaptSize(value, type = "width") {
-		var response;
+		let response;
 		if (config.layer.width_original == null) {
 			return value;
 		}
@@ -337,7 +333,7 @@ class Base_tools_class {
 		ctx.lineJoin = "round";
 
 		ctx.beginPath();
-		for(var i in coords){
+		for(const i in coords){
 			if(coords[i] === null){
 				ctx.closePath();
 				ctx.fill();
@@ -347,8 +343,8 @@ class Base_tools_class {
 			}
 
 			//coords in 100x100 box
-			var pos_x = x + coords[i][0] * width / 100;
-			var pos_y = y + coords[i][1] * height / 100;
+			const pos_x = x + coords[i][0] * width / 100;
+			const pos_y = y + coords[i][1] * height / 100;
 
 			if(i == '0')
 				ctx.moveTo(pos_x, pos_y);
@@ -362,28 +358,27 @@ class Base_tools_class {
 	}
 
 	default_events(){
-		var _this = this;
 
 		//mouse events
-		document.addEventListener('mousedown', function (event) {
-			_this.default_dragStart(event);
+		document.addEventListener('mousedown', (event) => {
+			this.default_dragStart(event);
 		});
-		document.addEventListener('mousemove', function (event) {
-			_this.default_dragMove(event);
+		document.addEventListener('mousemove', (event) => {
+			this.default_dragMove(event);
 		});
-		document.addEventListener('mouseup', function (event) {
-			_this.default_dragEnd(event);
+		document.addEventListener('mouseup', (event) => {
+			this.default_dragEnd(event);
 		});
 
 		// collect touch events
-		document.addEventListener('touchstart', function (event) {
-			_this.default_dragStart(event);
+		document.addEventListener('touchstart', (event) => {
+			this.default_dragStart(event);
 		});
-		document.addEventListener('touchmove', function (event) {
-			_this.default_dragMove(event);
+		document.addEventListener('touchmove', (event) => {
+			this.default_dragMove(event);
 		});
-		document.addEventListener('touchend', function (event) {
-			_this.default_dragEnd(event);
+		document.addEventListener('touchend', (event) => {
+			this.default_dragEnd(event);
 		});
 	}
 
@@ -406,15 +401,15 @@ class Base_tools_class {
 	}
 
 	shape_mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false)
 			return;
 
-		var mouse_x = mouse.x;
-		var mouse_y = mouse.y;
+		let mouse_x = mouse.x;
+		let mouse_y = mouse.y;
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -439,15 +434,14 @@ class Base_tools_class {
 			is_vector: true
 		};
 		app.State.do_action(
-			new app.Actions.Bundle_action('new_'+this.name+'_layer', 'New '+this.Helper.ucfirst(this.name)+' Layer', [
+			new app.Actions.Bundle_action(`new_${this.name}_layer`, `New ${this.Helper.ucfirst(this.name)} Layer`, [
 				new app.Actions.Insert_layer_action(this.layer)
 			])
 		);
 	}
 
 	shape_mousemove(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
 
 		if (mouse.is_drag == false)
 			return;
@@ -455,13 +449,13 @@ class Base_tools_class {
 			return;
 		}
 
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
-		var click_x = Math.round(this.shape_mouse_click.x);
-		var click_y = Math.round(this.shape_mouse_click.y);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
+		const click_x = Math.round(this.shape_mouse_click.x);
+		const click_y = Math.round(this.shape_mouse_click.y);
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -471,10 +465,10 @@ class Base_tools_class {
 			}
 		}
 
-		var x = Math.min(mouse_x, click_x);
-		var y = Math.min(mouse_y, click_y);
-		var width = Math.abs(mouse_x - click_x);
-		var height = Math.abs(mouse_y - click_y);
+		let x = Math.min(mouse_x, click_x);
+		let y = Math.min(mouse_y, click_y);
+		let width = Math.abs(mouse_x - click_x);
+		let height = Math.abs(mouse_y - click_y);
 
 		if (e.ctrlKey == true || e.metaKey) {
 			if (width  < height * this.best_ratio) {
@@ -501,21 +495,20 @@ class Base_tools_class {
 	}
 
 	shape_mouseup(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
 
 		if (mouse.click_valid == false) {
 			config.layer.status = null;
 			return;
 		}
 
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
-		var click_x = Math.round(this.shape_mouse_click.x);
-		var click_y = Math.round(this.shape_mouse_click.y);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
+		const click_x = Math.round(this.shape_mouse_click.x);
+		const click_y = Math.round(this.shape_mouse_click.y);
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -526,10 +519,10 @@ class Base_tools_class {
 		}
 		this.snap_line_info = {x: null, y: null};
 
-		var x = Math.min(mouse_x, click_x);
-		var y = Math.min(mouse_y, click_y);
-		var width = Math.abs(mouse_x - click_x);
-		var height = Math.abs(mouse_y - click_y);
+		let x = Math.min(mouse_x, click_x);
+		let y = Math.min(mouse_y, click_y);
+		let width = Math.abs(mouse_x - click_x);
+		let height = Math.abs(mouse_y - click_y);
 
 		if (e.ctrlKey == true || e.metaKey) {
 			if (width  < height * this.best_ratio) {
@@ -561,7 +554,7 @@ class Base_tools_class {
 				height,
 				status: null
 			}),
-			{ merge_with_history: 'new_'+this.name+'_layer' }
+			{ merge_with_history: `new_${this.name}_layer` }
 		);
 	}
 
@@ -590,7 +583,8 @@ class Base_tools_class {
 	}
 
 	get_snap_positions(exclude_id) {
-		var snap_positions = {
+		let i;
+		const snap_positions = {
 			x: [
 				0,
 				config.WIDTH/2,
@@ -604,15 +598,15 @@ class Base_tools_class {
 		};
 		if(config.guides_enabled == true){
 			//use guides
-			for(var i in config.guides){
-				var guide = config.guides[i];
+			for(i in config.guides){
+				const guide = config.guides[i];
 				if(guide.y === null)
 					snap_positions.x.push(guide.x);
 				else
 					snap_positions.y.push(guide.y);
 			}
 		}
-		for(var i in config.layers){
+		for(i in config.layers){
 			if(exclude_id != null && exclude_id == config.layers[i].id){
 				continue;
 			}
@@ -623,28 +617,28 @@ class Base_tools_class {
 			}
 
 			//x
-			var x = config.layers[i].x;
+			let x = config.layers[i].x;
 			if(x > 0 && x < config.WIDTH)
 				snap_positions.x.push(x);
 
-			var x = config.layers[i].x + config.layers[i].width/2;
+			x = config.layers[i].x + config.layers[i].width/2;
 			if(x > 0 && x < config.WIDTH)
 				snap_positions.x.push(x);
 
-			var x = config.layers[i].x + config.layers[i].width;
+			x = config.layers[i].x + config.layers[i].width;
 			if(x > 0 && x < config.WIDTH)
 				snap_positions.x.push(x);
 
 			//y
-			var y = config.layers[i].y;
+			let y = config.layers[i].y;
 			if(y > 0 && y < config.HEIGHT)
 				snap_positions.y.push(y);
 
-			var y = config.layers[i].y + config.layers[i].height/2;
+			y = config.layers[i].y + config.layers[i].height/2;
 			if(y > 0 && y < config.HEIGHT)
 				snap_positions.y.push(y);
 
-			var y = config.layers[i].y + config.layers[i].height;
+			y = config.layers[i].y + config.layers[i].height;
 			if(y > 0 && y < config.HEIGHT)
 				snap_positions.y.push(y);
 		}
@@ -662,8 +656,8 @@ class Base_tools_class {
 	 * @returns object|null
 	 */
 	calc_snap_position(event, pos_x, pos_y, exclude_id) {
-		var snap_position = { x: null, y: null };
-		var params = this.getParams();
+		let snap_positions, i, distance;
+		const snap_position = { x: null, y: null };
 
 		if(config.SNAP === false || event.shiftKey == true || (event.ctrlKey == true || event.metaKey == true)){
 			this.snap_line_info = {x: null, y: null};
@@ -671,35 +665,35 @@ class Base_tools_class {
 		}
 
 		//settings
-		var sensitivity = 0.01;
-		var max_distance = (config.WIDTH + config.HEIGHT) / 2 * sensitivity / config.ZOOM;
+		const sensitivity = 0.01;
+		const max_distance = (config.WIDTH + config.HEIGHT) / 2 * sensitivity / config.ZOOM;
 
 		//collect snap positions
 		if(typeof exclude_id != "undefined")
-			var snap_positions = this.get_snap_positions(exclude_id);
+			snap_positions = this.get_snap_positions(exclude_id);
 		else
-			var snap_positions = this.get_snap_positions();
+			snap_positions = this.get_snap_positions();
 
 		//find closest snap positions
-		var min_value = {
+		const min_value = {
 			x: null,
 			y: null,
 		};
-		var min_distance = {
+		const min_distance = {
 			x: null,
 			y: null,
 		};
 		//x
-		for(var i in snap_positions.x){
-			var distance = Math.abs(pos_x - snap_positions.x[i]);
+		for(i in snap_positions.x){
+			distance = Math.abs(pos_x - snap_positions.x[i]);
 			if(distance < max_distance && (distance < min_distance.x || min_distance.x === null)){
 				min_distance.x = distance;
 				min_value.x = snap_positions.x[i];
 			}
 		}
 		//y
-		for(var i in snap_positions.y){
-			var distance = Math.abs(pos_y - snap_positions.y[i]);
+		for(i in snap_positions.y){
+			distance = Math.abs(pos_y - snap_positions.y[i]);
 			if(distance < max_distance && (distance < min_distance.y || min_distance.y === null)){
 				min_distance.y = distance;
 				min_value.y = snap_positions.y[i];
@@ -707,7 +701,7 @@ class Base_tools_class {
 		}
 
 		//apply snap
-		var success = false;
+		let success = false;
 
 		//x
 		if(min_value.x != null) {

@@ -16,14 +16,13 @@ class Effects_tiltShift_class {
 	}
 
 	tilt_shift() {
-		var _this = this;
 
 		if (config.layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Tilt Shift',
 			preview: true,
 			effects: true,
@@ -40,9 +39,9 @@ class Effects_tiltShift_class {
 				{name: "param5", title: "X end:", value: 100, range: [0, 100]},
 				{name: "param6", title: "Y end:", value: 50, range: [0, 100]},
 			],
-			on_change: function (params, canvas_preview, w, h, canvas_) {
+			on_change: (params, canvas_preview, w, h, canvas_) => {
 				//recalc param by size
-				_this.change(canvas_, params);
+				this.change(canvas_, params);
 
 				//convert % to px for line
 				params.param3 = canvas_.width * params.param3 / 100;
@@ -58,8 +57,8 @@ class Effects_tiltShift_class {
 				canvas_preview.lineTo(params.param5 + 0.5, params.param6 + 0.5);
 				canvas_preview.stroke();
 			},
-			on_finish: function (params) {
-				_this.save(params);
+			on_finish: (params) => {
+				this.save(params);
 			},
 		};
 		this.POP.show(settings);
@@ -67,8 +66,7 @@ class Effects_tiltShift_class {
 
 	save(params) {
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
 
 		//change data
 		this.change(canvas, params);
@@ -85,14 +83,14 @@ class Effects_tiltShift_class {
 			this.fx_filter = glfx.canvas();
 		}
 
-		var param1 = parseInt(params.param1);
-		var param2 = parseInt(params.param2);
-		var param3 = parseInt(params.param3);
-		var param4 = parseInt(params.param4);
-		var param5 = parseInt(params.param5);
-		var param6 = parseInt(params.param6);
-		var param7 = parseInt(params.param7);
-		var param8 = parseInt(params.param8);
+		let param1 = parseInt(params.param1);
+		let param2 = parseInt(params.param2);
+		let param3 = parseInt(params.param3);
+		let param4 = parseInt(params.param4);
+		let param5 = parseInt(params.param5);
+		let param6 = parseInt(params.param6);
+		const param7 = parseInt(params.param7);
+		const param8 = parseInt(params.param8);
 
 		//convert % to px
 		param1 = canvas.height * param1 / 100;
@@ -102,32 +100,32 @@ class Effects_tiltShift_class {
 		param5 = canvas.width * param5 / 100;
 		param6 = canvas.height * param6 / 100;
 
-		var ctx = canvas.getContext("2d");
+		const ctx = canvas.getContext("2d");
 
 		//main effect
-		var texture = this.fx_filter.texture(canvas);
+		const texture = this.fx_filter.texture(canvas);
 		this.fx_filter.draw(texture).tiltShift(param3, param4, param5, param6, param1, param2).update();
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(this.fx_filter, 0, 0);
 
 		//saturation
-		var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = ImageFilters.HSLAdjustment(data, 0, param7, 0);
+		let data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		data = ImageFilters.HSLAdjustment(data, 0, param7, 0);
 		ctx.putImageData(data, 0, 0);
 
 		//sharpen
-		var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		var data = ImageFilters.Sharpen(data, param8);
+		data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		data = ImageFilters.Sharpen(data, param8);
 		ctx.putImageData(data, 0, 0);
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 		ctx.drawImage(canvas_thumb, 0, 0);
 
 		//now update
-		var params = {
+		const params = {
 			param7: 3,
 			param8: 1,
 			param1: 10,
@@ -137,7 +135,7 @@ class Effects_tiltShift_class {
 			param5: 100,
 			param6: 50,
 		}
-		var data = this.change(canvas, params);
+		this.change(canvas, params);
 	}
 
 }

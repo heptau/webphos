@@ -7,12 +7,12 @@
  * @returns {number[]} ids of the layers to move one place up, one after another (bubble sort), which turns the stack upside down
  */
 export function reverse_steps(ids) {
-	var list = ids.concat();
-	var steps = [];
-	for (var end = list.length - 1; end > 0; end--) {
-		for (var i = 0; i < end; i++) {
+	const list = ids.concat();
+	const steps = [];
+	for (let end = list.length - 1; end > 0; end--) {
+		for (let i = 0; i < end; i++) {
 			steps.push(list[i]);
-			var swap = list[i];
+			const swap = list[i];
 			list[i] = list[i + 1];
 			list[i + 1] = swap;
 		}
@@ -28,9 +28,9 @@ export function reverse_steps(ids) {
  * @returns {number[]}
  */
 export function apply_steps(ids, steps) {
-	var list = ids.concat();
-	steps.forEach(function (id) {
-		var index = list.indexOf(id);
+	const list = ids.concat();
+	steps.forEach((id) => {
+		const index = list.indexOf(id);
 		if (index >= 0 && index < list.length - 1) {
 			list[index] = list[index + 1];
 			list[index + 1] = id;

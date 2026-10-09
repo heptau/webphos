@@ -39,15 +39,15 @@ const translate_alertify = () => {
 };
 document.addEventListener('minipaint:history', translate_alertify);
 
-window.addEventListener('load', function (e) {
+window.addEventListener('load', () => {
 	// Initiate app
-	var Layers = new Base_layers_class();
-	var Base_tools = new Base_tools_class(true);
-	var GUI = new Base_gui_class();
-	var Base_state = new Base_state_class();
-	var File_open = new File_open_class();
-	var File_save = new File_save_class();
-	var Base_search = new Base_search_class();
+	const Layers = new Base_layers_class();
+	const Base_tools = new Base_tools_class(true);
+	const GUI = new Base_gui_class();
+	const Base_state = new Base_state_class();
+	const File_open = new File_open_class();
+	const File_save = new File_save_class();
+	new Base_search_class();
 
 	// Register singletons in app module
 	app.Actions = Actions;

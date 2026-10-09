@@ -14,15 +14,15 @@ class Layer_label_class {
 	}
 
 	label() {
-		var current = config.layer.color_label;
-		var value = LABELS.find((name) => name.toLowerCase() == current) || 'None';
+		const current = config.layer.color_label;
+		const value = LABELS.find((name) => name.toLowerCase() == current) || 'None';
 		this.POP.show({
 			title: 'Color Label',
 			params: [
-				{name: 'label', title: 'Color:', type: 'select', values: LABELS, value: value},
+				{name: 'label', title: 'Color:', type: 'select', values: LABELS, value},
 			],
 			on_finish: (params) => {
-				var label = params.label == 'None' ? null : String(params.label).toLowerCase();
+				const label = params.label == 'None' ? null : String(params.label).toLowerCase();
 				app.State.do_action(
 					new app.Actions.Bundle_action('layer_label', 'Layer Color Label', [
 						new app.Actions.Update_layer_action(config.layer.id, {color_label: label}),

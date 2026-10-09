@@ -1,6 +1,6 @@
 //main config file
 
-var config = {};
+const config = {};
 
 config.TRANSPARENCY = false;
 config.TRANSPARENCY_TYPE = 'squares'; //squares, green, grey
@@ -820,5 +820,5 @@ config.TOOLS = [
 
 //link to active tool
 config.TOOL = config.TOOLS[2];
-	
+
 export default config;

@@ -11,7 +11,7 @@
  * @returns {{width: number, height: number}}
  */
 export function rotated_canvas_size(width, height, angle) {
-	return angle == 90 || angle == 270 ? {width: height, height: width} : {width: width, height: height};
+	return angle == 90 || angle == 270 ? {width: height, height: width} : {width, height};
 }
 
 /**
@@ -24,7 +24,7 @@ export function rotated_canvas_size(width, height, angle) {
  * @returns {{x: number, y: number, width: number, height: number}}
  */
 export function rotate_box(box, canvas_width, canvas_height, angle) {
-	var x = box.x, y = box.y, w = box.width, h = box.height;
+	const x = box.x, y = box.y, w = box.width, h = box.height;
 	switch (angle) {
 		case 90:
 			return {x: canvas_height - (y + h), y: x, width: h, height: w};
@@ -33,7 +33,7 @@ export function rotate_box(box, canvas_width, canvas_height, angle) {
 		case 270:
 			return {x: y, y: canvas_width - (x + w), width: h, height: w};
 		default:
-			return {x: x, y: y, width: w, height: h};
+			return {x, y, width: w, height: h};
 	}
 }
 
@@ -46,9 +46,9 @@ export function rotate_box(box, canvas_width, canvas_height, angle) {
  * @returns {{width: number, height: number}}
  */
 export function arbitrary_canvas_size(width, height, angle) {
-	var radians = angle * Math.PI / 180;
-	var cos = Math.abs(Math.cos(radians));
-	var sin = Math.abs(Math.sin(radians));
+	const radians = angle * Math.PI / 180;
+	const cos = Math.abs(Math.cos(radians));
+	const sin = Math.abs(Math.sin(radians));
 	return {
 		width: Math.max(1, Math.ceil(width * cos + height * sin - 1e-9)),
 		height: Math.max(1, Math.ceil(width * sin + height * cos - 1e-9)),
@@ -65,9 +65,9 @@ export function arbitrary_canvas_size(width, height, angle) {
  * @returns {{x: number, y: number}}
  */
 export function rotate_point_arbitrary(point, old_size, new_size, angle) {
-	var radians = angle * Math.PI / 180;
-	var dx = point.x - old_size.width / 2;
-	var dy = point.y - old_size.height / 2;
+	const radians = angle * Math.PI / 180;
+	const dx = point.x - old_size.width / 2;
+	const dy = point.y - old_size.height / 2;
 	return {
 		x: new_size.width / 2 + dx * Math.cos(radians) - dy * Math.sin(radians),
 		y: new_size.height / 2 + dx * Math.sin(radians) + dy * Math.cos(radians),
@@ -82,12 +82,12 @@ export function rotate_point_arbitrary(point, old_size, new_size, angle) {
  * @returns {number} degrees, clockwise; 0 for a point
  */
 export function straighten_angle(from, to) {
-	var dx = to.x - from.x;
-	var dy = to.y - from.y;
+	const dx = to.x - from.x;
+	const dy = to.y - from.y;
 	if (dx == 0 && dy == 0) {
 		return 0;
 	}
-	var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+	let angle = Math.atan2(dy, dx) * 180 / Math.PI;
 	if (angle > 90) {
 		angle -= 180;
 	}

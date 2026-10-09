@@ -56,7 +56,7 @@ export class Update_layer_image_action extends Base_action {
 				// Update image using blob and FileReader (async)
 				await new Promise((resolve) => {
 					this.canvas.toBlob((blob) => {
-						var reader = new FileReader();
+						const reader = new FileReader();
 						reader.onloadend = () => {
 							canvas_data_url = reader.result;
 							resolve();
@@ -84,7 +84,7 @@ export class Update_layer_image_action extends Base_action {
 				this.new_image_id = await image_store.add(canvas_data_url);
 			}
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 			requestAnimationFrame(() => {
 				app.State.free(0, this.database_estimate || 1)
 			});
@@ -93,7 +93,7 @@ export class Update_layer_image_action extends Base_action {
 		// Estimate storage size
 		try {
 			this.database_estimate = new Blob([await image_store.get(this.old_image_id)]).size;
-		} catch (e) {}
+		} catch {}
 
 		// Assign layer properties
 		this.reference_layer.link.src = canvas_data_url;
@@ -110,7 +110,7 @@ export class Update_layer_image_action extends Base_action {
 		// Estimate storage size
 		try {
 			this.database_estimate = new Blob([this.reference_layer.link.src]).size;
-		} catch (e) {}
+		} catch {}
 
 		// Restore old image
 		if (this.old_image_id != null) {
@@ -130,7 +130,7 @@ export class Update_layer_image_action extends Base_action {
 		if (this.new_image_id != null) {
 			try {
 				await image_store.delete(this.new_image_id);
-			} catch (error) {
+			} catch {
 				has_error = true;
 			}
 			this.new_image_id = null;
@@ -139,7 +139,7 @@ export class Update_layer_image_action extends Base_action {
 			if (this.old_image_id != null) {
 				try {
 					await image_store.delete(this.old_image_id);
-				} catch (error) {
+				} catch {
 					has_error = true;
 				}
 				this.old_image_id = null;

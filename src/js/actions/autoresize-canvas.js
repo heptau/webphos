@@ -32,7 +32,7 @@ export class Autoresize_canvas_action extends Base_action {
 		let need_fit = false;
 		let new_config_width = config.WIDTH;
 		let new_config_height = config.HEIGHT;
-		var enable_autoresize = this.Tools_settings.get_setting('enable_autoresize');
+		const enable_autoresize = this.Tools_settings.get_setting('enable_autoresize');
 
 		if(enable_autoresize == false){
 			return;

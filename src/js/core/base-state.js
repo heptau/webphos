@@ -11,7 +11,7 @@ import alertify from './../../../node_modules/alertifyjs/build/alertify.min.js';
 import app from '../app.js';
 import { t } from '../modules/tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * Undo state class. Supports multiple levels undo.
@@ -46,7 +46,7 @@ class Base_state_class {
 	 */
 	remember_original(action) {
 		//actions that open or create content do not count as a change of the original
-		var skipped = [
+		const skipped = [
 			'activate_tool', 'select_layer', 'reset_selection', 'set_selection', 'set_selection_mask', 'refresh_layers_gui',
 			'open_json_file', 'open_image', 'open_file_data_url', 'new_file', 'new_layer', 'paste_new', 'fill_layer',
 		];
@@ -54,13 +54,13 @@ class Base_state_class {
 			return;
 		}
 		try {
-			var canvas = document.createElement('canvas');
+			const canvas = document.createElement('canvas');
 			canvas.width = config.WIDTH;
 			canvas.height = config.HEIGHT;
 			app.Layers.convert_layers_to_canvas(canvas.getContext('2d'), null, false);
 			this.original_canvas = canvas;
 		}
-		catch (error) {
+		catch {
 			this.original_canvas = null;
 		}
 	}
@@ -81,10 +81,10 @@ class Base_state_class {
 		if (this.action_history_index < this.action_history.length) {
 			const freed_actions = this.action_history.slice(this.action_history_index, this.action_history.length).reverse();
 			this.action_history = this.action_history.slice(0, this.action_history_index);
-			for (let freed_action of freed_actions) {
+			for (const freed_action of freed_actions) {
 				try {
 					await freed_action.free();
-				} catch (error) {
+				} catch {
 					error_during_free = true;
 				}
 			}
@@ -105,10 +105,10 @@ class Base_state_class {
 		} else {
 			this.action_history.push(action);
 			if (this.action_history.length > this.action_history_max) {
-				let action_to_free = this.action_history.shift();
+				const action_to_free = this.action_history.shift();
 				try {
 					await action_to_free.free();
-				} catch (error) {
+				} catch {
 					error_during_free = true;
 				}
 			} else {
@@ -178,12 +178,12 @@ class Base_state_class {
 		let has_error = false;
 		let free_complete = false;
 		while (this.action_history_index > 0) {
-			let action = this.action_history.shift();
+			const action = this.action_history.shift();
 			total_memory_freed += action.memory_estimate;
 			total_database_freed += action.database_estimate;
 			try {
 				await action.free();
-			} catch (error) {
+			} catch {
 				has_error = true;
 			}
 			if (total_memory_freed >= memory_size && total_database_freed >= database_size) {
@@ -194,16 +194,15 @@ class Base_state_class {
 		}
 		if (!free_complete) {
 			for (let i = this.action_history.length - 1; i >= 0; i--) {
-				let action = this.action_history[i];
+				const action = this.action_history[i];
 				total_memory_freed += action.memory_estimate;
 				total_database_freed += action.database_estimate;
 				try {
 					await action.free();
-				} catch (error) {
+				} catch {
 					has_error = true;
 				}
 				if (total_memory_freed >= memory_size && total_database_freed >= database_size) {
-					free_complete = true;
 					break;
 				}
 			}

@@ -10,7 +10,7 @@
  * @returns {View} the angle in degrees between -180 and 180 (clockwise), flip = mirrored left to right
  */
 export function normalize_view(view) {
-	var angle = parseFloat(view && view.rotate) || 0;
+	let angle = parseFloat(view && view.rotate) || 0;
 	angle = ((angle % 360) + 360) % 360;
 	if (angle > 180) {
 		angle -= 360;
@@ -23,7 +23,7 @@ export function normalize_view(view) {
  * @returns {boolean} the view is turned or mirrored
  */
 export function is_transformed(view) {
-	var v = normalize_view(view);
+	const v = normalize_view(view);
 	return v.rotate != 0 || v.flip;
 }
 
@@ -32,12 +32,12 @@ export function is_transformed(view) {
  * @returns {string} value of the CSS property transform ('' when nothing is changed)
  */
 export function css_transform(view) {
-	var v = normalize_view(view);
+	const v = normalize_view(view);
 	if (!is_transformed(v)) {
 		return '';
 	}
 	//the picture is mirrored first, then turned
-	return 'rotate(' + v.rotate + 'deg)' + (v.flip ? ' scaleX(-1)' : '');
+	return `rotate(${v.rotate}deg)${  v.flip ? ' scaleX(-1)' : ''}`;
 }
 
 /**
@@ -50,13 +50,13 @@ export function css_transform(view) {
  * @returns {{x: number, y: number}} position from the top left corner of the picture
  */
 export function screen_to_picture(point, center, size, view) {
-	var v = normalize_view(view);
-	var radians = v.rotate * Math.PI / 180;
-	var dx = point.x - center.x;
-	var dy = point.y - center.y;
+	const v = normalize_view(view);
+	const radians = v.rotate * Math.PI / 180;
+	const dx = point.x - center.x;
+	const dy = point.y - center.y;
 	//undo the rotation, then the mirroring
-	var x = dx * Math.cos(radians) + dy * Math.sin(radians);
-	var y = -dx * Math.sin(radians) + dy * Math.cos(radians);
+	let x = dx * Math.cos(radians) + dy * Math.sin(radians);
+	const y = -dx * Math.sin(radians) + dy * Math.cos(radians);
 	if (v.flip) {
 		x = -x;
 	}
@@ -72,9 +72,9 @@ export function screen_to_picture(point, center, size, view) {
  * @returns {{x: number, y: number}}
  */
 export function screen_delta_to_picture(dx, dy, view) {
-	var v = normalize_view(view);
-	var radians = v.rotate * Math.PI / 180;
-	var x = dx * Math.cos(radians) + dy * Math.sin(radians);
-	var y = -dx * Math.sin(radians) + dy * Math.cos(radians);
-	return {x: v.flip ? -x : x, y: y};
+	const v = normalize_view(view);
+	const radians = v.rotate * Math.PI / 180;
+	const x = dx * Math.cos(radians) + dy * Math.sin(radians);
+	const y = -dx * Math.sin(radians) + dy * Math.cos(radians);
+	return {x: v.flip ? -x : x, y};
 }

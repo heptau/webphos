@@ -20,12 +20,12 @@ export function selection_to_layer_rect(selection, layer) {
 	if (!selection || !selection.width || !selection.height) {
 		return null;
 	}
-	var scale_x = layer.width_original / layer.width;
-	var scale_y = layer.height_original / layer.height;
-	var left = clamp(Math.round((selection.x - layer.x) * scale_x), 0, layer.width_original);
-	var top = clamp(Math.round((selection.y - layer.y) * scale_y), 0, layer.height_original);
-	var right = clamp(Math.round((selection.x + selection.width - layer.x) * scale_x), 0, layer.width_original);
-	var bottom = clamp(Math.round((selection.y + selection.height - layer.y) * scale_y), 0, layer.height_original);
+	const scale_x = layer.width_original / layer.width;
+	const scale_y = layer.height_original / layer.height;
+	const left = clamp(Math.round((selection.x - layer.x) * scale_x), 0, layer.width_original);
+	const top = clamp(Math.round((selection.y - layer.y) * scale_y), 0, layer.height_original);
+	const right = clamp(Math.round((selection.x + selection.width - layer.x) * scale_x), 0, layer.width_original);
+	const bottom = clamp(Math.round((selection.y + selection.height - layer.y) * scale_y), 0, layer.height_original);
 	if (right <= left || bottom <= top) {
 		return null;
 	}
@@ -43,10 +43,10 @@ export function selection_to_layer_rect(selection, layer) {
  */
 export function grow_rect(selection, amount, canvas_width, canvas_height) {
 	amount = Math.round(amount) || 0;
-	var left = clamp(selection.x - amount, 0, canvas_width);
-	var top = clamp(selection.y - amount, 0, canvas_height);
-	var right = clamp(selection.x + selection.width + amount, 0, canvas_width);
-	var bottom = clamp(selection.y + selection.height + amount, 0, canvas_height);
+	const left = clamp(selection.x - amount, 0, canvas_width);
+	const top = clamp(selection.y - amount, 0, canvas_height);
+	const right = clamp(selection.x + selection.width + amount, 0, canvas_width);
+	const bottom = clamp(selection.y + selection.height + amount, 0, canvas_height);
 	if (right <= left || bottom <= top) {
 		return null;
 	}

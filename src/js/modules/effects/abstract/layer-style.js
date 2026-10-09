@@ -24,26 +24,25 @@ class Effects_layer_style_class extends Effects_common_class {
 	}
 
 	show_dialog(type, params, filter_id) {
-		var _this = this;
-		var padding = this.preview_padding;
+		const padding = this.preview_padding;
 
-		var settings = {
+		const settings = {
 			title: this.Helper.ucfirst(type).replace(/-/g, ' '),
 			preview: true,
 			preview_padding: padding,
 			effects: true,
-			params: params,
-			on_change: function (params, canvas_preview) {
-				_this.params = params;
-				var width = _this.POP.width_mini - padding * 2;
-				var height = _this.POP.height_mini - padding * 2;
-				canvas_preview.clearRect(0, 0, _this.POP.width_mini, _this.POP.height_mini);
-				_this.draw_preview(canvas_preview, this.layer_active_small, padding, padding, width, height, params,
-					_this.POP.width_mini / config.WIDTH);
+			params,
+			on_change: (params, canvas_preview) => {
+				this.params = params;
+				const width = this.POP.width_mini - padding * 2;
+				const height = this.POP.height_mini - padding * 2;
+				canvas_preview.clearRect(0, 0, this.POP.width_mini, this.POP.height_mini);
+				this.draw_preview(canvas_preview, this.POP.layer_active_small, padding, padding, width, height, params,
+					this.POP.width_mini / config.WIDTH);
 			},
-			on_finish: function (params) {
-				_this.params = params;
-				_this.save(params, type, filter_id);
+			on_finish: (params) => {
+				this.params = params;
+				this.save(params, type, filter_id);
 			},
 		};
 		this.Base_layers.disable_filter(filter_id);
@@ -61,15 +60,15 @@ class Effects_layer_style_class extends Effects_common_class {
 	 */
 	cached(layer, key, build, slot) {
 		slot = slot || 'main';
-		var cache = this.caches[slot] || (this.caches[slot] = new WeakMap());
-		var source = layer.link_canvas != null ? layer.link_canvas : layer.link;
-		var full_key = [layer.width, layer.height, key].join('|');
-		var cached = cache.get(layer);
+		const cache = this.caches[slot] || (this.caches[slot] = new WeakMap());
+		const source = layer.link_canvas != null ? layer.link_canvas : layer.link;
+		const full_key = [layer.width, layer.height, key].join('|');
+		const cached = cache.get(layer);
 		if (cached && cached.source === source && cached.key === full_key) {
 			return cached.canvas;
 		}
-		var canvas = build(source);
-		cache.set(layer, {source: source, key: full_key, canvas: canvas});
+		const canvas = build(source);
+		cache.set(layer, {source, key: full_key, canvas});
 		return canvas;
 	}
 
@@ -81,11 +80,11 @@ class Effects_layer_style_class extends Effects_common_class {
 		ctx.rotate((layer.rotate * Math.PI) / 180);
 	}
 
-	render_pre(ctx, data, layer) {
+	render_pre() {
 		//styles override what they need
 	}
 
-	render_post(ctx, data, layer) {
+	render_post() {
 		//styles override what they need
 	}
 

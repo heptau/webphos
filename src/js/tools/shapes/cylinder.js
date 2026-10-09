@@ -1,5 +1,3 @@
-import app from './../../app.js';
-import config from './../../config.js';
 import Base_tools_class from './../../core/base-tools.js';
 import Base_layers_class from './../../core/base-layers.js';
 
@@ -32,7 +30,7 @@ class Cylinder_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
@@ -41,7 +39,7 @@ class Cylinder_class extends Base_tools_class {
 		ctx.strokeStyle = '#555';
 		ctx.lineWidth = 2;
 
-		var width_all = width + x * 2;
+		const width_all = width + x * 2;
 		width = height * this.best_ratio;
 		x = (width_all - width) / 2;
 
@@ -52,8 +50,7 @@ class Cylinder_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
-		var fill = params.fill;
+		const params = layer.params;
 
 		ctx.save();
 
@@ -74,7 +71,7 @@ class Cylinder_class extends Base_tools_class {
 		ctx.restore();
 	}
 
-	draw_shape(ctx, x, y, width, height, coords) {
+	draw_shape(ctx, x, y, width, height) {
 		ctx.lineJoin = "round";
 
 		ctx.beginPath();
@@ -82,7 +79,7 @@ class Cylinder_class extends Base_tools_class {
 		ctx.scale(1, 1.20);
 		ctx.translate(-width / 2, -height / 2);
 
-		var dh = height/3;
+		const dh = height/3;
 
 		ctx.moveTo(0, dh);
 		ctx.bezierCurveTo(0,dh+dh, width,dh+dh, width,dh);

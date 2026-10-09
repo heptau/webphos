@@ -15,20 +15,20 @@ function escape_pattern(text) {
  * @returns {{data: object[][], count: number}} a changed copy of the data and the number of replacements
  */
 export function replace_in_text_data(data, find, replacement, match_case) {
-	var count = 0;
-	var pattern = new RegExp(escape_pattern(find), match_case ? 'g' : 'gi');
-	var text = String(replacement == undefined ? '' : replacement);
-	var result = data.map(function (line) {
-		return line.map(function (span) {
+	let count = 0;
+	const pattern = new RegExp(escape_pattern(find), match_case ? 'g' : 'gi');
+	const text = String(replacement == undefined ? '' : replacement);
+	const result = data.map((line) => {
+		return line.map((span) => {
 			if (typeof span.text != 'string') {
 				return span;
 			}
-			var changed = span.text.replace(pattern, function () {
+			const changed = span.text.replace(pattern, () => {
 				count++;
 				return text;
 			});
 			return Object.assign({}, span, {text: changed});
 		});
 	});
-	return {data: result, count: count};
+	return {data: result, count};
 }

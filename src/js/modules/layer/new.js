@@ -39,19 +39,19 @@ class Layer_new_class {
 	 *   'cut' also removes the selected pixels from the active layer (Layer via Cut)
 	 */
 	new_selection(mode) {
-		var merged = mode === 'merged';
-		var cut = mode === 'cut';
-		var layer = config.layer;
+		const merged = mode === 'merged';
+		const cut = mode === 'cut';
+		const layer = config.layer;
 		if (this.Edit_selection == null) {
 			this.Edit_selection = new Edit_selection_class();
 		}
-		var part = (merged || layer.type == 'image') ? this.Edit_selection.get_selection_canvas(layer, merged) : null;
+		const part = (merged || layer.type == 'image') ? this.Edit_selection.get_selection_canvas(layer, merged) : null;
 		if (part == null) {
 			alertify.error(t('Empty selection or type not image.'));
 			return;
 		}
 
-		var params = {
+		const params = {
 			x: part.x,
 			y: part.y,
 			width: part.width,
@@ -64,12 +64,12 @@ class Layer_new_class {
 		if (merged) {
 			params.name = t('Merged');
 		}
-		var actions = [];
+		const actions = [];
 		if (cut) {
 			//remove the selected pixels from the source layer
-			var canvas = this.Base_layers.convert_layer_to_canvas(layer.id, true);
-			var ctx = canvas.getContext('2d');
-			var image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			const canvas = this.Base_layers.convert_layer_to_canvas(layer.id, true);
+			const ctx = canvas.getContext('2d');
+			const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
 			ctx.putImageData(erase_with_mask(image, this.Edit_selection.get_mask().mask, layer), 0, 0);
 			actions.push(new app.Actions.Update_layer_image_action(canvas, layer.id));
 		}

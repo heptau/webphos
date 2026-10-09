@@ -27,14 +27,14 @@ export class Add_layer_filter_action extends Base_action {
 		if (!this.reference_layer) {
 			throw new Error('Aborted - layer with specified id doesn\'t exist');
 		}
-		var filter = {
+		const filter = {
 			id: this.filter_id,
 			name: this.name,
 			params: this.params,
 		};
 		if(this.filter_id) {
 			//update
-			for(var i in this.reference_layer.filters) {
+			for(const i in this.reference_layer.filters) {
 				if(this.reference_layer.filters[i].id == this.filter_id){
 					this.reference_layer.filters[i] = filter;
 					break;

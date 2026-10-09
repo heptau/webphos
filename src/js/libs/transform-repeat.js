@@ -13,9 +13,9 @@
  *   the rotation is added); null when nothing changed
  */
 export function describe_transform(before, after) {
-	var before_rotate = before.rotate || 0;
-	var after_rotate = after.rotate || 0;
-	var result = {
+	const before_rotate = before.rotate || 0;
+	const after_rotate = after.rotate || 0;
+	const result = {
 		dx: (after.x + after.width / 2) - (before.x + before.width / 2),
 		dy: (after.y + after.height / 2) - (before.y + before.height / 2),
 		scale_x: before.width ? after.width / before.width : 1,
@@ -34,11 +34,11 @@ export function describe_transform(before, after) {
  * @returns {Geometry} the geometry after the same transformation
  */
 export function apply_transform(geometry, change) {
-	var width = geometry.width * change.scale_x;
-	var height = geometry.height * change.scale_y;
-	var center_x = geometry.x + geometry.width / 2 + change.dx;
-	var center_y = geometry.y + geometry.height / 2 + change.dy;
-	var rotate = ((geometry.rotate || 0) + change.rotate) % 360;
+	const width = geometry.width * change.scale_x;
+	const height = geometry.height * change.scale_y;
+	const center_x = geometry.x + geometry.width / 2 + change.dx;
+	const center_y = geometry.y + geometry.height / 2 + change.dy;
+	let rotate = ((geometry.rotate || 0) + change.rotate) % 360;
 	if (rotate < 0) {
 		rotate += 360;
 	}
@@ -47,11 +47,11 @@ export function apply_transform(geometry, change) {
 		y: Math.round(center_y - height / 2),
 		width: Math.round(width),
 		height: Math.round(height),
-		rotate: rotate,
+		rotate,
 	};
 }
 
-var last = null;
+let last = null;
 
 /**
  * @param {Transformation|null} change

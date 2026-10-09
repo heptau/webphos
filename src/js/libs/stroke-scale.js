@@ -11,7 +11,7 @@
  *   (a stroke that is being drawn, an older layer) or is zero (a straight line has no height)
  */
 export function stroke_scale(layer) {
-	var ratio = function (size, original) {
+	const ratio = function (size, original) {
 		if (!(original > 0) || !(size > 0)) {
 			return 1;
 		}
@@ -25,6 +25,6 @@ export function stroke_scale(layer) {
  * @returns {boolean} the strokes of the layer are stretched (a new stroke must not be added to it, it would be stretched too)
  */
 export function is_stretched(layer) {
-	var scale = stroke_scale(layer);
+	const scale = stroke_scale(layer);
 	return Math.abs(scale.x - 1) > 0.001 || Math.abs(scale.y - 1) > 0.001;
 }

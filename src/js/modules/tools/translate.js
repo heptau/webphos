@@ -1,10 +1,10 @@
 import config from './../../config.js';
 import Helper_class from './../../libs/helpers.js';
-import Translate_class from './../../libs/jquery.translate.js';
+import './../../libs/jquery.translate.js'; // registers $.fn.translate
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { AUTO, detect_system_language, get_system_languages, normalize_lang_code } from './../../libs/system-preferences.js';
 
-var instance = null;
+let instance = null;
 
 //Available language codes - dictionaries are loaded on demand (code split),
 //so unused languages do not bloat the initial bundle.
@@ -108,7 +108,7 @@ class Tools_translate_class {
 	 * @returns {string}
 	 */
 	get_language_setting() {
-		var lang_code = this.Helper.getCookie('language');
+		const lang_code = this.Helper.getCookie('language');
 		if (!lang_code || lang_code == AUTO) {
 			return AUTO;
 		}
@@ -125,7 +125,7 @@ class Tools_translate_class {
 		}
 		const loader = LANG_LOADERS.get(lang_code);
 		if (!loader) {
-			return Promise.reject(new Error('Unknown language: ' + lang_code));
+			return Promise.reject(new Error(`Unknown language: ${  lang_code}`));
 		}
 		this.pending_langs[lang_code] = loader().then((dict) => {
 			for (const key in dict) {

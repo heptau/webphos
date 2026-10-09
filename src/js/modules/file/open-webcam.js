@@ -14,11 +14,10 @@ class File_open_webcam_class {
 	}
 
 	open_webcam() {
-		var _this = this;
-		var video = document.createElement('video');
+		const video = document.createElement('video');
 		video.autoplay = true;
 		video.style.maxWidth = '100%';
-		var track = null;
+		let track = null;
 
 		function handleSuccess(stream) {
 			track = stream.getTracks()[0];
@@ -29,32 +28,32 @@ class File_open_webcam_class {
 			alertify.error(t('Sorry, cold not load getUserMedia() data: ') + error);
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Webcam',
 			params: [
 				{title: "Stream:", html: '<div id="webcam_container"></div>'},
 			],
-			on_load: function(params){
+			on_load(){
 				document.getElementById('webcam_container').appendChild(video);
 			},
-			on_finish: function(params){
+			on_finish: () => {
 				//capture data
-				var width = video.videoWidth;
-				var height = video.videoHeight;
+				const width = video.videoWidth;
+				const height = video.videoHeight;
 
-				var tmpCanvas = document.createElement('canvas');
-				var tmpCanvasCtx = tmpCanvas.getContext("2d");
+				const tmpCanvas = document.createElement('canvas');
+				const tmpCanvasCtx = tmpCanvas.getContext("2d");
 				tmpCanvas.width = width;
 				tmpCanvas.height = height;
 				tmpCanvasCtx.drawImage(video, 0, 0);
 
 				//create requested layer
-				var new_layer = {
-					name: "Webcam #" + _this.owner.Base_layers.auto_increment,
+				const new_layer = {
+					name: `Webcam #${  this.owner.Base_layers.auto_increment}`,
 					type: 'image',
 					data: tmpCanvas.toDataURL("image/png"),
-					width: width,
-					height: height,
+					width,
+					height,
 					width_original: width,
 					height_original: height,
 				};
@@ -73,7 +72,7 @@ class File_open_webcam_class {
 				video.src = "";
 				video.load();
 			},
-			on_cancel: function(params){
+			on_cancel(){
 				if(track != null){
 					track.stop();
 				}

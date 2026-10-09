@@ -1,8 +1,6 @@
-import Helper_class from './../../libs/helpers.js';
 import Dialog_class from './../../libs/popup.js';
 import GUI_colors_class from './../gui/gui-colors.js';
 
-const Helper = new Helper_class();
 
 /**
  * This input opens a custom color picker dialog that is more tightly integrated with the application (swatch selection, etc).
@@ -34,7 +32,7 @@ const Helper = new Helper_class();
 		const { value } = $el.data();
 		const POP = new Dialog_class();
 		let colorsDialog = new GUI_colors_class();
-		var settings = {
+		const settings = {
 			title: 'Color Picker',
 			on_finish() {
 				set_value($el, colorsDialog.COLOR + (colorsDialog.ALPHA < 255 ? colorsDialog.ALPHA.toString(16).padStart(2, '0') : ''));
@@ -45,7 +43,7 @@ const Helper = new Helper_class();
 			params: [
 				{
 					function() {
-						var html = '<div id="dialog_color_picker"></div>';
+						const html = '<div id="dialog_color_picker"></div>';
 						return html;
 					}
 				}
@@ -53,11 +51,11 @@ const Helper = new Helper_class();
 		};
 		let colorValue;
 		let alpha = 255;
-		if (/^\#[0-9A-F]{8}$/gi.test(value)) {
+		if (/^#[0-9A-F]{8}$/gi.test(value)) {
 			// Hex with alpha
 			colorValue = value.slice(0, 7);
 			alpha = parseInt(value.slice(7, 9), 16);
-		} else if (/^\#[0-9A-F]{6}$/gi.test(value)) {
+		} else if (/^#[0-9A-F]{6}$/gi.test(value)) {
 			// Hex without alpha
 			colorValue = value;
 		} else {
@@ -69,14 +67,14 @@ const Helper = new Helper_class();
 	};
 
 	const set_value = ($el, value) => {
-		const trimmedValue = (value + '').trim();
+		const trimmedValue = (`${value  }`).trim();
 		let colorValue;
 		let opacity = 0;
-		if (/^\#[0-9A-F]{8}$/gi.test(trimmedValue)) {
+		if (/^#[0-9A-F]{8}$/gi.test(trimmedValue)) {
 			// Hex with alpha
 			colorValue = trimmedValue.slice(0, 7);
 			opacity = 1 - (parseInt(value.slice(7, 9), 16) * (1 / 255));
-		} else if (/^\#[0-9A-F]{6}$/gi.test(trimmedValue)) {
+		} else if (/^#[0-9A-F]{6}$/gi.test(trimmedValue)) {
 			// Hex without alpha
 			colorValue = trimmedValue;
 		} else {
@@ -99,7 +97,7 @@ const Helper = new Helper_class();
 	};
 
 	$.fn.uiColorInput = function(behavior, ...args) {
-		let returnValues = [];
+		const returnValues = [];
 		for (let i = 0; i < this.length; i++) {
 			let el = this[i];
 
@@ -114,7 +112,6 @@ const Helper = new Helper_class();
 				const value = definition.value != null ? definition.value : el.value || 0;
 				const ariaLabeledBy = el.getAttribute('aria-labelledby');
 
-				let $el;
 				if (el.parentNode) {
 					$(el).after(template);
 					const oldEl = el;
@@ -126,7 +123,7 @@ const Helper = new Helper_class();
 					el = orphanedParent.firstElementChild;
 				}
 				this[i] = el;
-				$el = $(el);
+				const $el = $(el);
 
 				const input = $el.find('input[type="color"]')[0];
 				const overlay = $el.find('.alpha_overlay')[0];

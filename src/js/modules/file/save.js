@@ -11,7 +11,7 @@ import File_save_action_class from './save-action.js';
 import File_save_size_class from './save-size.js';
 import { filter_supported_types } from './../../libs/export-formats.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * manages files / save
@@ -61,8 +61,8 @@ class File_save_class {
 	 * saves as non destructive mode (including layers, RAW)
 	 */
 	save(){
-		var types = JSON.parse(JSON.stringify(this.SAVE_TYPES));
-		for(var i in types){
+		const types = JSON.parse(JSON.stringify(this.SAVE_TYPES));
+		for(const i in types){
 			if(i != 'JSON'){
 				delete types[i];
 			}
@@ -76,7 +76,7 @@ class File_save_class {
 	 * save as encoded image
 	 */
 	export(){
-		var types = JSON.parse(JSON.stringify(this.SAVE_TYPES));
+		const types = JSON.parse(JSON.stringify(this.SAVE_TYPES));
 		delete types.JSON;
 
 		//only formats this browser can encode
@@ -87,20 +87,20 @@ class File_save_class {
 	 * saves the image at once without a dialog - in the format used last time (PNG by default)
 	 */
 	quick_export() {
-		var types = filter_supported_types(this.SAVE_TYPES);
+		const types = filter_supported_types(this.SAVE_TYPES);
 		delete types.JSON;
-		var type = this.Helper.getCookie('save_default');
+		let type = this.Helper.getCookie('save_default');
 		if (!types[type]) {
 			type = 'PNG';
 		}
-		var file_name = String(config.layers[0].name).split('.');
+		let file_name = String(config.layers[0].name).split('.');
 		if (file_name.length > 1) {
 			file_name.pop();
 		}
 		file_name = file_name.join('.').replace(/ /g, '-');
 		this.action_ops.save_action({
 			name: file_name,
-			type: type,
+			type,
 			layers: 'All',
 			quality: 90,
 			delay: 400,
@@ -108,13 +108,13 @@ class File_save_class {
 	}
 
 	save_general(file_types, title) {
-		var _this = this;
+		let i;
 
 		//find default format
-		var save_default = null;
-		var save_default_cookie = this.Helper.getCookie('save_default');
+		let save_default = null;
+		const save_default_cookie = this.Helper.getCookie('save_default');
 
-		for(var i in file_types) {
+		for(i in file_types) {
 			if(save_default_cookie == i){
 				save_default = i;
 				break;
@@ -123,37 +123,37 @@ class File_save_class {
 		if(save_default == null){
 			save_default = Object.keys(file_types)[0];
 		}
-		save_default = save_default + " - " + file_types[save_default];
+		save_default = `${save_default  } - ${  file_types[save_default]}`;
 
-		var calc_size_value = false;
-		var calc_size = false;
+		let calc_size_value = false;
+		let calc_size = false;
 		if (config.WIDTH * config.HEIGHT < 1000000) {
 			calc_size_value = true;
 			calc_size = true;
 		}
 
-		var file_name = config.layers[0].name;
-		var parts = file_name.split('.');
+		let file_name = config.layers[0].name;
+		const parts = file_name.split('.');
 		if (parts.length > 1)
 			file_name = parts[parts.length - 2];
 		file_name = file_name.replace(/ /g, "-");
 		file_name = this.Helper.escapeHtml(file_name);
 
-		var save_types = [];
-		for(var i in file_types) {
-			save_types.push(i + " - " + file_types[i]);
+		const save_types = [];
+		for(i in file_types) {
+			save_types.push(`${i  } - ${  file_types[i]}`);
 		}
 
-		var save_layers_types = [
+		const save_layers_types = [
 			'All',
 			'Selected',
 			'Separated',
 			'Separated (original types)',
 		];
-		var resolution = this.Tools_settings.get_setting('resolution');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
-		var settings = {
-			title: title,
+		const settings = {
+			title,
 			params: [
 				{name: "name", title: "File name:", value: file_name},
 				{name: "type", title: "Save as type:", type: "select", values: save_types, value: save_default},
@@ -164,27 +164,27 @@ class File_save_class {
 				{name: "layers", title: "Save layers:", values: save_layers_types},
 				{name: "delay", title: "Gif delay:", value: 400},
 			],
-			on_change: function (params, canvas_preview, w, h) {
-				_this.save_dialog_onchange(true);
+			on_change: () => {
+				this.save_dialog_onchange(true);
 			},
-			on_finish: function (params) {
+			on_finish: (params) => {
 				if (params.layers == 'Separated' || params.layers == 'Separated (original types)') {
-					var active_layer = config.layer.id;
-					var original_layer_type = params.layers;
+					const active_layer = config.layer.id;
+					const original_layer_type = params.layers;
 
 					//alter params
 					params.layers = 'Selected';
 
-					for (var i in config.layers) {
+					for (const i in config.layers) {
 						if (config.layers[i].visible == false)
 							continue;
 
 						//detect type
 						if (original_layer_type == 'Separated (original types)') {
 							//detect type from file name
-							params.type = _this.SAVE_TYPES[_this.default_extension];
-							for (var j in _this.SAVE_TYPES) {
-								if (_this.Helper.strpos(config.layers[i].name.toLowerCase(), '.' + j.toLowerCase()) !== false) {
+							params.type = this.SAVE_TYPES[this.default_extension];
+							for (const j in this.SAVE_TYPES) {
+								if (this.Helper.strpos(config.layers[i].name.toLowerCase(), `.${  j.toLowerCase()}`) !== false) {
 									params.type = j;
 									break;
 								}
@@ -192,12 +192,12 @@ class File_save_class {
 						}
 
 						new app.Actions.Select_layer_action(config.layers[i].id, true).do();
-						_this.save_action(params, true);
+						this.save_action(params, true);
 					}
 					new app.Actions.Select_layer_action(active_layer, true).do();
 				}
 				else {
-					_this.save_action(params);
+					this.save_action(params);
 				}
 			},
 		};
@@ -215,14 +215,14 @@ class File_save_class {
 	}
 
 	save_data_url() {
-		var max = 10 * 1000 * 1000;
+		let max = 10 * 1000 * 1000;
 		if (config.WIDTH * config.WIDTH > 10 * 1000 * 1000) {
-			alertify.error(t('Size is too big, max ') + this.Helper.number_format(max, 0) + ' pixels.');
+			alertify.error(`${t('Size is too big, max ') + this.Helper.number_format(max, 0)  } pixels.`);
 			return;
 		}
 
-		var canvas = document.createElement('canvas');
-		var ctx = canvas.getContext("2d");
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext("2d");
 		canvas.width = config.WIDTH;
 		canvas.height = config.HEIGHT;
 
@@ -230,15 +230,15 @@ class File_save_class {
 
 		//ask data
 		this.Base_layers.convert_layers_to_canvas(ctx, null, false);
-		var data_url = canvas.toDataURL();
+		const data_url = canvas.toDataURL();
 
 		max = 1000 * 1000;
 		if (data_url.length > max) {
-			alertify.error(t('Size is too big, max ') + this.Helper.number_format(max, 0) + ' bytes.');
+			alertify.error(`${t('Size is too big, max ') + this.Helper.number_format(max, 0)  } bytes.`);
 			return;
 		}
 
-		var settings = {
+		const settings = {
 			title: 'Data URL',
 			params: [
 				{name: "url", title: "URL:", type: "textarea", value: data_url},

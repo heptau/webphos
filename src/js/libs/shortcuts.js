@@ -24,16 +24,16 @@ export function match_shortcut(event, shortcut) {
 	if (!event || !shortcut || typeof event.key != 'string') {
 		return false;
 	}
-	var ctrl = Boolean(event.ctrlKey || event.metaKey);
+	const ctrl = Boolean(event.ctrlKey || event.metaKey);
 	if (ctrl != Boolean(shortcut.ctrl)
 		|| (shortcut.shift !== 'any' && Boolean(event.shiftKey) != Boolean(shortcut.shift))
 		|| Boolean(event.altKey) != Boolean(shortcut.alt)) {
 		return false;
 	}
 
-	var keys = Array.isArray(shortcut.key) ? shortcut.key : [shortcut.key];
-	var event_key = event.key.toLowerCase();
-	for (var i in keys) {
+	const keys = Array.isArray(shortcut.key) ? shortcut.key : [shortcut.key];
+	const event_key = event.key.toLowerCase();
+	for (const i in keys) {
 		if (String(keys[i]).toLowerCase() == event_key) {
 			return true;
 		}
@@ -41,12 +41,12 @@ export function match_shortcut(event, shortcut) {
 	//fallback for layouts where key produces non-latin character (e.g. digits on Czech keyboard),
 	//use physical key then. Latin keys are trusted so QWERTZ "z" is not confused with "y".
 	if (typeof event.code == 'string' && /^[a-z0-9]$/.test(event_key) == false) {
-		for (var j in keys) {
-			var key = String(keys[j]);
-			if (/^[0-9]$/.test(key) && event.code == 'Digit' + key) {
+		for (const j in keys) {
+			const key = String(keys[j]);
+			if (/^[0-9]$/.test(key) && event.code == `Digit${  key}`) {
 				return true;
 			}
-			if (/^[a-z]$/i.test(key) && event.code == 'Key' + key.toUpperCase()) {
+			if (/^[a-z]$/i.test(key) && event.code == `Key${  key.toUpperCase()}`) {
 				return true;
 			}
 			if (CODE_FALLBACK[key] != undefined && event.code == CODE_FALLBACK[key]) {
@@ -75,7 +75,7 @@ export function has_modifier(event) {
  * @returns {object|null}
  */
 export function find_shortcut(event, definitions) {
-	for (var i in definitions) {
+	for (const i in definitions) {
 		if (match_shortcut(event, definitions[i])) {
 			return definitions[i];
 		}
@@ -104,18 +104,18 @@ export function format_shortcut_mac(text) {
 	if (typeof text != 'string' || text == '') {
 		return '';
 	}
-	var parts = text.split(/\s*\+\s*/);
+	const parts = text.split(/\s*\+\s*/);
 	//"Ctrl++" is split into an empty last part - the key is "+"
 	if (parts.length > 1 && parts[parts.length - 1] == '') {
 		parts.pop();
 		parts[parts.length - 1] = '+';
 	}
-	var key = parts.pop();
-	var has = {};
-	for (var i in parts) {
+	const key = parts.pop();
+	const has = {};
+	for (const i in parts) {
 		has[parts[i].toLowerCase()] = true;
 	}
-	var out = '';
+	let out = '';
 	if (has.alt || has.option) {
 		out += '⌥';
 	}
@@ -125,7 +125,7 @@ export function format_shortcut_mac(text) {
 	if (has.ctrl || has.cmd) {
 		out += '⌘';
 	}
-	var symbol = MAC_KEY_SYMBOLS[key.toLowerCase()];
+	const symbol = MAC_KEY_SYMBOLS[key.toLowerCase()];
 	return out + (symbol != undefined ? symbol : key.toUpperCase());
 }
 
@@ -133,11 +133,11 @@ export function format_shortcut_mac(text) {
  * @returns {boolean} true when running on macOS
  */
 export function is_mac_platform() {
-	var nav = typeof navigator != 'undefined' ? navigator : null;
+	const nav = typeof navigator != 'undefined' ? navigator : null;
 	if (!nav) {
 		return false;
 	}
-	var platform = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || '';
+	const platform = (nav.userAgentData && nav.userAgentData.platform) || nav.platform || '';
 	return /mac/i.test(platform);
 }
 
@@ -151,7 +151,7 @@ const NOT_TEXT_INPUTS = ['checkbox', 'radio', 'range', 'color', 'button', 'submi
  * @returns {boolean}
  */
 export function is_typing_target(element) {
-	var el = /** @type {any} */ (element);
+	const el = /** @type {any} */ (element);
 	if (!el || typeof el.tagName !== 'string') {
 		return false;
 	}

@@ -10,7 +10,7 @@ import { t } from '../tools/translate.js';
 class Layer_lock_class {
 
 	toggle() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type == null) {
 			alertify.error(t('Layer is empty.'));
 			return;

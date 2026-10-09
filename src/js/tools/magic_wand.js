@@ -33,11 +33,11 @@ class Magic_wand_class extends Base_mask_tool_class {
 	}
 
 	async mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false || mouse.valid == false || this.working) {
 			return;
 		}
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer.type != 'image') {
 			alertify.error(t('This layer must contain an image. Please convert it to raster to apply this tool.'));
 			return;
@@ -47,12 +47,12 @@ class Magic_wand_class extends Base_mask_tool_class {
 			return;
 		}
 
-		var params = this.getParams();
+		const params = this.getParams();
 		this.working = true;
 		try {
-			var Edit_selection = this.Edit_selection || (this.Edit_selection = new Edit_selection_class());
-			var image = Edit_selection.layer_on_canvas(layer);
-			var mask = magic_wand_mask(image, mouse.x, mouse.y, params.tolerance, Boolean(params.contiguous));
+			const Edit_selection = this.Edit_selection || (this.Edit_selection = new Edit_selection_class());
+			const image = Edit_selection.layer_on_canvas(layer);
+			const mask = magic_wand_mask(image, mouse.x, mouse.y, params.tolerance, Boolean(params.contiguous));
 			await this.commit_mask(mask, e);
 		}
 		finally {

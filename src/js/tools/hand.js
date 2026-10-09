@@ -15,7 +15,7 @@ class Hand_class extends Base_tools_class {
 	}
 
 	load() {
-		var wrapper = function () {
+		const wrapper = function () {
 			return document.getElementById('main_wrapper');
 		};
 

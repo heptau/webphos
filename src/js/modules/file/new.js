@@ -8,9 +8,9 @@ import Tools_settings_class from './../tools/settings.js';
 import { UNIT_NAMES, is_unit, to_pixels, from_pixels, clamp_dpi } from './../../libs/units.js';
 import { link_unit_fields } from './../../libs/dialog-units.js';
 
-/** 
+/**
  * manages files / new
- * 
+ *
  * @author ViliusL
  */
 class File_new_class {
@@ -24,41 +24,41 @@ class File_new_class {
 	}
 
 	new () {
-		var _this = this;
-		var width = config.WIDTH;
-		var height = config.HEIGHT;
-		var common_dimensions = this.Base_gui.common_dimensions;
-		var resolution_types = ['Custom'];
+		let transparency;
+		let width = config.WIDTH;
+		let height = config.HEIGHT;
+		const common_dimensions = this.Base_gui.common_dimensions;
+		const resolution_types = ['Custom'];
 		//a new document starts with the defaults from Settings
-		var units = this.Tools_settings.get_setting('default_units', true);
-		var resolution = this.Tools_settings.get_default_resolution();
+		const units = this.Tools_settings.get_setting('default_units', true);
+		const resolution = this.Tools_settings.get_default_resolution();
 
-		for (var i in common_dimensions) {
-			var value = common_dimensions[i];
-			resolution_types.push(value[0] + 'x' + value[1] + ' - ' + value[2]);
+		for (const i in common_dimensions) {
+			const value = common_dimensions[i];
+			resolution_types.push(`${value[0]  }x${value[1]} - ${  value[2]}`);
 		}
-		for (var j in this.Base_gui.preset_dimensions) {
-			var preset = this.Base_gui.preset_dimensions[j];
-			resolution_types.push(preset[0] + 'x' + preset[1] + ' - ' + preset[2]);
+		for (const j in this.Base_gui.preset_dimensions) {
+			const preset = this.Base_gui.preset_dimensions[j];
+			resolution_types.push(`${preset[0]  }x${preset[1]} - ${  preset[2]}`);
 		}
 
-		var transparency_cookie = this.Helper.getCookie('transparency');
+		let transparency_cookie = this.Helper.getCookie('transparency');
 		if (transparency_cookie === null) {
 			//default
 			transparency_cookie = false;
 		}
 		if (transparency_cookie) {
-			var transparency = true;
+			transparency = true;
 		}
 		else {
-			var transparency = false;
+			transparency = false;
 		}
 
 		//convert units
 		width = from_pixels(width, units, resolution);
 		height = from_pixels(height, units, resolution);
 
-		var settings = {
+		const settings = {
 			title: 'New file',
 			params: [
 				{name: "resolution_type", title: "Preset:", type: "select", values: resolution_types},
@@ -70,8 +70,8 @@ class File_new_class {
 				{title: "Pixels:", html: '<span id="new_pixels">-</span>'},
 				{name: "transparency", title: "Transparent:", value: transparency},
 			],
-			on_finish: function (params) {
-				_this.new_handler(params);
+			on_finish: (params) => {
+				this.new_handler(params);
 			},
 		};
 		this.POP.show(settings);
@@ -82,40 +82,39 @@ class File_new_class {
 	 * preset and layout fill the width / height fields (like in Photoshop), typing a size selects "Custom"
 	 */
 	link_fields() {
-		var _this = this;
-		var field = function (name) {
-			return document.getElementById('pop_data_' + name);
+		const field = function (name) {
+			return document.getElementById(`pop_data_${  name}`);
 		};
-		var linked = link_unit_fields({width: 'width', height: 'height', units: 'units', dpi: 'dpi'}, 'new_pixels');
-		var preset_size = function () {
-			var match = /^(\d+)x(\d+)/.exec(field('resolution_type').value);
+		const linked = link_unit_fields({width: 'width', height: 'height', units: 'units', dpi: 'dpi'}, 'new_pixels');
+		const preset_size = function () {
+			const match = /^(\d+)x(\d+)/.exec(field('resolution_type').value);
 			return match ? [parseInt(match[1], 10), parseInt(match[2], 10)] : null;
 		};
-		var apply_layout = function (w, h) {
-			var layout = field('layout').value;
+		const apply_layout = function (w, h) {
+			const layout = field('layout').value;
 			if ((layout == 'Portrait' && w > h) || (layout == 'Landscape' && h > w)) {
 				return [h, w];
 			}
 			return [w, h];
 		};
 
-		field('resolution_type').addEventListener('change', function () {
-			var size = preset_size();
+		field('resolution_type').addEventListener('change', () => {
+			const size = preset_size();
 			if (size) {
-				var oriented = apply_layout(size[0], size[1]);
+				const oriented = apply_layout(size[0], size[1]);
 				linked.set_pixels(oriented[0], oriented[1]);
 			}
 		});
-		field('layout').addEventListener('change', function () {
-			var size = preset_size() || linked.get_pixels();
+		field('layout').addEventListener('change', () => {
+			const size = preset_size() || linked.get_pixels();
 			if (isNaN(size[0]) || isNaN(size[1])) {
 				return;
 			}
-			var oriented = apply_layout(size[0], size[1]);
+			const oriented = apply_layout(size[0], size[1]);
 			linked.set_pixels(oriented[0], oriented[1]);
 		});
-		['width', 'height', 'dpi', 'units'].forEach(function (name) {
-			field(name).addEventListener('input', function () {
+		['width', 'height', 'dpi', 'units'].forEach((name) => {
+			field(name).addEventListener('input', () => {
 				if (name != 'units' && name != 'dpi') {
 					field('resolution_type').value = 'Custom';
 				}
@@ -132,7 +131,7 @@ class File_new_class {
 	 */
 	async create_document(width, height, transparency, physical) {
 		//the current project stays in its own document tab
-		var rollback = app.GUI.GUI_documents.before_new();
+		const rollback = app.GUI.GUI_documents.before_new();
 
 		try {
 			await app.State.do_action(
@@ -168,7 +167,7 @@ class File_new_class {
 		//undo of the new project must not bring the previous document back
 		await app.GUI.GUI_documents.clear_history();
 		//creating the document is not a change of the document
-		var created = app.GUI.GUI_documents.documents[app.GUI.GUI_documents.active];
+		const created = app.GUI.GUI_documents.documents[app.GUI.GUI_documents.active];
 		if (created) {
 			created.dirty = false;
 			app.GUI.GUI_documents.render();
@@ -182,19 +181,19 @@ class File_new_class {
 	}
 
 	async new_handler(response) {
-		var transparency = response.transparency;
-		var units = is_unit(response.units) ? response.units : this.Tools_settings.get_setting('default_units');
-		var dpi = clamp_dpi(response.dpi);
+		const transparency = response.transparency;
+		const units = is_unit(response.units) ? response.units : this.Tools_settings.get_setting('default_units');
+		const dpi = clamp_dpi(response.dpi);
 
 		//the preset and layout already filled the fields, so the fields are the single source of the size
-		var width = to_pixels(response.width, units, dpi);
-		var height = to_pixels(response.height, units, dpi);
+		const width = to_pixels(response.width, units, dpi);
+		const height = to_pixels(response.height, units, dpi);
 
 		if (isNaN(width) || isNaN(height) || width < 1 || height < 1) {
 			return;
 		}
 
-		await this.create_document(width, height, transparency, {dpi: dpi, units: units});
+		await this.create_document(width, height, transparency, {dpi, units});
 
 		// Save transparency
 		if (transparency) {

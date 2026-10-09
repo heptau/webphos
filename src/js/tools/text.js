@@ -1,7 +1,6 @@
 import { warp_settings, warp_text } from './../libs/text-warp.js';
 import app from './../app.js';
 import config from './../config.js';
-import zoomView from './../libs/zoomView.js';
 import Base_tools_class from './../core/base-tools.js';
 import Base_selection_class from './../core/base-selection.js';
 import Base_layers_class from './../core/base-layers.js';
@@ -58,7 +57,7 @@ function load_font_family({ family, variants }, successCallback) {
 		const loadPromise = new Promise((resolve, reject) => {
 			WebFont.load({
 				google: {
-					families: [family + (variants ? ':' + variants.join(',') : '')]
+					families: [family + (variants ? `:${  variants.join(',')}` : '')]
 				},
 				fontactive: (family) => {
 					fontLoadMap.set(family, true);
@@ -66,7 +65,7 @@ function load_font_family({ family, variants }, successCallback) {
 					resolve();
 				},
 				fontinactive: (family) => {
-					alertify.error(t('Font ') + family + ' could not be loaded.');
+					alertify.error(`${t('Font ') + family  } could not be loaded.`);
 					fontLoadPromiseMap.delete(family);
 					reject();
 				}
@@ -105,7 +104,7 @@ class Font_metrics_class {
 		const body = document.body;
 		line.style.position = 'absolute';
 		line.style.whiteSpace = 'nowrap';
-		line.style.font = size + 'px ' + family;
+		line.style.font = `${size  }px ${  family}`;
 		body.appendChild(line);
 
 		// Now we can measure width and height of the letter
@@ -140,8 +139,8 @@ class Font_metrics_class {
 		kerningTestCanvas.height = this.height;
 		kerningTestCtx.clearRect(0, 0, this.width, this.height);
 		kerningTestCtx.font =
-		' ' + (this.size) + 'px' +
-		' ' + this.family;
+		` ${this.size}px` +
+		` ${  this.family}`;
 		kerningTestCtx.textAlign = 'left';
 		kerningTestCtx.textBaseline = baseline;
 		kerningTestCtx.fillStyle = '#000000';
@@ -173,17 +172,15 @@ class Font_metrics_class {
 
 	/**
 	 * Calculate the kerning offset between two letters.
-	 * @param {string} letters - a two character string of the two letters to determine font kerning from. Returns the kerning offset that should be used to draw the 2nd letter. 
+	 * @param {string} letters - a two character string of the two letters to determine font kerning from. Returns the kerning offset that should be used to draw the 2nd letter.
 	 * @param {object} flags - font style, such as bold or italic
 	 */
 	get_kerning_offset(letters, flags = {}) {
 		let offset = this.kerningMap.get(letters);
 		if (offset == null) {
 			kerningTestCtx.font =
-			' ' + (flags.italic ? 'italic' : '') +
-			' ' + (flags.bold ? 'bold' : '') +
-			' ' + (this.size) + 'px' +
-			' ' + this.family;
+			` ${flags.italic ? 'italic' : ''} ${flags.bold ? 'bold' : ''} ${this.size}px` +
+			` ${  this.family}`;
 			offset = kerningTestCtx.measureText(letters).width - (kerningTestCtx.measureText(letters[0]).width + kerningTestCtx.measureText(letters[1]).width);
 			this.kerningMap.set(letters, offset);
 		}
@@ -217,7 +214,7 @@ class Text_document_class {
 	get_line_character_count(lineNumber) {
 		return this.get_line_text(lineNumber).length;
 	}
-	
+
 	/**
 	 * Returns the text string at a given line (ignores formatting).
 	 * @param {number} lineNumber - The number of the line to get the text from
@@ -229,10 +226,10 @@ class Text_document_class {
 		}
 		return lineText;
 	}
-	
+
 	/**
 	 * Returns the position of the end of the the word at the line/character provided
-	 * @param {number} line - The reference line number (0 indexed) 
+	 * @param {number} line - The reference line number (0 indexed)
 	 * @param {number} character - The reference character position (0 indexed)
 	 * @param {boolean} noJump - Dont jump to the next word if at the end of current one
 	 */
@@ -269,7 +266,7 @@ class Text_document_class {
 
 	/**
 	 * Returns the position of the start of the the word at the line/character provided
-	 * @param {number} line - The reference line number (0 indexed) 
+	 * @param {number} line - The reference line number (0 indexed)
 	 * @param {number} character - The reference character position (0 indexed)
 	 * @param {boolean} noJump - Dont jump to the next word if at the end of current one
 	 */
@@ -306,7 +303,7 @@ class Text_document_class {
 			character: newCharacter
 		}
 	}
-	
+
 	/**
 	 * Determine if the metadata (formatting) of two text spans is the same, usually used to determine if the spans can be merged together.
 	 */
@@ -331,20 +328,20 @@ class Text_document_class {
 
 	/**
 	 * Inserts a span with empty text in the document at the specified line and character position
-	 * @param {number} line - The line number to insert at (0 indexed) 
+	 * @param {number} line - The line number to insert at (0 indexed)
 	 * @param {number} character - The character position to insert at (0 indexed)
 	 * @param {object} meta - Metadata to associate with span
 	 */
 	insert_empty_span(line, character, meta) {
 		let insertedSpan = null;
 		const lineDef = this.lines[line];
-		let newLine = [];
+		const newLine = [];
 		let spanStartCharacter = 0;
 		let wasInserted = false;
-		for (let span of lineDef) {
+		for (const span of lineDef) {
 			if (!wasInserted && character >= spanStartCharacter && character <= spanStartCharacter + span.text.length) {
-				let textBefore = span.text.slice(0, character - spanStartCharacter);
-				let textAfter = span.text.slice(character - spanStartCharacter);
+				const textBefore = span.text.slice(0, character - spanStartCharacter);
+				const textAfter = span.text.slice(character - spanStartCharacter);
 				if (textBefore.length > 0) {
 					newLine.push({
 						text: textBefore,
@@ -352,7 +349,7 @@ class Text_document_class {
 					});
 				}
 				const newMeta = JSON.parse(JSON.stringify(span.meta));
-				for (let metaKey in meta) {
+				for (const metaKey in meta) {
 					newMeta[metaKey] = meta[metaKey];
 				}
 				insertedSpan = {
@@ -375,18 +372,17 @@ class Text_document_class {
 		this.lines[line] = newLine;
 		return insertedSpan;
 	}
-	
+
 	/**
 	 * Inserts a text string in the document at the specified line and character position
 	 * @param {string} text - The text string to insert
-	 * @param {number} line - The line number to insert at (0 indexed) 
+	 * @param {number} line - The line number to insert at (0 indexed)
 	 * @param {number} character - The character position to insert at (0 indexed)
 	 */
 	insert_text(text, line, character) {
 
-		let insertedSpan;
 		if (this.queuedMetaChanges) {
-			insertedSpan = this.insert_empty_span(line, character, this.queuedMetaChanges);
+			this.insert_empty_span(line, character, this.queuedMetaChanges);
 			this.queuedMetaChanges = null;
 		}
 
@@ -394,8 +390,8 @@ class Text_document_class {
 		const textHasNewline = text.includes('\n');
 		let characterCount = 0;
 		let modifyingSpan = null;
-		let previousSpans = [];
-		let nextSpans = [];
+		const previousSpans = [];
+		const nextSpans = [];
 		let newLine = line;
 		let newCharacter = character;
 
@@ -462,7 +458,7 @@ class Text_document_class {
 			character: newCharacter
 		};
 	}
-	
+
 	/**
 	 * Deletes text withing the specified range
 	 * @param {number} startLine - The starting line of the text range
@@ -510,7 +506,7 @@ class Text_document_class {
 
 		// Get spans in end line after range
 		characterCount = 0;
-		let endSpan = null;    
+		let endSpan = null;
 		let endSpanDeleteIndex = 0;
 		for (let i = 0; i < this.lines[endLine].length; i++) {
 			const span = this.lines[endLine][i];
@@ -593,7 +589,7 @@ class Text_document_class {
 			character: startCharacter
 		};
 	}
-	
+
 	/**
 	 * Deletes a single character in front or behind the specified character position, handling deleting new lines, etc.
 	 * @param {boolean} forward - True if deleting the next character, otherwise deletes the previous character
@@ -603,7 +599,7 @@ class Text_document_class {
 	delete_character(forward, startLine, startCharacter) {
 		let endLine = startLine;
 		let endCharacter = startCharacter;
-		
+
 		// Delete forwards
 		if (forward) {
 			// If there are characters after cursor on this line we remove one
@@ -631,9 +627,9 @@ class Text_document_class {
 
 		return this.delete_range(startLine, startCharacter, endLine, endCharacter);
 	}
-	
+
 	/**
-	 * Retrieves a metadata summary object for the specified range of text. 
+	 * Retrieves a metadata summary object for the specified range of text.
 	 * @param {number} startLine - The starting line of the text range
 	 * @param {number} startCharacter - The character position at the starting line of the text range
 	 * @param {number} endLine - The ending line of the text range
@@ -707,7 +703,7 @@ class Text_document_class {
 	}
 
 	/**
-	 * Sets styling metadata for the specified range of text. 
+	 * Sets styling metadata for the specified range of text.
 	 * @param {number} startLine - The starting line of the text range
 	 * @param {number} startCharacter - The character position at the starting line of the text range
 	 * @param {number} endLine - The ending line of the text range
@@ -728,9 +724,9 @@ class Text_document_class {
 		let isInsideRange = false;
 		for (let lineIndex = startLine; lineIndex <= endLine; lineIndex++) {
 			const line = this.lines[lineIndex];
-			let newLine = [];
+			const newLine = [];
 			let spanStartCharacter = 0;
-			for (let span of line) {
+			for (const span of line) {
 				const spanText = span.text;
 				const spanLength = spanText.length;
 				if (lineIndex === startLine) {
@@ -784,14 +780,14 @@ class Text_document_class {
 	}
 
 	/**
-	 * Merges sibling spans that have the same metadata, and removes empty spans. 
+	 * Merges sibling spans that have the same metadata, and removes empty spans.
 	 * @param {number} startLine - The starting line of the text range
 	 * @param {number} endLine - The ending line of the text range
 	 */
 	normalize(startLine, endLine) {
 		for (let lineIndex = startLine; lineIndex <= endLine; lineIndex++) {
 			const line = this.lines[lineIndex];
-			let spanIndex = 0;
+			let spanIndex;
 			for (spanIndex = 0; spanIndex < line.length; spanIndex++) {
 				const span1 = line[spanIndex];
 				const span2 = line[spanIndex + 1];
@@ -832,7 +828,7 @@ class Text_selection_class {
 			line: 0,
 			character: 0
 		};
-		
+
 		this.end = {
 			line: 0,
 			character: 0
@@ -840,7 +836,7 @@ class Text_selection_class {
 
 		this.set_position(0, 0);
 	}
-	
+
 	/**
 	 * Returns if the current text selection contains no characters
 	 * @returns {boolean}
@@ -848,12 +844,12 @@ class Text_selection_class {
 	is_empty() {
 		return this.compare_position(this.start.line, this.start.character, this.end.line, this.end.character) === 0;
 	}
-	
+
 	/**
 	 * Determines the relative position of two line/character sets.
 	 * @param {number} line1
-	 * @param {number} character1 
-	 * @param {number} line2 
+	 * @param {number} character1
+	 * @param {number} line2
 	 * @param {number} character2
 	 * @returns {number} -1 if line1/character1 is less than line2/character2, 1 if greater, and 0 if equal
 	 */
@@ -872,12 +868,12 @@ class Text_selection_class {
 			}
 		}
 	}
-	
+
 	/**
 	 * Sets the head position of the selection to the specified line/character, optionally extends to selection to that position.
-	 * @param {number} line - The line number to set the selection to 
+	 * @param {number} line - The line number to set the selection to
 	 * @param {number} character - The character index to set the selection to
-	 * @param {boolean} [keepSelection] - If true, extends the current selection to the specified position. If false or undefined, sets an empty selection at that position. 
+	 * @param {boolean} [keepSelection] - If true, extends the current selection to the specified position. If false or undefined, sets an empty selection at that position.
 	 */
 	set_position(line, character, keepSelection) {
 		if (line == null) {
@@ -946,7 +942,7 @@ class Text_selection_class {
 			this.start_blinking();
 		}
 	}
-	
+
 	/**
 	 * Retrieves the position of the head of the selection (could be the start or end of the selection based on previous operations)
 	 * @returns {object} - { line, character }
@@ -975,7 +971,7 @@ class Text_selection_class {
 		const lastLine = positionCompare === 1 ? this.start.line : this.end.line;
 		const firstCharacter = positionCompare === 1 ? this.end.character : this.start.character;
 		const lastCharacter = positionCompare === 1 ? this.start.character : this.end.character;
-		let textLines = [];
+		const textLines = [];
 		for (let i = firstLine; i <= lastLine; i++) {
 			if (i === firstLine && i === lastLine) {
 				textLines.push(this.editor.document.get_line_text(i).slice(firstCharacter, lastCharacter));
@@ -989,10 +985,10 @@ class Text_selection_class {
 		}
 		return textLines.join('\n');
 	}
-	
+
 	/**
 	 * Sets the visibility of the selection in the editor.
-	 * @param {boolean} isVisible 
+	 * @param {boolean} isVisible
 	 */
 	set_visible(isVisible) {
 		if (this.isVisible != isVisible) {
@@ -1002,7 +998,7 @@ class Text_selection_class {
 
 	/**
 	 * Sets the visibility of the selection cursor in the editor.
-	 * @param {boolean} isVisible 
+	 * @param {boolean} isVisible
 	 */
 	set_cursor_visible(isVisible) {
 		if (this.isCursorVisible != isVisible) {
@@ -1015,7 +1011,7 @@ class Text_selection_class {
 			}
 		}
 	}
-	
+
 	/**
 	 * Starts the selection cursor blinking.
 	 */
@@ -1023,21 +1019,19 @@ class Text_selection_class {
 		clearInterval(this.blinkIntervalHandle);
 		this.blinkIntervalHandle = setInterval(this.blink.bind(this), this.blinkInterval);
 	}
-	
+
 	/**
 	 * Stops the selection cursor blinking.
 	 */
 	stop_blinking() {
 		clearInterval(this.blinkIntervalHandle);
 	}
-	
+
 	/**
 	 * Toggles the visibility of the selection cursor.
 	 */
 	blink() {
 		this.isBlinkVisible = !this.isBlinkVisible;
-		const firstLine = Math.min(this.start.line, this.end.line);
-		const lastLine = Math.max(this.start.line, this.end.line);
 		/*
 		this.editor.render({
 			lineStart: firstLine,
@@ -1046,10 +1040,10 @@ class Text_selection_class {
 		*/
 		// this.Base_layers.render();
 	}
-	
+
 	/**
 	 * Moves the cursor to a previous line.
-	 * @param {number} length - The number of lines to move 
+	 * @param {number} length - The number of lines to move
 	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_line_previous(length, keepSelection) {
@@ -1057,10 +1051,10 @@ class Text_selection_class {
 		const position = this.get_position();
 		this.set_position(position.line - length, null, keepSelection);
 	}
-	
+
 	/**
 	 * Moves the cursor to a next line.
-	 * @param {number} length - The number of lines to move 
+	 * @param {number} length - The number of lines to move
 	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_line_next(length, keepSelection) {
@@ -1068,10 +1062,10 @@ class Text_selection_class {
 		const position = this.get_position();
 		this.set_position(position.line + length, null, keepSelection);
 	}
-		
+
 	/**
 	 * Moves to the start of the current line.
-	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection 
+	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_line_start(keepSelection) {
 		const position = this.get_position();
@@ -1080,17 +1074,17 @@ class Text_selection_class {
 
 	/**
 	 * Moves to the end of the current line.
-	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection 
+	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_line_end(keepSelection) {
 		const position = this.get_position();
 		this.set_position(position.line, this.editor.document.get_line_character_count(position.line), keepSelection);
 	}
-	
+
 	/**
 	 * Moves the cursor to a character behind in the document, handles line wrapping.
-	 * @param {number} length - The number of characters to move 
-	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection 
+	 * @param {number} length - The number of characters to move
+	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_character_previous(length, keepSelection) {
 		length = length == null ? 1 : length;
@@ -1103,11 +1097,11 @@ class Text_selection_class {
 			this.set_position(position.line, position.character - length, keepSelection);
 		}
 	}
-	
+
 	/**
 	 * Moves the cursor to a character ahead in the document, handles line wrapping.
-	 * @param {number} length - The number of characters to move 
-	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection 
+	 * @param {number} length - The number of characters to move
+	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_character_next(length, keepSelection) {
 		length = length == null ? 1 : length;
@@ -1124,7 +1118,7 @@ class Text_selection_class {
 
 	/**
 	 * Moves the cursor to the beginning of the current word or previous word, handles line wrapping.
-	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection 
+	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_word_previous(keepSelection) {
 		const position = this.get_position();
@@ -1134,7 +1128,7 @@ class Text_selection_class {
 
 	/**
 	 * Moves the cursor to the end of the current word or next word, handles line wrapping.
-	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection 
+	 * @param {boolean} keepSelection - Whether to move to an empty selection or extend the current selection
 	 */
 	move_word_next(keepSelection) {
 		const position = this.get_position();
@@ -1182,7 +1176,7 @@ class Text_editor_class {
 		this.mouseSelectionMoveY = null;
 		this.mouseSelectionEdgeScrollInterval = null;
 		this.focused = false;
-		
+
 		// Text document for this editor
 		this.document = new Text_document_class();
 		this.document.lines = [[{ text: '', meta: {} }]];
@@ -1200,7 +1194,7 @@ class Text_editor_class {
 
 	/**
 	 * Sets the lines of the document (from layer data)
-	 * @param {array} lines 
+	 * @param {array} lines
 	 */
 	set_lines(lines) {
 		this.document.lines = lines || [[{ text: '', meta: {} }]];
@@ -1208,7 +1202,7 @@ class Text_editor_class {
 
 	/**
 	 * Returns the text string at a given line wrap (ignores formatting).
-	 * @param {object} wrap - The wrap definition 
+	 * @param {object} wrap - The wrap definition
 	 */
 	get_wrap_text(wrap) {
 		let wrapText = '';
@@ -1221,16 +1215,16 @@ class Text_editor_class {
 	/**
 	 * Calculates font metrics for the given span and returns it. Caches by default.
 	 * @param {object} span - The span to calculate metrics for
-	 * @param {boolean} noCache - Skip caching if the metrics is expected to change in the future (e.g. font family not loaded yet.) 
+	 * @param {boolean} noCache - Skip caching if the metrics is expected to change in the future (e.g. font family not loaded yet.)
 	 */
 	get_span_font_metrics(span, noCache) {
 		const fontSize = (span.meta.size || metaDefaults.size);
 		const fontName = (span.meta.family || metaDefaults.family);
-		let fontMetrics = fontMetricsMap.get(fontName + '_' + fontSize);
+		let fontMetrics = fontMetricsMap.get(`${fontName  }_${  fontSize}`);
 		if (!fontMetrics) {
 			fontMetrics = new Font_metrics_class(fontName, fontSize);
 			if (!noCache) {
-				fontMetricsMap.set(fontName + '_' + fontSize, fontMetrics);
+				fontMetricsMap.set(`${fontName  }_${  fontSize}`, fontMetrics);
 			}
 		}
 		return fontMetrics;
@@ -1241,8 +1235,8 @@ class Text_editor_class {
 	 */
 	get_complete_text() {
 		let completeText = '';
-		for (let line of this.document.lines) {
-			for (let span of line) {
+		for (const line of this.document.lines) {
+			for (const span of line) {
 					completeText += span.text;
 			}
 			if (this.document.lines.indexOf(line) !== this.document.lines.length - 1) {
@@ -1254,12 +1248,12 @@ class Text_editor_class {
 
 	replace_entire_IME_text(beforeTempText, newText) {
 		const cursorPosition = this.selection.get_position();
-		let allText = beforeTempText;
-		let lines = allText.split('\n');
-		let currentLineText = lines[cursorPosition.line];
-		let beforeText = currentLineText.substring(0, cursorPosition.character);
-		let afterText = currentLineText.substring(cursorPosition.character);
-		let updatedLineText = beforeText + newText + afterText;
+		const allText = beforeTempText;
+		const lines = allText.split('\n');
+		const currentLineText = lines[cursorPosition.line];
+		const beforeText = currentLineText.substring(0, cursorPosition.character);
+		const afterText = currentLineText.substring(cursorPosition.character);
+		const updatedLineText = beforeText + newText + afterText;
 		lines[cursorPosition.line] = updatedLineText;
 
 		const newLines = lines.map(lineText => {
@@ -1271,9 +1265,9 @@ class Text_editor_class {
 
 	set_IME_position(newText) {
 		const cursorPosition = this.selection.get_position();
-		let newTextLines = newText.split('\n');
-		let newCursorLine = cursorPosition.line + newTextLines.length - 1;
-		let newCursorCharacter = newText.length;
+		const newTextLines = newText.split('\n');
+		const newCursorLine = cursorPosition.line + newTextLines.length - 1;
+		const newCursorCharacter = newText.length;
 		this.selection.set_position(newCursorLine, newCursorCharacter + cursorPosition.character);
 		this.hasValueChanged = true;
 	}
@@ -1289,7 +1283,7 @@ class Text_editor_class {
 		this.selection.set_position(newPosition.line, newPosition.character);
 		this.hasValueChanged = true;
 	}
-	
+
 	delete_character_at_current_position(forward) {
 		let newPosition;
 		if (this.selection.is_empty()) {
@@ -1308,7 +1302,7 @@ class Text_editor_class {
 	}
 
 	delete_selection() {
-		let newPosition = this.document.delete_range(
+		const newPosition = this.document.delete_range(
 			this.selection.start.line,
 			this.selection.start.character,
 			this.selection.end.line,
@@ -1327,7 +1321,7 @@ class Text_editor_class {
 		this.mouseSelectionStartCharacter = cursorStart.character;
 		this.selection.set_position(cursorStart.line, cursorStart.character, false);
 	}
-	
+
 	trigger_cursor_move(layer, layerX, layerY) {
 		const isInsideCanvas = true; // layerX > 0 && layerY > 0 && layerX < this.lastCalculatedLayerWidth && layerY < this.lastCalculatedLayerHeight;
 		if (this.isMouseSelectionActive && isInsideCanvas) {
@@ -1338,33 +1332,32 @@ class Text_editor_class {
 			this.selection.set_position(cursorEnd.line, cursorEnd.character, true);
 		}
 	}
-	
+
 	trigger_cursor_end() {
 		this.isMouseSelectionActive = false;
 		this.mouseSelectionMoveX = null;
 		this.mouseSelectionMoveY = null;
 	}
-	
+
 	get_cursor_position_from_absolute_position(layer, x, y) {
 		let line = -1;
 		let character = -1;
 
 		if (this.lineRenderInfo) {
 			const textDirection = layer.params.text_direction;
-			const wrapDirection = layer.params.wrap_direction;
 			const isHorizontalTextDirection = ['ltr', 'rtl'].includes(textDirection);
-			const isNegativeTextDirection = ['rtl', 'btt'].includes(textDirection);
+			['rtl', 'btt'].includes(textDirection);
 
-			let characterPosition = isHorizontalTextDirection ? x : y;
-			let wrapPosition = isHorizontalTextDirection ? y : x;
-			
+			const characterPosition = isHorizontalTextDirection ? x : y;
+			const wrapPosition = isHorizontalTextDirection ? y : x;
+
 			const wrapSizes = this.lineRenderInfo.wrapSizes;
 			let wrapRelativeIndex = -1;
-		
+
 			let globalWrapIndex = 0;
-			for (let [lineIndex, lineInfo] of this.lineRenderInfo.lines.entries()) {
+			for (const [lineIndex, lineInfo] of this.lineRenderInfo.lines.entries()) {
 				wrapRelativeIndex = 0;
-				for (let wrap of lineInfo.wraps) {
+				for (const _wrap of lineInfo.wraps) {
 					if (wrapPosition < wrapSizes[globalWrapIndex].offset + wrapSizes[globalWrapIndex].size) {
 						line = lineIndex;
 						break;
@@ -1411,30 +1404,28 @@ class Text_editor_class {
 	calculate_text_placement(ctx, layer) {
 		const boundary = layer.params.boundary;
 		const textDirection = layer.params.text_direction;
-		const wrapDirection = layer.params.wrap_direction;
 		const halign = layer.params.halign;
 		const valign = layer.params.valign;
 		const isHorizontalTextDirection = ['ltr', 'rtl'].includes(textDirection);
-		const isNegativeTextDirection = ['rtl', 'btt'].includes(textDirection);
+		['rtl', 'btt'].includes(textDirection);
 
 		let totalTextDirectionSize = 0;
-		let totalWrapDirectionSize = 0;
-		let textDirectionMaxSize = isHorizontalTextDirection ? layer.width : layer.height;
+		const textDirectionMaxSize = isHorizontalTextDirection ? layer.width : layer.height;
 
 		// Determine new lines based on text wrapping, if applicable
-		let lineRenderInfo = {
+		const lineRenderInfo = {
 			wrapSizes: [],
 			lines: []
 		};
-		for (let line of this.document.lines) {
+		for (const line of this.document.lines) {
 			let wrapAccumulativeSize = 0;
 			let wrapCharacterOffsets = [0];
-			let lineWraps = [];
+			const lineWraps = [];
 			let currentWrapSpans = [...line];
-			let s = 0;
-			let fontMetrics = null;
-			let character = null;
-			let nextCharacter = null;
+			let s;
+			let fontMetrics;
+			let character;
+			let nextCharacter;
 			let fontKerning = 0;
 			for (s = 0; s < currentWrapSpans.length; s++) {
 				const span = currentWrapSpans[s];
@@ -1444,10 +1435,8 @@ class Text_editor_class {
 				fontMetrics = this.get_span_font_metrics(span, !fontLoadMap.get(family));
 				if (isHorizontalTextDirection) {
 					ctx.font =
-						' ' + (span.meta.italic ? 'italic' : '') +
-						' ' + (span.meta.bold ? 'bold' : '') +
-						' ' + size + 'px' +
-						' ' + family;
+						` ${span.meta.italic ? 'italic' : ''} ${span.meta.bold ? 'bold' : ''} ${size}px` +
+						` ${  family}`;
 				}
 				for (let c = 0; c < span.text.length; c++) {
 					character = span.text[c];
@@ -1479,8 +1468,8 @@ class Text_editor_class {
 								break;
 							}
 						}
-						let beforeSpans = [];
-						let afterSpans = [];
+						let beforeSpans;
+						let afterSpans;
 						// Found a previous span on the current line wrap that contains a space, split the line
 						if (dividerPosition > -1) {
 							beforeSpans = currentWrapSpans.slice(0, bs);
@@ -1528,7 +1517,7 @@ class Text_editor_class {
 								});
 							}
 						}
-						let largestOffset = wrapCharacterOffsets[wrapCharacterOffsets.length-1];
+						const largestOffset = wrapCharacterOffsets[wrapCharacterOffsets.length-1];
 						if (largestOffset > totalTextDirectionSize) {
 							totalTextDirectionSize = largestOffset;
 						}
@@ -1552,7 +1541,7 @@ class Text_editor_class {
 				}
 			}
 			if (currentWrapSpans.length > 0) {
-				let largestOffset = wrapCharacterOffsets[wrapCharacterOffsets.length-1];
+				const largestOffset = wrapCharacterOffsets[wrapCharacterOffsets.length-1];
 				if (largestOffset > totalTextDirectionSize) {
 					totalTextDirectionSize = largestOffset;
 				}
@@ -1570,8 +1559,8 @@ class Text_editor_class {
 		// Adjust offsets for alignment along the text direction
 		if ((isHorizontalTextDirection && halign !== 'left') || (!isHorizontalTextDirection && valign !== 'top')) {
 			const maxTextDirectionSize = boundary === 'dynamic' ? totalTextDirectionSize : (isHorizontalTextDirection ? layer.width : layer.height);
-			for (let line of lineRenderInfo.lines) {
-				for (let wrap of line.wraps) {
+			for (const line of lineRenderInfo.lines) {
+				for (const wrap of line.wraps) {
 					const isCentered = (isHorizontalTextDirection && halign == 'center') || (!isHorizontalTextDirection && valign === 'middle');
 					const lastSpan = wrap.spans[wrap.spans.length - 1];
 					const wrapSize = wrap.characterOffsets[wrap.characterOffsets.length - 1 - (lastSpan.text[lastSpan.text.length - 1] === ' ' ? 1 : 0)];
@@ -1588,12 +1577,12 @@ class Text_editor_class {
 		// Determine the size of each line (e.g. line height if horizontal typing direction)
 		let wrapSizeAccumulator = 0;
 		let wrapCounter = 0;
-		for (let line of lineRenderInfo.lines) {
+		for (const line of lineRenderInfo.lines) {
 			line.firstWrapIndex = wrapCounter;
-			for (let wrap of line.wraps) {
+			for (const wrap of line.wraps) {
 				let ascenderSize = 0;
 				let descenderSize = 0;
-				for (let span of wrap.spans) {
+				for (const span of wrap.spans) {
 					const family = span.meta.family || metaDefaults.family;
 					const leading = span.meta.leading != null ? span.meta.leading : metaDefaults.leading;
 					const fontMetrics = this.get_span_font_metrics(span, !fontLoadMap.get(family));
@@ -1616,13 +1605,13 @@ class Text_editor_class {
 						descenderSize = spanDescenderSize;
 					}
 				}
-				let lineSize = ascenderSize + descenderSize;
+				const lineSize = ascenderSize + descenderSize;
 				lineRenderInfo.wrapSizes.push({ size: lineSize, offset: wrapSizeAccumulator, baseline: ascenderSize });
 				wrapSizeAccumulator += lineSize;
 				wrapCounter++;
 			}
 		}
-		totalWrapDirectionSize = wrapSizeAccumulator;
+		const totalWrapDirectionSize = wrapSizeAccumulator;
 
 		this.lastCalculatedLayerWidth = layer.width;
 		this.lastCalculatedLayerHeight = layer.height;
@@ -1640,19 +1629,18 @@ class Text_editor_class {
 
 		try {
 
-			let options = options || {};
-			let isSelectionEmpty = this.selection.is_empty();
+			const options = options || {};
+			const isSelectionEmpty = this.selection.is_empty();
 
 			ctx.textAlign = 'left';
 			ctx.textBaseline = 'alphabetic';
 
 			const boundary = layer.params.boundary;
-			let drawOffsetTop = layer.y + 1;
-			let drawOffsetLeft = layer.x + 1;
+			const drawOffsetTop = layer.y + 1;
+			const drawOffsetLeft = layer.x + 1;
 			const textDirection = layer.params.text_direction;
-			const wrapDirection = layer.params.wrap_direction;
 			const isHorizontalTextDirection = ['ltr', 'rtl'].includes(textDirection);
-			const isNegativeTextDirection = ['rtl', 'btt'].includes(textDirection);
+			['rtl', 'btt'].includes(textDirection);
 
 			const wrapSizes = this.lineRenderInfo.wrapSizes;
 			let lineIndex = 0;
@@ -1669,15 +1657,15 @@ class Text_editor_class {
 				ctx.translate(-layer.x - layer.width / 2, -layer.y - layer.height / 2);
 
 			}
-			for (let line of this.lineRenderInfo.lines) {
+			for (const line of this.lineRenderInfo.lines) {
 				let lineLetterCount = 0;
-				for (let [localWrapIndex, wrap] of line.wraps.entries()) {
+				for (const [localWrapIndex, wrap] of line.wraps.entries()) {
 					let cursorStartX = null;
 					let cursorStartY = null;
 					let cursorSize = null;
 					let characterIndex = 0;
 					const characterOffsets = wrap.characterOffsets;
-					for (let [spanIndex, span] of wrap.spans.entries()) {
+					for (const [spanIndex, span] of wrap.spans.entries()) {
 						const kerning = span.meta.kerning != null ? span.meta.kerning : metaDefaults.kerning;
 						const bold = span.meta.bold != null ? span.meta.bold : metaDefaults.bold;
 						const italic = span.meta.italic != null ? span.meta.italic : metaDefaults.italic;
@@ -1700,10 +1688,8 @@ class Text_editor_class {
 
 						// Set styles for drawing
 						ctx.font =
-							' ' + (italic ? 'italic' : '') +
-							' ' + (bold ? 'bold' : '') +
-							' ' + Math.round(span.meta.size || metaDefaults.size) + 'px' +
-							' ' + family;
+							` ${italic ? 'italic' : ''} ${bold ? 'bold' : ''} ${Math.round(span.meta.size || metaDefaults.size)}px` +
+							` ${  family}`;
 						const fill_color = span.meta.fill_color || metaDefaults.fill_color;
 						let fillStyle;
 						if (fill_color.startsWith('#')) {
@@ -1721,8 +1707,8 @@ class Text_editor_class {
 							ctx.lineWidth = 0;
 						}
 
-						
-						
+
+
 						// Loop through each letter in each span and draw it
 						for (let c = 0; c < span.text.length; c++) {
 							const letter = span.text.charAt(c);
@@ -1771,7 +1757,7 @@ class Text_editor_class {
 								const letterStartY = isHorizontalTextDirection ? lineStart : textDirectionOffset;
 								const letterSizeX = isHorizontalTextDirection ? letterWidth : letterHeight;
 								const letterSizeY = isHorizontalTextDirection ? letterHeight : letterWidth;
-								ctx.fillStyle = this.selectionBackgroundColor + '22';
+								ctx.fillStyle = `${this.selectionBackgroundColor  }22`;
 								ctx.fillRect(letterStartX, letterStartY, letterSizeX, letterSizeY);
 								ctx.strokeStyle = this.selectionBackgroundColor;
 								ctx.lineWidth = 0.75;
@@ -1799,7 +1785,7 @@ class Text_editor_class {
 							lineLetterCount++;
 						}
 
-						
+
 
 						if (span.text.length === 0) {
 							if (cursorLine === lineIndex && cursorCharacter === lineLetterCount) {
@@ -1901,13 +1887,13 @@ class Google_fonts_search_class {
 		html += `
 				</div>
 				<div class="pagination">
-					${page > 1 ? '<button title="Previous Page" data-page="' + (page - 1) + '">&laquo;</button>' : ''}
-					${page - 2 > 0 ? '<button title="Page ' + (page - 2) + '" data-page="' + (page - 2) + '">' + (page - 2) + '</button>' : ''}
-					${page - 1 > 0 ? '<button title="Page ' + (page - 1) + '" data-page="' + (page - 1) + '">' + (page - 1) + '</button>' : ''}
+					${page > 1 ? `<button title="Previous Page" data-page="${page - 1}">&laquo;</button>` : ''}
+					${page - 2 > 0 ? `<button title="Page ${page - 2}" data-page="${page - 2}">${page - 2}</button>` : ''}
+					${page - 1 > 0 ? `<button title="Page ${page - 1}" data-page="${page - 1}">${page - 1}</button>` : ''}
 					<button title="Page ${page}" aria-pressed="true" data-page="${page}">${page}</button>
-					${page + 1 <= pageCount ? '<button title="Page ' + (page + 1) + '" data-page="' + (page + 1) + '">' + (page + 1) + '</button>' : ''}
-					${page + 2 <= pageCount ? '<button title="Page ' + (page + 2) + '" data-page="' + (page + 2) + '">' + (page + 2) + '</button>' : ''}
-					${page < pageCount ? '<button title="Next Page" data-page="' + (page + 1) + '">&raquo;</button>' : ''}
+					${page + 1 <= pageCount ? `<button title="Page ${page + 1}" data-page="${page + 1}">${page + 1}</button>` : ''}
+					${page + 2 <= pageCount ? `<button title="Page ${page + 2}" data-page="${page + 2}">${page + 2}</button>` : ''}
+					${page < pageCount ? `<button title="Next Page" data-page="${page + 1}">&raquo;</button>` : ''}
 				</div>
 			</div>
 		`;
@@ -1922,7 +1908,7 @@ class Google_fonts_search_class {
 
 		// Handle checkbox
 		this.fontListNode.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
-			checkbox.addEventListener('change', (e) => {
+			checkbox.addEventListener('change', () => {
 				if (checkbox.checked) {
 					this.selectedFonts[checkbox.value] = this.fontListFiltered
 						.slice(startIndex, startIndex + this.fontsPerPage)
@@ -1948,10 +1934,10 @@ class Google_fonts_search_class {
 			],
 			on_load: (params, popup) => {
 				this.popup = popup;
-				var node = document.createElement("div");
+				const node = document.createElement("div");
 				this.dialogContentNode = popup.el.querySelector('.dialog_content');
 				this.dialogContentNode.appendChild(node);
-				this.fontListNode = node;				
+				this.fontListNode = node;
 
 				const queryInput = popup.el.querySelector('#pop_data_query');
 				queryInput.addEventListener('input', (e) => {
@@ -1979,7 +1965,7 @@ const apiKey = config.google_webfonts_key;
 				alertify.error(t('Google Web Fonts API key is not configured. Please set window.Google_Webfonts_API_Key before using font search.'));
 				return;
 			}
-			
+
 			// Rate limiting for Google Fonts API
 			if (!window._lastGoogleFontsRequest) {
 				window._lastGoogleFontsRequest = 0;
@@ -1990,9 +1976,9 @@ const apiKey = config.google_webfonts_key;
 				return;
 			}
 			window._lastGoogleFontsRequest = now;
-			
-			safe_execute_async(async function() {
-				var response = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${apiKey}&sort=popularity`);
+
+			safe_execute_async(async () => {
+				const response = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?key=${apiKey}&sort=popularity`);
 				if (!response.ok) {
 					if (response.status === 429) {
 						throw new Error('Rate limit exceeded');
@@ -2000,14 +1986,14 @@ const apiKey = config.google_webfonts_key;
 					if (response.status === 401 || response.status === 403) {
 						throw new Error('API key invalid or missing');
 					}
-					throw new Error('Service error: ' + response.status);
+					throw new Error(`Service error: ${  response.status}`);
 				}
-				var data = await response.json();
+				const data = await response.json();
 				this.fontList = data.items;
 				this.fontListFiltered = data.items;
 				this.render_font_list();
-			}.bind(this), 'Google Fonts API').catch(function(error) {
-				var userMessage = get_user_error_message(error, 'Google Fonts API');
+			}, 'Google Fonts API').catch((error) => {
+				const userMessage = get_user_error_message(error, 'Google Fonts API');
 				alertify.error(userMessage);
 			});
 			},
@@ -2016,7 +2002,7 @@ const apiKey = config.google_webfonts_key;
 				this.POP = null;
 				if (Object.keys(this.selectedFonts).length > 0) {
 					let firstFont = null;
-					for (let font in this.selectedFonts) {
+					for (const font in this.selectedFonts) {
 						if (!firstFont) {
 							firstFont = font;
 						}
@@ -2063,7 +2049,7 @@ class Text_class extends Base_tools_class {
 				width: null,
 				height: null,
 			};
-			var sel_config = {
+			const sel_config = {
 				enable_background: false,
 				enable_borders: true,
 				enable_controls: true,
@@ -2087,7 +2073,7 @@ class Text_class extends Base_tools_class {
 
 			this.textarea.addEventListener('focus', () => {
 				this.focused = true;
-				let editor = this.get_editor(this.layer);
+				const editor = this.get_editor(this.layer);
 				if (editor) {
 					this.focusedValue = JSON.stringify(editor.document.lines);
 				}
@@ -2095,9 +2081,9 @@ class Text_class extends Base_tools_class {
 
 			this.textarea.addEventListener('blur', () => {
 				this.focused = false;
-				let editor = this.get_editor(this.layer);
+				const editor = this.get_editor(this.layer);
 				if (editor) {
-					let value = JSON.stringify(editor.document.lines);
+					const value = JSON.stringify(editor.document.lines);
 					if (this.focusedValue !== value) {
 						this.layer.data = JSON.parse(this.focusedValue);
 						app.State.do_action(
@@ -2320,7 +2306,7 @@ class Text_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false)
 			return;
 
@@ -2387,7 +2373,7 @@ class Text_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false)
 			return;
 		if (mouse.click_valid == false) {
@@ -2422,7 +2408,7 @@ class Text_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -2474,11 +2460,11 @@ class Text_class extends Base_tools_class {
 		else if (this.selecting) {
 			editor.trigger_cursor_end();
 			this.textarea.focus();
-			
+
 			if (editor.selection.is_empty() && editor.document.queuedMetaChanges) {
-				let meta = {};
+				const meta = {};
 				const existingMeta = editor.document.get_meta_range(editor.selection.start.line, editor.selection.start.character, editor.selection.end.line, editor.selection.end.character);
-				for (let metaKey in existingMeta) {
+				for (const metaKey in existingMeta) {
 					meta[metaKey] = editor.document.queuedMetaChanges[metaKey] != null ? editor.document.queuedMetaChanges[metaKey] : existingMeta[metaKey][0];
 				}
 			} else {
@@ -2510,7 +2496,7 @@ class Text_class extends Base_tools_class {
 	}
 
 
-	doubleClick(event) {
+	doubleClick() {
 		if (document.activeElement === this.textarea) {
 			const editor = this.get_editor(this.layer);
 			if (editor.selection.is_empty()) {
@@ -2576,12 +2562,12 @@ class Text_class extends Base_tools_class {
 			if (!editor.document.queuedMetaChanges) {
 				editor.document.queuedMetaChanges = {};
 			}
-			for (let metaKey in meta) {
+			for (const metaKey in meta) {
 				editor.document.queuedMetaChanges[metaKey] = meta[metaKey];
 			}
 		} else {
 			editor.document.queuedMetaChanges = null;
-			let oldData = JSON.parse(JSON.stringify(editor.document.lines));
+			const oldData = JSON.parse(JSON.stringify(editor.document.lines));
 			editor.document.set_meta_range(editor.selection.start.line, editor.selection.start.character, editor.selection.end.line, editor.selection.end.character, meta);
 			editor.hasValueChanged = true;
 			this.layer.data = oldData;
@@ -2614,8 +2600,8 @@ class Text_class extends Base_tools_class {
 
 	resize_to_dynamic_bounds(layer, editor) {
 		if (layer && layer.params && layer.params.boundary === 'dynamic') {
-			let new_width = Math.max(9, editor.textBoundaryWidth + 1);
-			let new_height = Math.max(9, editor.textBoundaryHeight + 1);
+			const new_width = Math.max(9, editor.textBoundaryWidth + 1);
+			const new_height = Math.max(9, editor.textBoundaryHeight + 1);
 			config.layer.width = new_width;
 			config.layer.height = new_height;
 		}
@@ -2639,7 +2625,6 @@ class Text_class extends Base_tools_class {
 	render(ctx, layer) {
 		if (layer.width == 0 && layer.height == 0)
 			return;
-		var params = layer.params;
 
 		const isActiveLayerAndTextTool = layer === config.layer && config.TOOL.name === 'text';
 		const editor = this.get_editor(layer);
@@ -2668,27 +2653,27 @@ class Text_class extends Base_tools_class {
 	 * bent there, and the result goes to the picture (turned with the layer, if it is rotated).
 	 */
 	render_with_warp(ctx, layer, editor) {
-		var warp = warp_settings(layer.params);
+		const warp = warp_settings(layer.params);
 		if (warp.style == 'None' || !(layer.width > 0) || !(layer.height > 0)) {
 			editor.render(ctx, layer);
 			return;
 		}
 		//room around the text for the bent letters
-		var margin = Math.round(Math.max(layer.width, layer.height) * 0.6);
-		var width = Math.round(layer.width) + margin * 2;
-		var height = Math.round(layer.height) + margin * 2;
+		const margin = Math.round(Math.max(layer.width, layer.height) * 0.6);
+		const width = Math.round(layer.width) + margin * 2;
+		const height = Math.round(layer.height) + margin * 2;
 		if (width > 4096 || height > 4096) {
 			editor.render(ctx, layer);
 			return;
 		}
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = width;
 		canvas.height = height;
-		var canvas_ctx = canvas.getContext('2d', {willReadFrequently: true});
+		const canvas_ctx = canvas.getContext('2d', {willReadFrequently: true});
 		canvas_ctx.translate(margin - layer.x, margin - layer.y);
 
 		//the text is drawn straight, the rotation of the layer is applied to the bent picture
-		var rotate = layer.rotate;
+		const rotate = layer.rotate;
 		layer.rotate = 0;
 		try {
 			editor.render(canvas_ctx, layer);
@@ -2697,7 +2682,7 @@ class Text_class extends Base_tools_class {
 			layer.rotate = rotate;
 		}
 
-		var image = canvas_ctx.getImageData(0, 0, width, height);
+		const image = canvas_ctx.getImageData(0, 0, width, height);
 		warp_text(image, warp, {x: margin, y: margin, width: layer.width, height: layer.height});
 		canvas_ctx.setTransform(1, 0, 0, 1, 0, 0);
 		canvas_ctx.putImageData(image, 0, 0);
@@ -2720,7 +2705,7 @@ class Text_class extends Base_tools_class {
 			// Convert legacy to new format
 			if (layer.params && layer.params.text) {
 				const params = layer.params;
-				let lines = [];
+				const lines = [];
 				const textLines = layer.params.text.split('\n');
 				const family = params.family && params.family.value? params.family.value : params.family;
 				for (const textLine of textLines) {
@@ -2828,7 +2813,7 @@ class Text_class extends Base_tools_class {
 		}
 		const mouse = this.get_mouse_info(e);
 		const clickableMargin = 5;
-		for (let layer of layers_sorted) {
+		for (const layer of layers_sorted) {
 			if (layer.type === 'text') {
 				// TODO - account for rotation
 				if (mouse.x >= layer.x - clickableMargin && mouse.x <= layer.x + layer.width + clickableMargin && mouse.y >= layer.y - clickableMargin && mouse.y <= layer.y + layer.height + clickableMargin) {

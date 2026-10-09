@@ -15,7 +15,7 @@ class Edit_find_replace_class {
 	}
 
 	find_replace() {
-		var has_text = config.layers.some((layer) => layer.type == 'text');
+		const has_text = config.layers.some((layer) => layer.type == 'text');
 		if (!has_text) {
 			alertify.warning(t('There are no text layers.'));
 			return;
@@ -31,10 +31,10 @@ class Edit_find_replace_class {
 				if (String(params.find) == '') {
 					return;
 				}
-				var actions = [];
-				var total = 0;
+				const actions = [];
+				let total = 0;
 				config.layers.filter((layer) => layer.type == 'text' && Array.isArray(layer.data)).forEach((layer) => {
-					var result = replace_in_text_data(layer.data, params.find, params.replace, params.case);
+					const result = replace_in_text_data(layer.data, params.find, params.replace, params.case);
 					if (result.count > 0) {
 						total += result.count;
 						actions.push(new app.Actions.Update_layer_action(layer.id, {data: result.data}));
@@ -45,7 +45,7 @@ class Edit_find_replace_class {
 					return;
 				}
 				app.State.do_action(new app.Actions.Bundle_action('find_replace', 'Find and Replace Text', actions));
-				alertify.success(total + ' ' + t('replacements'));
+				alertify.success(`${total  } ${  t('replacements')}`);
 			},
 		});
 	}

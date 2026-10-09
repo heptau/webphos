@@ -21,15 +21,15 @@ class Line_class extends Base_tools_class {
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false)
 			return;
 
-		var mouse_x = mouse.x;
-		var mouse_y = mouse.y;
+		let mouse_x = mouse.x;
+		let mouse_y = mouse.y;
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -62,20 +62,18 @@ class Line_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false)
 			return;
 		if (mouse.click_valid == false) {
 			return;
 		}
 
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
-		var click_x = Math.round(this.mouse_click.x);
-		var click_y = Math.round(this.mouse_click.y);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -85,8 +83,8 @@ class Line_class extends Base_tools_class {
 			}
 		}
 
-		var width = mouse_x - this.layer.x;
-		var height = mouse_y - this.layer.y;
+		let width = mouse_x - this.layer.x;
+		let height = mouse_y - this.layer.y;
 		if (e.ctrlKey == true || e.metaKey) {
 			//one direction only
 			if (Math.abs(width) < Math.abs(height))
@@ -103,19 +101,17 @@ class Line_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false) {
 			config.layer.status = null;
 			return;
 		}
 
-		var mouse_x = Math.round(mouse.x);
-		var mouse_y = Math.round(mouse.y);
-		var click_x = Math.round(this.mouse_click.x);
-		var click_y = Math.round(this.mouse_click.y);
+		let mouse_x = Math.round(mouse.x);
+		let mouse_y = Math.round(mouse.y);
 
 		//apply snap
-		var snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
+		const snap_info = this.calc_snap_position(e, mouse_x, mouse_y, config.layer.id);
 		if(snap_info != null){
 			if(snap_info.x != null) {
 				mouse_x = snap_info.x;
@@ -127,8 +123,8 @@ class Line_class extends Base_tools_class {
 		this.snap_line_info = {x: null, y: null};
 
 
-		var width = mouse_x - this.layer.x;
-		var height = mouse_y - this.layer.y;
+		let width = mouse_x - this.layer.x;
+		let height = mouse_y - this.layer.y;
 
 		if (width == 0 && height == 0) {
 			//same coordinates - cancel
@@ -156,12 +152,12 @@ class Line_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
 	demo(ctx, x, y, width, height) {
-		var coords = [
+		const coords = [
 			[0, 0],
 			[100, 100],
 		];
@@ -172,7 +168,7 @@ class Line_class extends Base_tools_class {
 		if (layer.width == 0 && layer.height == 0)
 			return;
 
-		var params = layer.params;
+		const params = layer.params;
 
 		//set styles
 		ctx.fillStyle = layer.color;
@@ -180,8 +176,8 @@ class Line_class extends Base_tools_class {
 		ctx.lineWidth = params.size;
 		ctx.lineCap = 'round';
 
-		var width = layer.x + layer.width;
-		var height = layer.y + layer.height;
+		const width = layer.x + layer.width;
+		const height = layer.y + layer.height;
 
 		//draw line
 		ctx.beginPath();

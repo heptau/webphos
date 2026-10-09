@@ -1,5 +1,5 @@
-# Security Policy for WebPhos (see also SECURITY.md)
+# Security Policy for Lumifex (see also SECURITY.md)
 Contact: mailto:security@80.cz
 Expires: 2027-10-06T08:00:00.000Z
 Preferred-Languages: en, cs, sk
-Canonical: https://webphos.80.cz/.well-known/security.txt
+Canonical: https://lumifex.80.cz/.well-known/security.txt

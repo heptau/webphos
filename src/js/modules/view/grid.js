@@ -3,7 +3,7 @@ import Helper_class from './../../libs/helpers.js';
 import Base_gui_class from './../../core/base-gui.js';
 import Dialog_class from './../../libs/popup.js';
 
-var instance = null;
+let instance = null;
 
 class View_grid_class {
 
@@ -17,7 +17,7 @@ class View_grid_class {
 		this.GUI = new Base_gui_class();
 		this.Helper = new Helper_class();
 
-		var saved = String(this.Helper.getCookie('grid_size') || '').split(',').map((v) => parseInt(v, 10));
+		const saved = String(this.Helper.getCookie('grid_size') || '').split(',').map((v) => parseInt(v, 10));
 		if (saved.length == 2 && saved[0] >= 3 && saved[1] >= 3) {
 			this.GUI.grid_size = saved;
 		}
@@ -35,7 +35,7 @@ class View_grid_class {
 	 * View > Grid Settings - size of the grid cells
 	 */
 	settings() {
-		var dialog = new Dialog_class();
+		const dialog = new Dialog_class();
 		dialog.show({
 			title: 'Grid Settings',
 			params: [

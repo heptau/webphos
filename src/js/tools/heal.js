@@ -22,12 +22,12 @@ class Heal_class extends Base_pixel_tool_class {
 	}
 
 	is_sampled(params) {
-		var source = params.source;
+		const source = params.source;
 		return (source && source.value !== undefined ? source.value : source) == 'Sampled';
 	}
 
 	mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (e.altKey && mouse.click_valid) {
 			//Alt + click chooses the place to copy from
 			if (config.layer.type == 'image') {
@@ -52,19 +52,19 @@ class Heal_class extends Base_pixel_tool_class {
 	}
 
 	stamp(ctx, position, size, params) {
-		var radius = Math.max(2, size / 2);
-		var match = params.match_color !== false;
+		const radius = Math.max(2, size / 2);
+		const match = params.match_color !== false;
 		if (this.offset) {
 			//the place to copy from and the spot have to be in the part that is read
-			var reach = Math.ceil(radius * 1.5) + 2;
-			var left = Math.max(0, Math.floor(Math.min(position.x, position.x + this.offset.x) - reach));
-			var top = Math.max(0, Math.floor(Math.min(position.y, position.y + this.offset.y) - reach));
-			var right = Math.min(ctx.canvas.width, Math.ceil(Math.max(position.x, position.x + this.offset.x) + reach));
-			var bottom = Math.min(ctx.canvas.height, Math.ceil(Math.max(position.y, position.y + this.offset.y) + reach));
+			const reach = Math.ceil(radius * 1.5) + 2;
+			const left = Math.max(0, Math.floor(Math.min(position.x, position.x + this.offset.x) - reach));
+			const top = Math.max(0, Math.floor(Math.min(position.y, position.y + this.offset.y) - reach));
+			const right = Math.min(ctx.canvas.width, Math.ceil(Math.max(position.x, position.x + this.offset.x) + reach));
+			const bottom = Math.min(ctx.canvas.height, Math.ceil(Math.max(position.y, position.y + this.offset.y) + reach));
 			if (right <= left || bottom <= top) {
 				return;
 			}
-			var image = ctx.getImageData(left, top, right - left, bottom - top);
+			const image = ctx.getImageData(left, top, right - left, bottom - top);
 			heal_from(image, position.x - left, position.y - top, radius,
 				position.x + this.offset.x - left, position.y + this.offset.y - top, match);
 			ctx.putImageData(image, left, top);
@@ -82,10 +82,10 @@ class Heal_class extends Base_pixel_tool_class {
 		if (this.sample == null || !this.is_sampled(this.getParams())) {
 			return;
 		}
-		var layer = config.layer;
-		var scale = 1 / (config.ZOOM || 1);
-		var x = layer.x + this.sample.x;
-		var y = layer.y + this.sample.y;
+		const layer = config.layer;
+		const scale = 1 / (config.ZOOM || 1);
+		const x = layer.x + this.sample.x;
+		const y = layer.y + this.sample.y;
 		ctx.save();
 		ctx.beginPath();
 		ctx.moveTo(x - 6 * scale, y);

@@ -3,7 +3,7 @@
  * The outline of a mask is found once and cached, the animation only changes which pixels are light and dark.
  */
 
-var cache = new WeakMap();
+const cache = new WeakMap();
 
 //above this number of outline pixels the outline is drawn without animation (it would be too slow)
 export const MAX_ANIMATED_PIXELS = 60000;
@@ -15,18 +15,18 @@ export const MAX_ANIMATED_PIXELS = 60000;
  */
 export function mask_outline(mask, threshold) {
 	threshold = threshold == undefined ? 128 : threshold;
-	var key = mask.data;
-	var cached = cache.get(key);
+	const key = mask.data;
+	const cached = cache.get(key);
 	if (cached && cached.threshold == threshold) {
 		return cached.outline;
 	}
-	var w = mask.width;
-	var h = mask.height;
-	var data = mask.data;
-	var positions = [];
-	for (var y = 0; y < h; y++) {
-		for (var x = 0; x < w; x++) {
-			var p = y * w + x;
+	const w = mask.width;
+	const h = mask.height;
+	const data = mask.data;
+	const positions = [];
+	for (let y = 0; y < h; y++) {
+		for (let x = 0; x < w; x++) {
+			const p = y * w + x;
 			if (data[p] < threshold) {
 				continue;
 			}
@@ -37,8 +37,8 @@ export function mask_outline(mask, threshold) {
 			}
 		}
 	}
-	var outline = Int32Array.from(positions);
-	cache.set(key, {threshold: threshold, outline: outline});
+	const outline = Int32Array.from(positions);
+	cache.set(key, {threshold, outline});
 	return outline;
 }
 
@@ -67,19 +67,19 @@ export function ant_phase(now) {
  * @param {number} [phase]
  */
 export function draw_mask_ants(ctx, mask, phase) {
-	var outline = mask_outline(mask);
+	const outline = mask_outline(mask);
 	if (outline.length == 0) {
 		return;
 	}
 	if (outline.length > MAX_ANIMATED_PIXELS) {
 		phase = 0;
 	}
-	var light = new Path2D();
-	var dark = new Path2D();
-	var w = mask.width;
-	for (var i = 0; i < outline.length; i++) {
-		var x = outline[i] % w;
-		var y = (outline[i] - x) / w;
+	const light = new Path2D();
+	const dark = new Path2D();
+	const w = mask.width;
+	for (let i = 0; i < outline.length; i++) {
+		const x = outline[i] % w;
+		const y = (outline[i] - x) / w;
 		(ant_is_light(x, y, phase || 0) ? light : dark).rect(x, y, 1, 1);
 	}
 	ctx.save();
@@ -103,7 +103,7 @@ export function draw_mask_ants(ctx, mask, phase) {
  * @param {number} [phase]
  */
 export function draw_rect_ants(ctx, x, y, w, h, zoom, phase) {
-	var unit = 1 / (zoom || 1);
+	const unit = 1 / (zoom || 1);
 	ctx.save();
 	ctx.globalAlpha = 1;
 	ctx.lineWidth = unit;

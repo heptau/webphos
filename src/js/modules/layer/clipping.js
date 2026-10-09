@@ -11,7 +11,7 @@ import { t } from '../tools/translate.js';
 class Layer_clipping_class {
 
 	create() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || layer.type == null) {
 			alertify.error(t('Layer is empty.'));
 			return;
@@ -27,7 +27,7 @@ class Layer_clipping_class {
 	}
 
 	release() {
-		var layer = config.layer;
+		const layer = config.layer;
 		if (layer == null || is_clipped(layer) == false) {
 			return;
 		}
@@ -41,7 +41,7 @@ class Layer_clipping_class {
 	set(layer, composition, name) {
 		return app.State.do_action(
 			new app.Actions.Bundle_action('layer_clipping', name, [
-				new app.Actions.Update_layer_action(layer.id, {composition: composition}),
+				new app.Actions.Update_layer_action(layer.id, {composition}),
 			])
 		);
 	}

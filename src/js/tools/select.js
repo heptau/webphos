@@ -30,14 +30,14 @@ class Select_tool_class extends Base_tools_class {
 		this.snap_line_info = {x: null, y: null};
 		this.rotate_initial = null;
 
-		var sel_config = {
+		const sel_config = {
 			enable_background: false,
 			enable_borders: true,
 			enable_controls: true,
 			keep_ratio: true,
 			enable_rotation: true,
 			enable_move: true,
-			data_function: function () {
+			data_function () {
 				return config.layer;
 			},
 		};
@@ -45,28 +45,27 @@ class Select_tool_class extends Base_tools_class {
 	}
 
 	load() {
-		var _this = this;
 
 		//mouse events
-		document.addEventListener('mousedown', function (e) {
-			_this.dragStart(e);
+		document.addEventListener('mousedown', (e) => {
+			this.dragStart(e);
 		});
-		document.addEventListener('mousemove', function (e) {
-			_this.dragMove(e);
+		document.addEventListener('mousemove', (e) => {
+			this.dragMove(e);
 		});
-		document.addEventListener('mouseup', function (e) {
-			_this.dragEnd(e);
+		document.addEventListener('mouseup', (e) => {
+			this.dragEnd(e);
 		});
 
 		// collect touch events
-		document.addEventListener('touchstart', function (e) {
-			_this.dragStart(e);
+		document.addEventListener('touchstart', (e) => {
+			this.dragStart(e);
 		});
-		document.addEventListener('touchmove', function (e) {
-			_this.dragMove(e);
+		document.addEventListener('touchmove', (e) => {
+			this.dragMove(e);
 		});
-		document.addEventListener('touchend', function (e) {
-			_this.dragEnd(e);
+		document.addEventListener('touchend', (e) => {
+			this.dragEnd(e);
 		});
 
 		//keyboard actions
@@ -78,7 +77,7 @@ class Select_tool_class extends Base_tools_class {
 			}
 			if (this.Helper.is_input(event.target))
 				return;
-			var k = event.key;
+			const k = event.key;
 
 			if (k == "Escape" && this.selection_drag) {
 				//dragging a selection: nothing is changed
@@ -113,17 +112,17 @@ class Select_tool_class extends Base_tools_class {
 				return;
 			if (this.Helper.is_input(event.target))
 				return;
-			var k = event.key;
+			const k = event.key;
 			if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k)) {
 				if (this.keyboard_move_start_position) {
-					let x = config.layer.x;
-					let y = config.layer.y;
+					const x = config.layer.x;
+					const y = config.layer.y;
 					config.layer.x = this.keyboard_move_start_position.x;
 					config.layer.y = this.keyboard_move_start_position.y;
-					var key_x = x - this.keyboard_move_start_position.x;
-					var key_y = y - this.keyboard_move_start_position.y;
-					var key_actions = [new app.Actions.Update_layer_action(config.layer.id, { x, y })];
-					(this.keyboard_linked || []).forEach(function (start) {
+					const key_x = x - this.keyboard_move_start_position.x;
+					const key_y = y - this.keyboard_move_start_position.y;
+					const key_actions = [new app.Actions.Update_layer_action(config.layer.id, { x, y })];
+					(this.keyboard_linked || []).forEach((start) => {
 						start.layer.x = start.x;
 						start.layer.y = start.y;
 						key_actions.push(new app.Actions.Update_layer_action(start.layer.id, {x: start.x + key_x, y: start.y + key_y}));
@@ -139,7 +138,7 @@ class Select_tool_class extends Base_tools_class {
 	}
 
 	dragStart(event) {
-		var mouse = this.get_mouse_info(event);
+		const mouse = this.get_mouse_info(event);
 		if (config.TOOL.name != this.name)
 			return;
 		if (mouse.click_valid == false) {
@@ -150,7 +149,7 @@ class Select_tool_class extends Base_tools_class {
 	}
 
 	dragMove(event) {
-		var mouse = this.get_mouse_info(event);
+		const mouse = this.get_mouse_info(event);
 		if (config.TOOL.name != this.name)
 			return;
 		if (mouse.click_valid == false) {
@@ -161,7 +160,7 @@ class Select_tool_class extends Base_tools_class {
 	}
 
 	dragEnd(event) {
-		var mouse = this.get_mouse_info(event);
+		const mouse = this.get_mouse_info(event);
 		if (config.TOOL.name != this.name)
 			return;
 		if (mouse.click_valid == false) {
@@ -178,7 +177,7 @@ class Select_tool_class extends Base_tools_class {
 	linked_starts() {
 		return linked_with(config.layers, config.layer)
 			.filter((layer) => layer.locked !== true)
-			.map((layer) => ({layer: layer, x: layer.x, y: layer.y, width: layer.width, height: layer.height, rotate: layer.rotate}));
+			.map((layer) => ({layer, x: layer.x, y: layer.y, width: layer.width, height: layer.height, rotate: layer.rotate}));
 	}
 
 	/**
@@ -189,14 +188,14 @@ class Select_tool_class extends Base_tools_class {
 	 * @returns {{start: object, frame: object}[]}
 	 */
 	linked_frames(after) {
-		var before = Object.assign({}, this.mousedown_dimensions, {rotate: this.rotate_initial});
+		const before = Object.assign({}, this.mousedown_dimensions, {rotate: this.rotate_initial});
 		return (this.linked_start || [])
 			.filter((start) => start.layer.type != 'adjustment')
-			.map((start) => ({start: start, frame: follow_transform(before, after, start)}));
+			.map((start) => ({start, frame: follow_transform(before, after, start)}));
 	}
 
 	async mousedown(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.click_valid == false || config.mouse_lock === true) {
 			return;
 		}
@@ -236,7 +235,7 @@ class Select_tool_class extends Base_tools_class {
 	 * @returns {string} 'Content', 'Outline' or 'Layer' (the selection is ignored, the layer is moved)
 	 */
 	selection_mode() {
-		var value = this.getParams().selection_content;
+		const value = this.getParams().selection_content;
 		return value && value.value !== undefined ? value.value : (value || 'Content');
 	}
 
@@ -245,18 +244,18 @@ class Select_tool_class extends Base_tools_class {
 	 * @returns {boolean} the press starts dragging the selection
 	 */
 	start_selection_drag(mouse) {
-		var mode = this.selection_mode();
-		var mover = new Edit_selection_move_class();
+		const mode = this.selection_mode();
+		const mover = new Edit_selection_move_class();
 		if (!mover.applies({x: mouse.x, y: mouse.y}, mode)) {
 			return false;
 		}
 		mover.begin(mode);
-		this.selection_drag = {mode: mode, x: mouse.x, y: mouse.y};
+		this.selection_drag = {mode, x: mouse.x, y: mouse.y};
 		return true;
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (mouse.is_drag == false || mouse.click_valid == false || config.mouse_lock === true) {
 			return;
 		}
@@ -267,7 +266,7 @@ class Select_tool_class extends Base_tools_class {
 		if (this.resizing) {
 
 			//also handle rotation
-			let rotate = this.Base_selection.current_angle
+			const rotate = this.Base_selection.current_angle
 			if(config.layer.rotate != rotate && rotate !== null){
 				config.layer.rotate = rotate;
 			}
@@ -276,7 +275,7 @@ class Select_tool_class extends Base_tools_class {
 			this.linked_frames({
 				x: config.layer.x, y: config.layer.y, width: config.layer.width, height: config.layer.height,
 				rotate: config.layer.rotate
-			}).forEach(function (item) {
+			}).forEach((item) => {
 				Object.assign(item.start.layer, item.frame);
 			});
 			config.need_render = true;
@@ -289,7 +288,7 @@ class Select_tool_class extends Base_tools_class {
 			config.layer.y = Math.round(mouse.y - mouse.click_y + this.mousedown_dimensions.y);
 
 			//apply snap
-			var snap_info = this.calc_snap(e, config.layer.x, config.layer.y);
+			const snap_info = this.calc_snap(e, config.layer.x, config.layer.y);
 			if(snap_info != null){
 				if(snap_info.x != null) {
 					config.layer.x = snap_info.x;
@@ -300,9 +299,9 @@ class Select_tool_class extends Base_tools_class {
 			}
 
 			//the linked layers follow
-			var follow_x = config.layer.x - this.mousedown_dimensions.x;
-			var follow_y = config.layer.y - this.mousedown_dimensions.y;
-			(this.linked_start || []).forEach(function (start) {
+			const follow_x = config.layer.x - this.mousedown_dimensions.x;
+			const follow_y = config.layer.y - this.mousedown_dimensions.y;
+			(this.linked_start || []).forEach((start) => {
 				start.layer.x = start.x + follow_x;
 				start.layer.y = start.y + follow_y;
 			});
@@ -312,9 +311,9 @@ class Select_tool_class extends Base_tools_class {
 	}
 
 	mouseup(e) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 		if (this.selection_drag) {
-			var drag = this.selection_drag;
+			const drag = this.selection_drag;
 			this.selection_drag = null;
 			return new Edit_selection_move_class().finish(mouse.x - drag.x, mouse.y - drag.y, e.altKey === true);
 		}
@@ -322,18 +321,18 @@ class Select_tool_class extends Base_tools_class {
 			return;
 		}
 		if (this.resizing) {
-			let x = config.layer.x;
-			let y = config.layer.y;
-			let width = config.layer.width;
-			let height = config.layer.height;
-			let turned = this.Base_selection.current_angle;
-			let linked_after = this.linked_frames({
+			const x = config.layer.x;
+			const y = config.layer.y;
+			const width = config.layer.width;
+			const height = config.layer.height;
+			const turned = this.Base_selection.current_angle;
+			const linked_after = this.linked_frames({
 				x, y, width, height, rotate: turned !== null ? turned : this.rotate_initial
 			});
 			//the linked layers go back to where they were, the action changes them
-			var linked_resize = [];
-			linked_after.forEach(function (item) {
-				var start = item.start;
+			const linked_resize = [];
+			linked_after.forEach((item) => {
+				const start = item.start;
 				Object.assign(start.layer, {x: start.x, y: start.y, width: start.width, height: start.height, rotate: start.rotate});
 				linked_resize.push(new app.Actions.Update_layer_action(start.layer.id, item.frame));
 			});
@@ -358,7 +357,7 @@ class Select_tool_class extends Base_tools_class {
 			}
 
 			//also handle rotation
-			let rotate = this.Base_selection.current_angle;
+			const rotate = this.Base_selection.current_angle;
 			//Edit > Transform Again repeats this
 			remember_transform(describe_transform(
 				{x: this.mousedown_dimensions.x, y: this.mousedown_dimensions.y, width: this.mousedown_dimensions.width, height: this.mousedown_dimensions.height, rotate: this.rotate_initial},
@@ -387,13 +386,13 @@ class Select_tool_class extends Base_tools_class {
 			}
 		}
 		else if (this.moving) {
-			var new_x = Math.round(mouse.x - mouse.click_x + this.mousedown_dimensions.x);
-			var new_y = Math.round(mouse.y - mouse.click_y + this.mousedown_dimensions.y);
+			let new_x = Math.round(mouse.x - mouse.click_x + this.mousedown_dimensions.x);
+			let new_y = Math.round(mouse.y - mouse.click_y + this.mousedown_dimensions.y);
 			config.layer.x = this.mousedown_dimensions.x;
 			config.layer.y = this.mousedown_dimensions.y;
 
 			if(mouse.x - mouse.click_x || mouse.y - mouse.click_y) {
-				var snap_info = this.calc_snap(e, new_x, new_y);
+				const snap_info = this.calc_snap(e, new_x, new_y);
 				if (snap_info != null) {
 					if (snap_info.x != null) {
 						new_x = snap_info.x;
@@ -405,10 +404,10 @@ class Select_tool_class extends Base_tools_class {
 			}
 
 			//the linked layers go back to where they were, the action moves them
-			var linked_updates = [];
-			var move_x = new_x - this.mousedown_dimensions.x;
-			var move_y = new_y - this.mousedown_dimensions.y;
-			(this.linked_start || []).forEach(function (start) {
+			const linked_updates = [];
+			const move_x = new_x - this.mousedown_dimensions.x;
+			const move_y = new_y - this.mousedown_dimensions.y;
+			(this.linked_start || []).forEach((start) => {
 				start.layer.x = start.x;
 				start.layer.y = start.y;
 				linked_updates.push(new app.Actions.Update_layer_action(start.layer.id, {x: start.x + move_x, y: start.y + move_y}));
@@ -416,7 +415,7 @@ class Select_tool_class extends Base_tools_class {
 			this.linked_start = [];
 
 			if (this.mousedown_dimensions.x !== new_x || this.mousedown_dimensions.y !== new_y) {
-				var moved_from = this.mousedown_dimensions;
+				const moved_from = this.mousedown_dimensions;
 				remember_transform(describe_transform(
 					{x: moved_from.x, y: moved_from.y, width: moved_from.width, height: moved_from.height, rotate: 0},
 					{x: new_x, y: new_y, width: moved_from.width, height: moved_from.height, rotate: 0}
@@ -439,13 +438,13 @@ class Select_tool_class extends Base_tools_class {
 	 * The selection (the Move tool can drag it) as marching ants, or the preview of it while it is dragged
 	 */
 	draw_selection(ctx) {
-		var state = new Selection_mask_class();
-		var preview = state.get_preview();
+		const state = new Selection_mask_class();
+		const preview = state.get_preview();
 		if (preview) {
 			ctx.drawImage(preview.overlay, 0, 0);
 			return;
 		}
-		var current = state.get();
+		const current = state.get();
 		if (current == null) {
 			return;
 		}
@@ -465,20 +464,20 @@ class Select_tool_class extends Base_tools_class {
 		if (!app.Layers || !app.Layers.Base_selection) {
 			return [];
 		}
-		var tools = this.Base_gui.GUI_tools.tools_modules;
+		const tools = this.Base_gui.GUI_tools.tools_modules;
 		return tools.selection ? tools.selection.object.on_leave() : [];
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
-		var mouse = this.get_mouse_info(event);
+		ctx = this.Base_layers.ctx;
+		const mouse = this.get_mouse_info(event);
 
 		this.draw_selection(ctx);
 
 		//maybe related tool have additional overlay render handlers?
 		if(config.layer.render_function != null) {
-			var render_class = config.layer.render_function[0];
-			var render_function = 'select';
+			const render_class = config.layer.render_function[0];
+			const render_function = 'select';
 			if (
 				typeof this.Base_gui.GUI_tools.tools_modules[render_class].object[
 					render_function
@@ -505,8 +504,8 @@ class Select_tool_class extends Base_tools_class {
 	 * @returns object|null
 	 */
 	calc_snap(event, pos_x, pos_y) {
-		var snap_position = { x: null, y: null };
-		var params = this.getParams();
+		let i, distance;
+		const snap_position = { x: null, y: null };
 
 		if(config.SNAP === false || event.shiftKey == true){
 			this.snap_line_info = {x: null, y: null};
@@ -514,14 +513,14 @@ class Select_tool_class extends Base_tools_class {
 		}
 
 		//settings
-		var sensitivity = 0.01;
-		var max_distance = (config.WIDTH + config.HEIGHT) / 2 * sensitivity / config.ZOOM;
+		const sensitivity = 0.01;
+		const max_distance = (config.WIDTH + config.HEIGHT) / 2 * sensitivity / config.ZOOM;
 
 		//collect snap positions
-		var snap_positions = this.get_snap_positions(config.layer.id);
+		const snap_positions = this.get_snap_positions(config.layer.id);
 
 		//find closest snap positions
-		var min_group = {
+		const min_group = {
 			x: {
 				start: null,
 				center: null,
@@ -533,7 +532,7 @@ class Select_tool_class extends Base_tools_class {
 				end: null,
 			},
 		};
-		var min_group_distance = {
+		const min_group_distance = {
 			x: {
 				start: null,
 				center: null,
@@ -546,40 +545,40 @@ class Select_tool_class extends Base_tools_class {
 			},
 		};
 		//x
-		for(var i in snap_positions.x){
-			var distance = Math.abs(pos_x - snap_positions.x[i]);
+		for(i in snap_positions.x){
+			distance = Math.abs(pos_x - snap_positions.x[i]);
 			if(distance < max_distance && (distance < min_group_distance.x.start || min_group_distance.x.start === null)){
 				min_group_distance.x.start = distance;
 				min_group.x.start = snap_positions.x[i];
 			}
 
-			var distance = Math.abs(pos_x + config.layer.width/2 - snap_positions.x[i]);
+			distance = Math.abs(pos_x + config.layer.width/2 - snap_positions.x[i]);
 			if(distance < max_distance && (distance < min_group_distance.x.center || min_group_distance.x.center === null)){
 				min_group_distance.x.center = distance;
 				min_group.x.center = snap_positions.x[i];
 			}
 
-			var distance = Math.abs(pos_x + config.layer.width - snap_positions.x[i]);
+			distance = Math.abs(pos_x + config.layer.width - snap_positions.x[i]);
 			if(distance < max_distance && (distance < min_group_distance.x.end || min_group_distance.x.end === null)){
 				min_group_distance.x.end = distance;
 				min_group.x.end = snap_positions.x[i];
 			}
 		}
 		//y
-		for(var i in snap_positions.y){
-			var distance = Math.abs(pos_y - snap_positions.y[i]);
+		for(i in snap_positions.y){
+			distance = Math.abs(pos_y - snap_positions.y[i]);
 			if(distance < max_distance && (distance < min_group_distance.y.start || min_group_distance.y.start === null)){
 				min_group_distance.y.start = distance;
 				min_group.y.start = snap_positions.y[i];
 			}
 
-			var distance = Math.abs(pos_y + config.layer.height/2 - snap_positions.y[i]);
+			distance = Math.abs(pos_y + config.layer.height/2 - snap_positions.y[i]);
 			if(distance < max_distance && (distance < min_group_distance.y.center || min_group_distance.y.center === null)){
 				min_group_distance.y.center = distance;
 				min_group.y.center = snap_positions.y[i];
 			}
 
-			var distance = Math.abs(pos_y + config.layer.height - snap_positions.y[i]);
+			distance = Math.abs(pos_y + config.layer.height - snap_positions.y[i]);
 			if(distance < max_distance && (distance < min_group_distance.y.end || min_group_distance.y.end === null)){
 				min_group_distance.y.end = distance;
 				min_group.y.end = snap_positions.y[i];
@@ -587,7 +586,7 @@ class Select_tool_class extends Base_tools_class {
 		}
 
 		//find best begin, center, end
-		var min_distance = {
+		const min_distance = {
 			x: null,
 			y: null,
 		};
@@ -607,7 +606,7 @@ class Select_tool_class extends Base_tools_class {
 			min_distance.y = min_group_distance.y.end;
 
 		//apply snap
-		var success = false;
+		let success = false;
 		//x
 		if(min_group.x.center != null && min_group_distance.x.center == min_distance.x) {
 			snap_position.x = Math.round(min_group.x.center - config.layer.width / 2);
@@ -693,7 +692,7 @@ class Select_tool_class extends Base_tools_class {
 			this.keyboard_linked = this.linked_starts();
 		}
 		//as in Photoshop: arrow = 1 px, Shift + arrow = 10 px (Ctrl/Cmd + arrow = 50 px)
-		var power = 1;
+		let power = 1;
 		if (event.shiftKey == true)
 			power = 10;
 		if (event.ctrlKey == true || event.metaKey)
@@ -701,9 +700,9 @@ class Select_tool_class extends Base_tools_class {
 
 		config.layer.x += direction_x * power;
 		config.layer.y += direction_y * power;
-		var shift_x = config.layer.x - this.keyboard_move_start_position.x;
-		var shift_y = config.layer.y - this.keyboard_move_start_position.y;
-		(this.keyboard_linked || []).forEach(function (start) {
+		const shift_x = config.layer.x - this.keyboard_move_start_position.x;
+		const shift_y = config.layer.y - this.keyboard_move_start_position.y;
+		(this.keyboard_linked || []).forEach((start) => {
 			start.layer.x = start.x + shift_x;
 			start.layer.y = start.y + shift_y;
 		});
@@ -711,16 +710,16 @@ class Select_tool_class extends Base_tools_class {
 	}
 
 	async auto_select_object(e) {
-		var params = this.getParams();
+		const params = this.getParams();
 		if (params.auto_select == false)
 			return;
 
-		var layers_sorted = this.Base_layers.get_sorted_layers();
-		var mouse = this.get_mouse_info(e);
+		const layers_sorted = this.Base_layers.get_sorted_layers();
+		const mouse = this.get_mouse_info(e);
 
 		//the layer under the pointer (the active layer anywhere in its frame, see libs/auto-select.js)
-		var id = pick_layer(layers_sorted, config.layer.id, {x: mouse.x, y: mouse.y}, (value) => {
-			var canvas = this.Base_layers.convert_layer_to_canvas(value.id, null, false);
+		const id = pick_layer(layers_sorted, config.layer.id, {x: mouse.x, y: mouse.y}, (value) => {
+			const canvas = this.Base_layers.convert_layer_to_canvas(value.id, null, false);
 			return this.check_hit_region(e, canvas.getContext("2d"), value);
 		});
 		if (id !== null && id != config.layer.id) {
@@ -731,7 +730,7 @@ class Select_tool_class extends Base_tools_class {
 	}
 
 	check_hit_region(e, ctx, layer) {
-		var mouse = this.get_mouse_info(e);
+		const mouse = this.get_mouse_info(e);
 
 		if(layer.type == 'image' && Math.abs(layer.width * layer.height / 1000000) > 5){
 			//too big to check using getImageData - use simple way
@@ -744,8 +743,8 @@ class Select_tool_class extends Base_tools_class {
 			return false;
 		}
 
-		var data = ctx.getImageData(mouse.x, mouse.y, 1, 1).data;
-		var blank = [0, 0, 0, 0];
+		const data = ctx.getImageData(mouse.x, mouse.y, 1, 1).data;
+		let blank = [0, 0, 0, 0];
 		if (config.TRANSPARENCY == false) {
 			blank = [0, 0, 0, 0];
 		}

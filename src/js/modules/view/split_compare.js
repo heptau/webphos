@@ -23,27 +23,27 @@ class View_split_compare_class {
 			return;
 		}
 		//the picture from before the first change was saved by the state (see Base_state.remember_original)
-		var before = app.State.original_canvas;
+		const before = app.State.original_canvas;
 		if (!before || app.State.action_history_index == 0) {
 			alertify.warning(t('There are no changes to compare.'));
 			return;
 		}
 
-		config.compare = {before: before, x: config.WIDTH / 2};
+		config.compare = {before, x: config.WIDTH / 2};
 		this.start();
 		config.need_render = true;
 		alertify.message(t('Drag the line to compare. Escape ends the comparison.'), 4);
 	}
 
 	start() {
-		var wrapper = document.getElementById('main_wrapper');
-		var canvas = document.getElementById('canvas_minipaint');
-		var set_from_event = (event) => {
-			var rect = canvas.getBoundingClientRect();
+		const wrapper = document.getElementById('main_wrapper');
+		const canvas = document.getElementById('canvas_minipaint');
+		const set_from_event = (event) => {
+			const rect = canvas.getBoundingClientRect();
 			config.compare.x = this.Base_layers.get_world_coords(event.clientX - rect.left, event.clientY - rect.top).x;
 			config.need_render = true;
 		};
-		var down = (event) => {
+		const down = (event) => {
 			if (event.button !== 0) {
 				return;
 			}
@@ -53,15 +53,15 @@ class View_split_compare_class {
 			this.dragging = true;
 			set_from_event(event);
 		};
-		var move = (event) => {
+		const move = (event) => {
 			if (this.dragging) {
 				set_from_event(event);
 			}
 		};
-		var up = () => {
+		const up = () => {
 			this.dragging = false;
 		};
-		var key = (event) => {
+		const key = (event) => {
 			if (event.key == 'Escape') {
 				this.stop();
 			}
@@ -70,7 +70,7 @@ class View_split_compare_class {
 		document.addEventListener('mousemove', move);
 		document.addEventListener('mouseup', up);
 		document.addEventListener('keydown', key);
-		this.handlers = {wrapper: wrapper, down: down, move: move, up: up, key: key};
+		this.handlers = {wrapper, down, move, up, key};
 	}
 
 	stop() {

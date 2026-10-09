@@ -17,16 +17,16 @@ class Effects_contrast_class extends Effects_common_class {
 			return;
 		}
 
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'contrast');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'contrast');
 
-		var params = [
+		const params = [
 			{name: "value", title: "Percentage:", value: filter.value ??= 40, range: [-100, 100]},
 		];
 		this.show_dialog('contrast', params, filter_id);
 	}
 
 	convert_value(value) {
-		var system_value;
+		let system_value;
 		if (value > 0) {
 			system_value = value / 100 + 1;
 		}
@@ -41,27 +41,27 @@ class Effects_contrast_class extends Effects_common_class {
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//draw
-		var size = this.convert_value(40, null, 'preview');
-		ctx.filter = "contrast("+size+")";
+		const size = this.convert_value(40, null, 'preview');
+		ctx.filter = `contrast(${size})`;
 		ctx.drawImage(canvas_thumb, 0, 0);
 		ctx.filter = 'none';
 	}
 
 	render_pre(ctx, data) {
-		var value = this.convert_value(data.params.value, data.params, 'save');
-		var filter = 'contrast(' + value + ')';
+		const value = this.convert_value(data.params.value, data.params, 'save');
+		const filter = `contrast(${value})`;
 
 		if(ctx.filter == 'none')
 			ctx.filter = filter;
 		else
-			ctx.filter += ' ' + filter;
+			ctx.filter += ` ${  filter}`;
 	}
 
-	render_post(ctx, data){
+	render_post(ctx){
 		ctx.filter = 'none';
 	}
 

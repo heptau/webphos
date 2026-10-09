@@ -4,7 +4,7 @@ import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../tools/translate.js';
 
-var instance = null;
+let instance = null;
 
 /**
  * Edit > History - list of the undo history; clicking a step jumps to the state after that step
@@ -24,26 +24,25 @@ class Edit_history_class {
 	}
 
 	history() {
-		var _this = this;
 		this.Dialog.show({
 			title: 'History',
 			className: 'history',
 			params: [],
-			on_load: function (params, popup) {
-				var list = document.createElement('div');
+			on_load: (params, popup) => {
+				const list = document.createElement('div');
 				list.className = 'history_list';
 				list.style.maxHeight = '320px';
 				list.style.overflowY = 'auto';
 				list.style.minWidth = '260px';
 				popup.el.querySelector('.dialog_content').appendChild(list);
 
-				list.addEventListener('click', function (event) {
-					var item = event.target.closest('[data-step]');
+				list.addEventListener('click', (event) => {
+					const item = event.target.closest('[data-step]');
 					if (item) {
-						_this.go_to(parseInt(item.dataset.step), list);
+						this.go_to(parseInt(item.dataset.step), list);
 					}
 				});
-				_this.render(list);
+				this.render(list);
 			},
 		});
 	}
@@ -54,9 +53,9 @@ class Edit_history_class {
 	 * @returns {{step: number, name: string, active: boolean, undone: boolean}[]}
 	 */
 	get_steps() {
-		var state = app.State;
-		var steps = [{step: 0, name: t('Initial state'), active: state.action_history_index == 0, undone: false}];
-		state.action_history.forEach(function (action, i) {
+		const state = app.State;
+		const steps = [{step: 0, name: t('Initial state'), active: state.action_history_index == 0, undone: false}];
+		state.action_history.forEach((action, i) => {
 			steps.push({
 				step: i + 1,
 				name: t(action.action_description || action.action_id || 'Action'),
@@ -69,8 +68,8 @@ class Edit_history_class {
 
 	render(list, scroll = true) {
 		list.innerHTML = '';
-		this.get_steps().forEach(function (step) {
-			var item = document.createElement('button');
+		this.get_steps().forEach((step) => {
+			const item = document.createElement('button');
 			item.type = 'button';
 			item.dataset.step = step.step;
 			item.textContent = step.name;
@@ -83,7 +82,7 @@ class Edit_history_class {
 			item.setAttribute('aria-current', step.active ? 'true' : 'false');
 			list.appendChild(item);
 		});
-		var active = list.querySelector('[aria-current="true"]');
+		const active = list.querySelector('[aria-current="true"]');
 		if (scroll && active && active.scrollIntoView) {
 			active.scrollIntoView({block: 'nearest'});
 		}
@@ -99,7 +98,7 @@ class Edit_history_class {
 		this.busy = true;
 		config.freeze_render = true;
 		try {
-			var state = app.State;
+			const state = app.State;
 			step = Math.max(0, Math.min(step, state.action_history.length));
 			while (state.action_history_index > step) {
 				await state.undo_action();
@@ -108,7 +107,7 @@ class Edit_history_class {
 				await state.redo_action();
 			}
 		}
-		catch (error) {
+		catch {
 			alertify.error(t('History step could not be applied.'));
 		}
 		finally {

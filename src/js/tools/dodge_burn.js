@@ -34,15 +34,15 @@ class Dodge_burn_class extends Base_tools_class {
 		this.mousemove(event);
 
 		//mouse cursor
-		var mouse = this.get_mouse_info(event);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(event);
+		const params = this.getParams();
 		this.show_mouse_cursor(mouse.x, mouse.y, params.size, 'circle');
 	}
 
 	mousedown(e) {
 		this.started = false;
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.click_valid == false) {
 			return;
 		}
@@ -72,25 +72,25 @@ class Dodge_burn_class extends Base_tools_class {
 	}
 
 	mousemove(e) {
-		var mouse = this.get_mouse_info(e);
-		var params = this.getParams();
+		const mouse = this.get_mouse_info(e);
+		const params = this.getParams();
 		if (mouse.is_drag == false || mouse.click_valid == false || this.started == false) {
 			return;
 		}
 		//interpolate between the last and the current position, so fast movements leave no gaps
-		var spacing = Math.max(1, params.size / 4);
-		var distance = Math.hypot(mouse.x - this.last.x, mouse.y - this.last.y);
-		var steps = Math.max(1, Math.ceil(distance / spacing));
-		var from = this.last;
-		for (var s = 1; s <= steps; s++) {
-			var next = {x: from.x + (mouse.x - from.x) * s / steps, y: from.y + (mouse.y - from.y) * s / steps};
+		const spacing = Math.max(1, params.size / 4);
+		const distance = Math.hypot(mouse.x - this.last.x, mouse.y - this.last.y);
+		const steps = Math.max(1, Math.ceil(distance / spacing));
+		const from = this.last;
+		for (let s = 1; s <= steps; s++) {
+			const next = {x: from.x + (mouse.x - from.x) * s / steps, y: from.y + (mouse.y - from.y) * s / steps};
 			this.dab(next, params);
 			this.last = next;
 		}
 		config.need_render = true;
 	}
 
-	mouseup(e) {
+	mouseup() {
 		if (this.started == false) {
 			return;
 		}
@@ -114,19 +114,19 @@ class Dodge_burn_class extends Base_tools_class {
 	 * One brush dab at the mouse position
 	 */
 	dab(mouse, params) {
-		var ctx = this.tmpCanvasCtx;
-		var mouse_x = this.adaptSize(Math.round(mouse.x) - config.layer.x, 'width');
-		var mouse_y = this.adaptSize(Math.round(mouse.y) - config.layer.y, 'height');
-		var size_w = this.adaptSize(params.size, 'width');
-		var size_h = this.adaptSize(params.size, 'height');
+		const ctx = this.tmpCanvasCtx;
+		let mouse_x = this.adaptSize(Math.round(mouse.x) - config.layer.x, 'width');
+		let mouse_y = this.adaptSize(Math.round(mouse.y) - config.layer.y, 'height');
+		const size_w = this.adaptSize(params.size, 'width');
+		const size_h = this.adaptSize(params.size, 'height');
 
-		var center_x = Math.round(mouse_x - Math.round(size_w / 2));
-		var center_y = Math.round(mouse_y - Math.round(size_h / 2));
+		const center_x = Math.round(mouse_x - Math.round(size_w / 2));
+		const center_y = Math.round(mouse_y - Math.round(size_h / 2));
 		mouse_x = Math.round(mouse_x);
 		mouse_y = Math.round(mouse_y);
 
-		var imageData = ctx.getImageData(center_x, center_y, size_w, size_h);
-		var filtered = dodgeBurn(imageData, {
+		const imageData = ctx.getImageData(center_x, center_y, size_w, size_h);
+		const filtered = dodgeBurn(imageData, {
 			mode: params.burn ? 'burn' : 'dodge',
 			exposure: params.exposure,
 		});

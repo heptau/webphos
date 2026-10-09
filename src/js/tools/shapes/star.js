@@ -1,5 +1,3 @@
-import app from './../../app.js';
-import config from './../../config.js';
 import Base_tools_class from './../../core/base-tools.js';
 import Base_layers_class from './../../core/base-layers.js';
 
@@ -33,7 +31,7 @@ class Star_class extends Base_tools_class {
 	}
 
 	render_overlay(ctx){
-		var ctx = this.Base_layers.ctx;
+		ctx = this.Base_layers.ctx;
 		this.render_overlay_parent(ctx);
 	}
 
@@ -46,25 +44,25 @@ class Star_class extends Base_tools_class {
 		spikes = parseInt(spikes);
 		spikes = Math.max(spikes, 3);
 
-		var outerRadius = 50;
+		let outerRadius = 50;
 		if(spikes == 5){
 			outerRadius = 53;
 		}
 
-		var cx = 50;
+		const cx = 50;
 
-		var cy = 50;
+		let cy = 50;
 		if(spikes == 5){
 			cy = 55;
 		}
 
-		var rot = Math.PI / 2 * 3;
-		var x = cx;
-		var y = cy;
-		var step = Math.PI / spikes;
+		let rot = Math.PI / 2 * 3;
+		let x;
+		let y;
+		const step = Math.PI / spikes;
 		this.coords = [];
 		this.coords.push([cx, cy - outerRadius]);
-		for (var i = 0; i < spikes; i++) {
+		for (let i = 0; i < spikes; i++) {
 			x = cx + Math.cos(rot) * outerRadius;
 			y = cy + Math.sin(rot) * outerRadius;
 			this.coords.push([x, y]);
@@ -84,8 +82,7 @@ class Star_class extends Base_tools_class {
 	}
 
 	render(ctx, layer) {
-		var params = layer.params;
-		var fill = params.fill;
+		const params = layer.params;
 
 		this.generate_coords(params.corners, params.inner_radius);
 

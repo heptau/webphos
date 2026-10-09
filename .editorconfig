@@ -1,0 +1,36 @@
+root = true
+
+[*]
+indent_style = tab
+indent_size = 3
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{rb,sql,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# two trailing spaces are a line break in Markdown
+[*.md]
+trim_trailing_whitespace = false
+
+# files written by tools, which keep their own indentation
+[{package.json,package-lock.json,.claude/launch.json}]
+indent_style = space
+indent_size = 2
+
+# npm run translations:sync writes the dictionaries with 4 spaces
+[src/js/languages/*.json]
+indent_style = space
+indent_size = 4
+
+# third-party libraries and the build output are not reformatted
+[{src/js/libs/{gifjs/*,glfx,imagefilters,color-thief,canvastotiff,jquery.translate}.js,docs/**,dist/**,coverage/**,CNAME}]
+indent_style = unset
+indent_size = unset
+end_of_line = unset
+charset = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset

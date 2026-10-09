@@ -19,8 +19,8 @@ export class Select_layer_action extends Base_action {
 	async do() {
 		super.do();
 
-		let old_layer = config.layer;
-		let new_layer = app.Layers.get_layer(this.layer_id);
+		const old_layer = config.layer;
+		const new_layer = app.Layers.get_layer(this.layer_id);
 
 		if (old_layer !== new_layer) {
 			this.old_layer = old_layer;

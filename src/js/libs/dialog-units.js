@@ -17,26 +17,26 @@ function format(value, unit) {
  * @returns {{get_pixels: function(): number[], set_pixels: function(number, number)}}
  */
 export function link_unit_fields(names, readout_id) {
-	var field = (name) => document.getElementById('pop_data_' + names[name]);
-	var unit = field('units').value;
-	var dpi = () => clamp_dpi(field('dpi').value);
+	const field = (name) => document.getElementById(`pop_data_${  names[name]}`);
+	let unit = field('units').value;
+	const dpi = () => clamp_dpi(field('dpi').value);
 
-	var get_pixels = () => [
+	const get_pixels = () => [
 		to_pixels(field('width').value, unit, dpi()),
 		to_pixels(field('height').value, unit, dpi()),
 	];
-	var update_readout = () => {
-		var element = readout_id ? document.getElementById(readout_id) : null;
+	const update_readout = () => {
+		const element = readout_id ? document.getElementById(readout_id) : null;
 		if (element) {
-			var pixels = get_pixels();
-			element.textContent = (isNaN(pixels[0]) || isNaN(pixels[1])) ? '-' : pixels[0] + ' x ' + pixels[1] + ' px';
+			const pixels = get_pixels();
+			element.textContent = (isNaN(pixels[0]) || isNaN(pixels[1])) ? '-' : `${pixels[0]  } x ${pixels[1]} px`;
 		}
 	};
 
 	field('units').addEventListener('change', () => {
-		var next = field('units').value;
+		const next = field('units').value;
 		['width', 'height'].forEach((name) => {
-			var value = convert_size(field(name).value, unit, next, dpi());
+			const value = convert_size(field(name).value, unit, next, dpi());
 			field(name).value = format(value, next);
 		});
 		unit = next;
@@ -49,7 +49,7 @@ export function link_unit_fields(names, readout_id) {
 	update_readout();
 
 	return {
-		get_pixels: get_pixels,
+		get_pixels,
 		set_pixels: (w, h) => {
 			field('width').value = format(from_pixels(w, unit, dpi()), unit);
 			field('height').value = format(from_pixels(h, unit, dpi()), unit);

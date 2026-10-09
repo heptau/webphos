@@ -16,9 +16,9 @@ class Effects_gradientOverlay_class extends Effects_layer_style_class {
 			return;
 		}
 
-		var filter = this.Base_layers.find_filter_by_id(filter_id, 'gradient-overlay');
+		const filter = this.Base_layers.find_filter_by_id(filter_id, 'gradient-overlay');
 
-		var params = [
+		const params = [
 			{name: "style", title: "Style:", value: filter.style ??= 'linear', values: ['linear', 'radial']},
 			{name: "color", title: "Start color:", value: filter.color ??= "#ff0000", type: 'color'},
 			{name: "color2", title: "End color:", value: filter.color2 ??= "#0000ff", type: 'color'},
@@ -43,39 +43,39 @@ class Effects_gradientOverlay_class extends Effects_layer_style_class {
 	 * @returns {HTMLCanvasElement}
 	 */
 	build_overlay(source, width, height, params) {
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = Math.max(1, Math.round(width));
 		canvas.height = Math.max(1, Math.round(height));
-		var ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d');
 		ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
 		ctx.globalCompositeOperation = 'source-in';
 
-		var from = safe_color(params.color);
-		var to = safe_color(params.color2);
+		let from = safe_color(params.color);
+		let to = safe_color(params.color2);
 		if (params.reverse === true || params.reverse === 'true') {
 			[from, to] = [to, from];
 		}
 
 		//the gradient spans the visible content of the layer, not its transparent margins
-		var bounds = alpha_bounds(ctx.getImageData(0, 0, canvas.width, canvas.height))
+		const bounds = alpha_bounds(ctx.getImageData(0, 0, canvas.width, canvas.height))
 			|| {x: 0, y: 0, width: canvas.width, height: canvas.height};
 
-		var gradient;
+		let gradient;
 		if (params.style === 'radial') {
-			var radius = Math.hypot(bounds.width, bounds.height) / 2;
-			var cx = bounds.x + bounds.width / 2;
-			var cy = bounds.y + bounds.height / 2;
+			const radius = Math.hypot(bounds.width, bounds.height) / 2;
+			const cx = bounds.x + bounds.width / 2;
+			const cy = bounds.y + bounds.height / 2;
 			gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
 		}
 		else {
-			var line = gradient_line(bounds.width, bounds.height, params.angle);
+			const line = gradient_line(bounds.width, bounds.height, params.angle);
 			gradient = ctx.createLinearGradient(bounds.x + line.x0, bounds.y + line.y0, bounds.x + line.x1, bounds.y + line.y1);
 		}
-		var custom = parse_gradient_stops(params.stops);
+		const custom = parse_gradient_stops(params.stops);
 		if (custom) {
 			//any number of colors, typed as text; Reverse mirrors the positions
-			var reversed = params.reverse === true || params.reverse === 'true';
-			custom.forEach(function (stop) {
+			const reversed = params.reverse === true || params.reverse === 'true';
+			custom.forEach((stop) => {
 				gradient.addColorStop(reversed ? 1 - stop.position : stop.position, stop.color);
 			});
 		}
@@ -101,10 +101,10 @@ class Effects_gradientOverlay_class extends Effects_layer_style_class {
 	}
 
 	demo(canvas_id, canvas_thumb) {
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
-		var width = this.Effects_browser.preview_width - 20;
-		var height = this.Effects_browser.preview_height - 20;
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
+		const width = this.Effects_browser.preview_width - 20;
+		const height = this.Effects_browser.preview_height - 20;
 
 		ctx.drawImage(canvas_thumb, 10, 10, width, height);
 		ctx.globalAlpha = 0.7;
@@ -116,7 +116,7 @@ class Effects_gradientOverlay_class extends Effects_layer_style_class {
 		if (!layer || layer.type != 'image') {
 			return;
 		}
-		var params = {
+		const params = {
 			style: data.params.style,
 			color: data.params.color,
 			color2: data.params.color2,
@@ -126,10 +126,10 @@ class Effects_gradientOverlay_class extends Effects_layer_style_class {
 			color_mid: data.params.color_mid,
 			stops: data.params.stops,
 		};
-		var key = [params.style, params.color, params.color2, params.angle, params.reverse, params.middle, params.color_mid, params.stops].join('|');
-		var overlay = this.cached(layer, key, (source) => this.build_overlay(source, layer.width, layer.height, params));
+		const key = [params.style, params.color, params.color2, params.angle, params.reverse, params.middle, params.color_mid, params.stops].join('|');
+		const overlay = this.cached(layer, key, (source) => this.build_overlay(source, layer.width, layer.height, params));
 
-		var previous_filter = ctx.filter;
+		const previous_filter = ctx.filter;
 		ctx.filter = 'none';
 		ctx.save();
 		ctx.globalAlpha = ctx.globalAlpha * clamp_int(data.params.opacity, 1, 100, 70) / 100;

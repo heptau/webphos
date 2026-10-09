@@ -8,7 +8,7 @@ import { t } from '../tools/translate.js';
 class Layer_stamp_class {
 
 	stamp_visible() {
-		var canvas = new Edit_selection_class().get_merged_canvas();
+		const canvas = new Edit_selection_class().get_merged_canvas();
 		app.State.do_action(
 			new app.Actions.Bundle_action('stamp_visible', 'Stamp Visible', [
 				new app.Actions.Insert_layer_action({

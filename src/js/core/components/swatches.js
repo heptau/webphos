@@ -56,7 +56,7 @@
 
 	const set_selected_hex = ($el, hex) => {
 		const { selectedIndex, swatches } = $el.data();
-		if (/^\#[0-9A-F]{6}$/gi.test(hex)) {
+		if (/^#[0-9A-F]{6}$/gi.test(hex)) {
 			const swatch = swatches[selectedIndex];
 			$(swatch)
 				.data('hex', hex)
@@ -70,7 +70,7 @@
 		for (let i = 0; i < swatches.length; i++) {
 			if (hexArray[i]) {
 				const hex = hexArray[i];
-				if (/^\#[0-9A-F]{6}$/gi.test(hex)) {
+				if (/^#[0-9A-F]{6}$/gi.test(hex)) {
 					$(swatches[i])
 						.data('hex', hex)
 						.css('background-color', hex);
@@ -82,7 +82,7 @@
 	}
 
 	$.fn.uiSwatches = function(behavior, ...args) {
-		let returnValues = [];
+		const returnValues = [];
 		for (let i = 0; i < this.length; i++) {
 			let el = this[i];
 
@@ -111,9 +111,9 @@
 					el.setAttribute('id', id);
 				}
 				if (cols) {
-					swatchGroup.classList.add('cols_' + cols);
+					swatchGroup.classList.add(`cols_${  cols}`);
 				}
-				swatchGroup.classList.add('rows_' + rows);
+				swatchGroup.classList.add(`rows_${  rows}`);
 
 				const swatches = [];
 				for (let i = 0; i < count; i++) {
@@ -143,7 +143,7 @@
 			}
 			// Behaviors
 			else if (behavior === 'set_selected_hex') {
-				const newValue = args[0] + '';
+				const newValue = `${args[0]  }`;
 				set_selected_hex($(el), newValue);
 			}
 			else if (behavior === 'get_selected_hex') {
@@ -155,7 +155,7 @@
 			}
 			else if (behavior === 'get_all_hex') {
 				const { swatches } = $(el).data();
-				for (let swatch of swatches) {
+				for (const swatch of swatches) {
 					returnValues.push($(swatch).data('hex'));
 				}
 			}

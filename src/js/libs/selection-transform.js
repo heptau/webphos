@@ -20,7 +20,7 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 1000;
 const MIN_SIZE = 2; //pixels
 
-export var IDENTITY = {scale_x: 100, scale_y: 100, rotate: 0, dx: 0, dy: 0};
+export const IDENTITY = {scale_x: 100, scale_y: 100, rotate: 0, dx: 0, dy: 0};
 
 function clamp(value, min, max) {
 	return Math.min(max, Math.max(min, value));
@@ -47,10 +47,10 @@ export function frame_of(bounds, t) {
  * @returns {{x: number, y: number}} the point in the frame: from its center, along its sides
  */
 export function to_local(point, frame) {
-	var dx = point.x - frame.cx;
-	var dy = point.y - frame.cy;
-	var cos = Math.cos(frame.angle);
-	var sin = Math.sin(frame.angle);
+	const dx = point.x - frame.cx;
+	const dy = point.y - frame.cy;
+	const cos = Math.cos(frame.angle);
+	const sin = Math.sin(frame.angle);
 	return {x: dx * cos + dy * sin, y: -dx * sin + dy * cos};
 }
 
@@ -60,8 +60,8 @@ export function to_local(point, frame) {
  * @returns {{x: number, y: number}} the point in the picture
  */
 export function from_local(local, frame) {
-	var cos = Math.cos(frame.angle);
-	var sin = Math.sin(frame.angle);
+	const cos = Math.cos(frame.angle);
+	const sin = Math.sin(frame.angle);
 	return {x: frame.cx + local.x * cos - local.y * sin, y: frame.cy + local.x * sin + local.y * cos};
 }
 
@@ -72,9 +72,9 @@ export function from_local(local, frame) {
  * @returns {Object<string, {x: number, y: number}>} places of the handles and of the corners of the frame
  */
 export function handle_points(bounds, t, rotate_distance) {
-	var f = frame_of(bounds, t);
-	var result = {};
-	SCALE_HANDLES.forEach(function (name) {
+	const f = frame_of(bounds, t);
+	const result = {};
+	SCALE_HANDLES.forEach((name) => {
 		result[name] = from_local({x: SIGNS[name][0] * f.hw, y: SIGNS[name][1] * f.hh}, f);
 	});
 	result.rotate = from_local({x: 0, y: -f.hh - (rotate_distance || 0)}, f);
@@ -93,22 +93,22 @@ export function handle_points(bounds, t, rotate_distance) {
  *   'move' (inside the frame) or null (far from the frame)
  */
 export function hit_test(bounds, t, point, reach, rotate_distance) {
-	var points = handle_points(bounds, t, rotate_distance);
-	var near = function (name) {
+	const points = handle_points(bounds, t, rotate_distance);
+	const near = function (name) {
 		return Math.hypot(points[name].x - point.x, points[name].y - point.y) <= reach;
 	};
 	if (near('rotate')) {
 		return 'rotate';
 	}
 	//corners first, they are small and edges are long
-	var order = ['tl', 'tr', 'br', 'bl', 'top', 'right', 'bottom', 'left'];
-	for (var i = 0; i < order.length; i++) {
+	const order = ['tl', 'tr', 'br', 'bl', 'top', 'right', 'bottom', 'left'];
+	for (let i = 0; i < order.length; i++) {
 		if (near(order[i])) {
 			return order[i];
 		}
 	}
-	var f = frame_of(bounds, t);
-	var local = to_local(point, f);
+	const f = frame_of(bounds, t);
+	const local = to_local(point, f);
 	if (Math.abs(local.x) <= f.hw && Math.abs(local.y) <= f.hh) {
 		return 'move';
 	}
@@ -133,8 +133,8 @@ export function hit_test(bounds, t, point, reach, rotate_distance) {
  */
 export function drag_transform(bounds, start, kind, from, to, keys) {
 	keys = keys || {};
-	var result = {scale_x: start.scale_x, scale_y: start.scale_y, rotate: start.rotate, dx: start.dx, dy: start.dy};
-	var f = frame_of(bounds, start);
+	const result = {scale_x: start.scale_x, scale_y: start.scale_y, rotate: start.rotate, dx: start.dx, dy: start.dy};
+	const f = frame_of(bounds, start);
 
 	if (kind == 'move') {
 		result.dx = start.dx + (to.x - from.x);
@@ -142,9 +142,9 @@ export function drag_transform(bounds, start, kind, from, to, keys) {
 		return result;
 	}
 	if (kind == 'rotate') {
-		var before = Math.atan2(from.y - f.cy, from.x - f.cx);
-		var now = Math.atan2(to.y - f.cy, to.x - f.cx);
-		var degrees = start.rotate + (now - before) * 180 / Math.PI;
+		const before = Math.atan2(from.y - f.cy, from.x - f.cx);
+		const now = Math.atan2(to.y - f.cy, to.x - f.cx);
+		let degrees = start.rotate + (now - before) * 180 / Math.PI;
 		if (keys.shift) {
 			degrees = Math.round(degrees / 15) * 15;
 		}
@@ -156,51 +156,51 @@ export function drag_transform(bounds, start, kind, from, to, keys) {
 		return result;
 	}
 
-	var signs = SIGNS[kind];
-	var q = to_local(to, f);
-	var half = [f.hw, f.hh];
-	var size = [0, 0]; //new half size in the frame
-	var center = [0, 0]; //new center in the frame
-	for (var axis = 0; axis < 2; axis++) {
-		var s = signs[axis];
+	const signs = SIGNS[kind];
+	const q = to_local(to, f);
+	const half = [f.hw, f.hh];
+	const size = [0, 0]; //new half size in the frame
+	const center = [0, 0]; //new center in the frame
+	for (let axis = 0; axis < 2; axis++) {
+		const s = signs[axis];
 		if (s == 0) {
 			size[axis] = half[axis];
 			center[axis] = 0;
 			continue;
 		}
-		var pointer = axis == 0 ? q.x : q.y;
+		const pointer = axis == 0 ? q.x : q.y;
 		if (keys.alt) {
 			//around the center
 			size[axis] = Math.max(MIN_SIZE / 2, Math.abs(pointer));
 			center[axis] = 0;
 		}
 		else {
-			var fixed = -s * half[axis]; //the side on the other end stays where it is
-			var moved = s * (pointer - fixed) >= MIN_SIZE ? pointer : fixed + s * MIN_SIZE;
+			const fixed = -s * half[axis]; //the side on the other end stays where it is
+			const moved = s * (pointer - fixed) >= MIN_SIZE ? pointer : fixed + s * MIN_SIZE;
 			size[axis] = Math.abs(moved - fixed) / 2;
 			center[axis] = (moved + fixed) / 2;
 		}
 	}
 	if (keys.shift && signs[0] != 0 && signs[1] != 0) {
 		//the proportions of the frame stay: the bigger of the two changes counts
-		var factor = Math.max(size[0] / f.hw, size[1] / f.hh);
-		for (var a = 0; a < 2; a++) {
-			var anchor = keys.alt ? 0 : -signs[a] * half[a];
+		const factor = Math.max(size[0] / f.hw, size[1] / f.hh);
+		for (let a = 0; a < 2; a++) {
+			const anchor = keys.alt ? 0 : -signs[a] * half[a];
 			size[a] = half[a] * factor;
 			center[a] = keys.alt ? 0 : anchor + signs[a] * size[a];
 		}
 	}
 
-	var scale_x = clamp(size[0] * 200 / bounds.width, MIN_SCALE, MAX_SCALE);
-	var scale_y = clamp(size[1] * 200 / bounds.height, MIN_SCALE, MAX_SCALE);
+	const scale_x = clamp(size[0] * 200 / bounds.width, MIN_SCALE, MAX_SCALE);
+	const scale_y = clamp(size[1] * 200 / bounds.height, MIN_SCALE, MAX_SCALE);
 	//a clamped size moves the center, so the side that must stay fixed stays
-	var final_half = [bounds.width * scale_x / 200, bounds.height * scale_y / 200];
-	for (var b = 0; b < 2; b++) {
+	const final_half = [bounds.width * scale_x / 200, bounds.height * scale_y / 200];
+	for (let b = 0; b < 2; b++) {
 		if (signs[b] != 0 && !keys.alt) {
 			center[b] = -signs[b] * half[b] + signs[b] * final_half[b];
 		}
 	}
-	var moved_center = from_local({x: center[0], y: center[1]}, f);
+	const moved_center = from_local({x: center[0], y: center[1]}, f);
 	result.scale_x = scale_x;
 	result.scale_y = scale_y;
 	result.dx = moved_center.x - (bounds.x + bounds.width / 2);

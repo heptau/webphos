@@ -9,8 +9,8 @@ function is_default(value, fallback) {
 }
 
 function clean(meta, defaults) {
-	var result = {};
-	Object.keys(meta).forEach(function (key) {
+	const result = {};
+	Object.keys(meta).forEach((key) => {
 		if (meta[key] !== undefined && (!defaults || !is_default(meta[key], defaults[key]) || key === 'fill_color')) {
 			result[key] = meta[key];
 		}
@@ -26,14 +26,14 @@ function clean(meta, defaults) {
  * @returns {{first: {line: number, character: number}, last: {line: number, character: number}}}
  */
 export function order_range(range) {
-	var a = range.start;
-	var b = range.end;
-	var backwards = a.line > b.line || (a.line === b.line && a.character > b.character);
+	const a = range.start;
+	const b = range.end;
+	const backwards = a.line > b.line || (a.line === b.line && a.character > b.character);
 	return backwards ? {first: b, last: a} : {first: a, last: b};
 }
 
 export function is_empty_range(range) {
-	var ordered = order_range(range);
+	const ordered = order_range(range);
 	return ordered.first.line === ordered.last.line && ordered.first.character === ordered.last.character;
 }
 
@@ -41,34 +41,34 @@ export function is_empty_range(range) {
  * Cuts the spans at the ends of the range and marks (inside: true) those that lie in it. Without a range everything is inside.
  */
 function mark_range(data, range) {
-	var ordered = range ? order_range(range) : null;
-	return data.map(function (line, line_index) {
-		var from = 0;
-		var to = Infinity;
-		var outside = false;
+	const ordered = range ? order_range(range) : null;
+	return data.map((line, line_index) => {
+		let from = 0;
+		let to = Infinity;
+		let outside = false;
 		if (ordered) {
 			outside = line_index < ordered.first.line || line_index > ordered.last.line;
 			from = line_index === ordered.first.line ? ordered.first.character : 0;
 			to = line_index === ordered.last.line ? ordered.last.character : Infinity;
 		}
-		var result = [];
-		var position = 0;
-		line.forEach(function (span) {
-			var text = String(span.text);
-			var start = position;
-			var end = position + text.length;
+		const result = [];
+		let position = 0;
+		line.forEach((span) => {
+			const text = String(span.text);
+			const start = position;
+			const end = position + text.length;
 			position = end;
-			var piece = function (a, b, inside) {
+			const piece = function (a, b, inside) {
 				if (b > a || (text === '' && a === 0)) {
-					result.push({text: text.slice(a - start, b - start), meta: Object.assign({}, span.meta || {}), inside: inside});
+					result.push({text: text.slice(a - start, b - start), meta: Object.assign({}, span.meta || {}), inside});
 				}
 			};
 			if (outside || end <= from || start >= to) {
 				piece(start, end, false);
 			}
 			else {
-				var cut_from = Math.max(start, from);
-				var cut_to = Math.min(end, to);
+				const cut_from = Math.max(start, from);
+				const cut_to = Math.min(end, to);
 				piece(start, cut_from, false);
 				piece(cut_from, cut_to, true);
 				piece(cut_to, end, false);
@@ -79,27 +79,27 @@ function mark_range(data, range) {
 }
 
 function same_meta(a, b) {
-	var keys = Object.keys(Object.assign({}, a, b)).sort();
-	return keys.every(function (key) { return a[key] === b[key]; });
+	const keys = Object.keys(Object.assign({}, a, b)).sort();
+	return keys.every((key) => { return a[key] === b[key]; });
 }
 
 /**
  * Takes the marks away and joins neighbouring spans with the same style (the cuts would pile up otherwise).
  */
 function unmark(data) {
-	return data.map(function (line) {
-		var result = [];
-		line.forEach(function (span) {
-			var last = result[result.length - 1];
-			var meta = clean(span.meta, null);
+	return data.map((line) => {
+		const result = [];
+		line.forEach((span) => {
+			const last = result[result.length - 1];
+			const meta = clean(span.meta, null);
 			if (last && same_meta(last.meta, meta)) {
 				last.text += span.text;
 			}
 			else {
-				result.push({text: span.text, meta: meta});
+				result.push({text: span.text, meta});
 			}
 		});
-		return result.filter(function (span, index) {
+		return result.filter((span, index) => {
 			return span.text !== '' || (index === 0 && result.length === 1);
 		});
 	});
@@ -112,9 +112,9 @@ function unmark(data) {
  * @returns {object[][]} a changed copy
  */
 function map_spans(data, change, range) {
-	var marked = mark_range(data, range);
-	marked.forEach(function (line) {
-		line.forEach(function (span) {
+	const marked = mark_range(data, range);
+	marked.forEach((line) => {
+		line.forEach((span) => {
 			if (span.inside) {
 				span.meta = change(span, span.meta);
 			}
@@ -133,8 +133,8 @@ function map_spans(data, change, range) {
  * @returns {object[][]}
  */
 export function apply_meta(data, changes, defaults, range) {
-	return map_spans(data, function (span, meta) {
-		Object.keys(changes).forEach(function (key) {
+	return map_spans(data, (span, meta) => {
+		Object.keys(changes).forEach((key) => {
 			meta[key] = is_default(changes[key], defaults[key]) && key !== 'fill_color' ? undefined : changes[key];
 		});
 		return clean(meta, defaults);
@@ -150,15 +150,15 @@ export function apply_meta(data, changes, defaults, range) {
  * @returns {object}
  */
 export function read_meta(data, defaults, range) {
-	var found = null;
-	var source = data || [];
+	let found = null;
+	let source = data || [];
 	if (range && data) {
-		source = mark_range(data, range).map(function (line) {
-			return line.filter(function (span) { return span.inside; });
+		source = mark_range(data, range).map((line) => {
+			return line.filter((span) => { return span.inside; });
 		});
 	}
-	source.forEach(function (line) {
-		line.forEach(function (span) {
+	source.forEach((line) => {
+		line.forEach((span) => {
 			if (found === null && String(span.text) !== '') {
 				found = span.meta || {};
 			}
@@ -180,10 +180,10 @@ export function read_meta(data, defaults, range) {
  * @returns {object[][]}
  */
 export function toggle_flag(data, key, defaults, range) {
-	var all = true;
-	var any = false;
-	mark_range(data, range).forEach(function (line) {
-		line.forEach(function (span) {
+	let all = true;
+	let any = false;
+	mark_range(data, range).forEach((line) => {
+		line.forEach((span) => {
 			if (!span.inside || String(span.text) === '') {
 				return;
 			}
@@ -193,13 +193,13 @@ export function toggle_flag(data, key, defaults, range) {
 			}
 		});
 	});
-	var change = {};
+	const change = {};
 	change[key] = any && all ? false : true;
 	return apply_meta(data, change, defaults, range);
 }
 
 function title_case(text) {
-	return text.toLowerCase().replace(/(^|[\s\-_.,;:!?()"'“„])(\S)/g, function (match, before, letter) {
+	return text.toLowerCase().replace(/(^|[\s\-_.,;:!?()"'“„])(\S)/g, (match, before, letter) => {
 		return before + letter.toUpperCase();
 	});
 }
@@ -211,8 +211,8 @@ function title_case(text) {
  * @returns {object[][]}
  */
 export function change_case(data, mode, range) {
-	return map_spans(data, function (span, meta) {
-		var text = String(span.text);
+	return map_spans(data, (span, meta) => {
+		const text = String(span.text);
 		span.text = mode === 'upper' ? text.toUpperCase() : mode === 'lower' ? text.toLowerCase() : title_case(text);
 		return meta;
 	}, range);
@@ -226,8 +226,8 @@ export function change_case(data, mode, range) {
  * @returns {object[][]}
  */
 export function replace_text(data, text) {
-	var first = data && data[0] && data[0][0] && data[0][0].meta ? data[0][0].meta : {};
-	return String(text).split('\n').map(function (line) {
+	const first = data && data[0] && data[0][0] && data[0][0].meta ? data[0][0].meta : {};
+	return String(text).split('\n').map((line) => {
 		return [{text: line, meta: Object.assign({}, first)}];
 	});
 }

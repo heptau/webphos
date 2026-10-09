@@ -14,7 +14,7 @@ class Red_eye_class extends Base_pixel_tool_class {
 	}
 
 	stamp(ctx, position, size, params) {
-		var radius = Math.max(2, size / 2);
+		const radius = Math.max(2, size / 2);
 		this.with_region(ctx, position, radius + 1, (image, x, y) => {
 			remove_red_eye(image, x, y, radius, params.strength);
 		});

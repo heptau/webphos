@@ -132,7 +132,7 @@
 	};
 
 	const generate_on_mouse_up_window = ($el) => {
-		return (event) => {
+		return () => {
 			const $window = $(window);
 			$el.removeClass('active');
 			$window.off('mousemove touchmove', $el.data('mouseMoveWindowHandler'));
@@ -149,14 +149,14 @@
 		$el.attr('aria-valuemax', max);
 		$el.attr('aria-valuenow', value);
 		if (vertical) {
-			bar.style.height = (((value - min) / (max - min)) * 100) + '%';
+			bar.style.height = `${((value - min) / (max - min)) * 100  }%`;
 		} else {
-			bar.style.width = (((value - min) / (max - min)) * 100) + '%';
+			bar.style.width = `${((value - min) / (max - min)) * 100  }%`;
 		}
 	};
 
 	$.fn.uiRange = function(behavior, ...args) {
-		let returnValues = [];
+		const returnValues = [];
 		for (let i = 0; i < this.length; i++) {
 			let el = this[i];
 
@@ -165,7 +165,7 @@
 				const definition = behavior || {};
 
 				const classList = el.className;
-				const id = definition.id != null ? definition.id : el.getAttribute('id'); 
+				const id = definition.id != null ? definition.id : el.getAttribute('id');
 				const value = definition.value != null ? definition.value : parseFloat(el.value) || 0;
 				const min = definition.min != null ? definition.min : parseFloat(el.getAttribute('min')) || 0;
 				const max = definition.max != null ? definition.max : parseFloat(el.getAttribute('max')) || 0;

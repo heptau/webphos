@@ -13,7 +13,7 @@ class GUI_history_class {
 	}
 
 	render_main_history() {
-		var container = document.getElementById('toggle_history');
+		const container = document.getElementById('toggle_history');
 		if (!container) {
 			return;
 		}
@@ -24,7 +24,7 @@ class GUI_history_class {
 		container.appendChild(this.list);
 
 		this.list.addEventListener('click', (event) => {
-			var item = event.target.closest('[data-step]');
+			const item = event.target.closest('[data-step]');
 			if (item) {
 				this.History.go_to(parseInt(item.dataset.step, 10), this.list);
 			}
@@ -33,9 +33,9 @@ class GUI_history_class {
 			if (event.key != 'ArrowDown' && event.key != 'ArrowUp') {
 				return;
 			}
-			var items = Array.from(this.list.querySelectorAll('[data-step]'));
-			var index = items.indexOf(document.activeElement);
-			var next = items[index + (event.key == 'ArrowDown' ? 1 : -1)];
+			const items = Array.from(this.list.querySelectorAll('[data-step]'));
+			const index = items.indexOf(document.activeElement);
+			const next = items[index + (event.key == 'ArrowDown' ? 1 : -1)];
 			if (next) {
 				event.preventDefault();
 				next.focus();
@@ -59,11 +59,11 @@ class GUI_history_class {
 	}
 
 	render() {
-		var block = document.getElementById('history_base');
+		const block = document.getElementById('history_base');
 		if (!this.list || !block || block.classList.contains('panel_hidden')) {
 			return;
 		}
-		var container = document.getElementById('toggle_history');
+		const container = document.getElementById('toggle_history');
 		if (container.classList.contains('hidden')) {
 			//collapsed - rendered when it is opened
 			return;

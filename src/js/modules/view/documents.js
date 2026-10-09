@@ -18,12 +18,12 @@ class View_documents_class {
 	}
 
 	close_others(index) {
-		var keep = this.docs.documents[parseInt(index, 10)];
+		const keep = this.docs.documents[parseInt(index, 10)];
 		this.docs.documents.filter((doc) => doc !== keep).forEach((doc) => this.docs.close(this.docs.documents.indexOf(doc)));
 	}
 
 	close_right(index) {
-		var from = parseInt(index, 10);
+		const from = parseInt(index, 10);
 		this.docs.documents.slice(from + 1).forEach((doc) => this.docs.close(this.docs.documents.indexOf(doc)));
 	}
 

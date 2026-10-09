@@ -1,6 +1,6 @@
-# WebPhos Makefile
-# Build and development automation for WebPhos
-# 
+# Lumifex Makefile
+# Build and development automation for Lumifex
+#
 # Usage:
 #   make            - Show this help
 #   make build      - Build production version to docs/ (for GitHub Pages)
@@ -17,7 +17,7 @@ VERSION := $(strip $(shell cat VERSION))
 
 # Default target - show help
 help:
-	@echo "WebPhos $(VERSION) - Build Commands"
+	@echo "Lumifex $(VERSION) - Build Commands"
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
@@ -36,7 +36,7 @@ help:
 
 # Build production version to docs/ for GitHub Pages
 build: clean
-	@echo "Building WebPhos $(VERSION) (from the VERSION file)..."
+	@echo "Building Lumifex $(VERSION) (from the VERSION file)..."
 	@npm pkg set version=$(VERSION) > /dev/null
 	npm run build
 	@echo "Copying to docs/ for GitHub Pages..."

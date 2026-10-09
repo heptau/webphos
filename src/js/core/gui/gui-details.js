@@ -13,7 +13,7 @@ import Helper_class from './../../libs/helpers.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import Tools_translate_class, { t } from './../../modules/tools/translate.js';
 
-var template = `
+const template = `
 	<div class="row">
 		<span class="trn label">X</span>
 		<input type="number" id="detail_x" step="any" />
@@ -181,20 +181,20 @@ class GUI_details_class {
 	}
 
 	render_general(key, events) {
-		var layer = config.layer;
-		var _this = this;
-		var units = this.Tools_settings.get_setting('default_units');
-		var resolution = this.Tools_settings.get_setting('resolution');
+		let target;
+		const layer = config.layer;
+		const units = this.Tools_settings.get_setting('default_units');
+		const resolution = this.Tools_settings.get_setting('resolution');
 
 		if (layer != undefined) {
-			var target = document.getElementById('detail_' + key);
+			target = document.getElementById(`detail_${  key}`);
 			target.dataset.layer = layer.id;
 			if (layer[key] == null) {
 				target.value = '';
 				target.disabled = true;
 			}
 			else {
-				var value = layer[key];
+				let value = layer[key];
 
 				if(key == 'x' || key == 'y' || key == 'width' || key == 'height'){
 					//convert units
@@ -212,24 +212,25 @@ class GUI_details_class {
 
 		if (events) {
 			//events
-			var target = document.getElementById('detail_' + key);
+			target = document.getElementById(`detail_${  key}`);
 			if(target == undefined){
-				console.log('Error: missing details event target ' + 'detail_' + key);
+				console.error(`Error: missing details event target ` + `detail_${  key}`);
 				return;
 			}
 			let focus_value = null;
-			target.addEventListener('focus', function (e) {
+			target.addEventListener('focus', function () {
 				focus_value = parseFloat(this.value);
 			});
-			target.addEventListener('blur', function (e) {
+			target.addEventListener('blur', (e) => {
+				let value;
 				if(key == 'x' || key == 'y' || key == 'width' || key == 'height'){
 					//convert units
-					var value = _this.Helper.get_internal_unit(this.value, units, resolution);
+					value = this.Helper.get_internal_unit(e.currentTarget.value, units, resolution);
 				}
 				else {
-					var value = parseInt(this.value);
+					value = parseInt(e.currentTarget.value);
 				}
-				var layer = _this.Base_layers.get_layer(e.target.dataset.layer);
+				const layer = this.Base_layers.get_layer(e.target.dataset.layer);
 				layer[key] = focus_value;
 				if (focus_value !== value) {
 					app.State.do_action(
@@ -241,50 +242,52 @@ class GUI_details_class {
 					);
 				}
 			});
-			target.addEventListener('change', function (e) {
+			target.addEventListener('change', (event) => {
+				let value;
 				if(key == 'x' || key == 'y' || key == 'width' || key == 'height'){
 					//convert units
-					var value = _this.Helper.get_internal_unit(this.value, units, resolution);
+					value = this.Helper.get_internal_unit(event.currentTarget.value, units, resolution);
 				}
 				else {
-					var value = parseInt(this.value);
+					value = parseInt(event.currentTarget.value);
 				}
-				
-				if(this.min != undefined && this.min != '' && value < this.min){
+
+				if(event.currentTarget.min != undefined && event.currentTarget.min != '' && value < event.currentTarget.min){
 					document.getElementById('detail_opacity').value = value;
-					value = this.min;
+					value = event.currentTarget.min;
 				}
-				if(this.max != undefined && this.min != '' && value > this.max){
+				if(event.currentTarget.max != undefined && event.currentTarget.min != '' && value > event.currentTarget.max){
 					document.getElementById('detail_opacity').value = value;
-					value = this.max;
+					value = event.currentTarget.max;
 				}
-				
+
 				config.layer[key] = value;
 				config.need_render = true;
 			});
-			target.addEventListener('keyup', function (e) {
+			target.addEventListener('keyup', (e) => {
 				//for edge....
+				let value;
 				if (e.keyCode != 13) {
 					return;
 				}
 
 				if(key == 'x' || key == 'y' || key == 'width' || key == 'height'){
 					//convert units
-					var value = _this.Helper.get_internal_unit(this.value, units, resolution);
+					value = this.Helper.get_internal_unit(e.currentTarget.value, units, resolution);
 				}
 				else {
-					var value = parseInt(this.value);
+					value = parseInt(e.currentTarget.value);
 				}
-				
-				if(this.min != undefined && this.min != '' && value < this.min){
+
+				if(e.currentTarget.min != undefined && e.currentTarget.min != '' && value < e.currentTarget.min){
 					document.getElementById('detail_opacity').value = value;
-					value = this.min;
+					value = e.currentTarget.min;
 				}
-				if(this.max != undefined && this.min != '' && value > this.max){
+				if(e.currentTarget.max != undefined && e.currentTarget.min != '' && value > e.currentTarget.max){
 					document.getElementById('detail_opacity').value = value;
-					value = this.max;
+					value = e.currentTarget.max;
 				}
-				
+
 				config.layer[key] = value;
 				config.need_render = true;
 			});
@@ -292,10 +295,11 @@ class GUI_details_class {
 	}
 
 	render_general_param(key, events) {
-		var layer = config.layer;
+		let target;
+		const layer = config.layer;
 
 		if (layer != undefined) {
-			var target = document.getElementById('detail_param_' + key);
+			target = document.getElementById(`detail_param_${  key}`);
 			if (layer.params[key] == null) {
 				target.value = '';
 				target.disabled = true;
@@ -322,15 +326,15 @@ class GUI_details_class {
 
 		if (events) {
 			//events
-			var target = document.getElementById('detail_param_' + key);
+			target = document.getElementById(`detail_param_${  key}`);
 			let focus_value = null;
-			target.addEventListener('focus', function (e) {
+			target.addEventListener('focus', function () {
 				focus_value = parseInt(this.value);
 			});
-			target.addEventListener('blur', function (e) {
-				var value = parseInt(this.value);
+			target.addEventListener('blur', function () {
+				const value = parseInt(this.value);
 				config.layer.params[key] = focus_value;
-				let params_copy = JSON.parse(JSON.stringify(config.layer.params));
+				const params_copy = JSON.parse(JSON.stringify(config.layer.params));
 				params_copy[key] = value;
 				if (focus_value !== value) {
 					app.State.do_action(
@@ -342,14 +346,14 @@ class GUI_details_class {
 					);
 				}
 			});
-			target.addEventListener('change', function (e) {
-				var value = parseInt(this.value);
+			target.addEventListener('change', function () {
+				const value = parseInt(this.value);
 				config.layer.params[key] = value;
 				config.need_render = true;
 				config.need_render_changed_params = true;
 
 			});
-			target.addEventListener('click', function (e) {
+			target.addEventListener('click', function () {
 				if (typeof config.layer.params[key] != 'boolean')
 					return;
 				this.classList.toggle('active');
@@ -361,10 +365,11 @@ class GUI_details_class {
 	}
 
 	render_general_select_param(key, events){
-		var layer = config.layer;
+		let target;
+		const layer = config.layer;
 
 		if (layer != undefined) {
-			var target = document.getElementById('detail_param_' + key);
+			target = document.getElementById(`detail_param_${  key}`);
 
 			if (layer.params[key] == null) {
 				target.value = '';
@@ -381,15 +386,15 @@ class GUI_details_class {
 
 		if (events) {
 			//events
-			var target = document.getElementById('detail_param_' + key);
+			target = document.getElementById(`detail_param_${  key}`);
 			let focus_value = null;
-			target.addEventListener('focus', function (e) {
+			target.addEventListener('focus', function () {
 				focus_value = this.value;
 			});
-			target.addEventListener('blur', function (e) {
-				var value = this.value;
+			target.addEventListener('blur', function () {
+				const value = this.value;
 				config.layer.params[key] = focus_value;
-				let params_copy = JSON.parse(JSON.stringify(config.layer.params));
+				const params_copy = JSON.parse(JSON.stringify(config.layer.params));
 				params_copy[key] = value;
 				if (focus_value !== value) {
 					app.State.do_action(
@@ -401,8 +406,8 @@ class GUI_details_class {
 					);
 				}
 			});
-			target.addEventListener('change', function (e) {
-				var value = this.value;
+			target.addEventListener('change', function () {
+				const value = this.value;
 				config.layer.params[key] = value;
 				config.need_render = true;
 				config.need_render_changed_params = true;
@@ -414,7 +419,7 @@ class GUI_details_class {
 	 * item: color
 	 */
 	render_color(events) {
-		var layer = config.layer;
+		const layer = config.layer;
 
 		let $colorInput;
 		if (events) {
@@ -430,10 +435,10 @@ class GUI_details_class {
 		if (events) {
 			//events
 			let focus_value = null;
-			$colorInput.on('focus', function (e) {
+			$colorInput.on('focus', () => {
 				focus_value = $colorInput.uiColorInput('get_value');
 			});
-			$colorInput.on('change', function (e) {
+			$colorInput.on('change', () => {
 				const value = $colorInput.uiColorInput('get_value');
 				config.layer.color = focus_value;
 				if (focus_value !== value) {
@@ -453,7 +458,7 @@ class GUI_details_class {
 	 * item: size reset button
 	 */
 	render_reset(events) {
-		var layer = config.layer;
+		const layer = config.layer;
 
 		if (layer != undefined) {
 			//size
@@ -467,7 +472,7 @@ class GUI_details_class {
 
 		if (events) {
 			//events
-			document.getElementById('reset_x').addEventListener('click', function (e) {
+			document.getElementById('reset_x').addEventListener('click', () => {
 				if (config.layer.x) {
 					app.State.do_action(
 						new app.Actions.Bundle_action('change_layer_details', 'Change Layer Details', [
@@ -478,7 +483,7 @@ class GUI_details_class {
 					);
 				}
 			});
-			document.getElementById('reset_y').addEventListener('click', function (e) {
+			document.getElementById('reset_y').addEventListener('click', () => {
 				if (config.layer.y) {
 					app.State.do_action(
 						new app.Actions.Bundle_action('change_layer_details', 'Change Layer Details', [
@@ -489,7 +494,7 @@ class GUI_details_class {
 					);
 				}
 			});
-			document.getElementById('reset_size').addEventListener('click', function (e) {
+			document.getElementById('reset_size').addEventListener('click', () => {
 				if (config.layer.width !== config.layer.width_original
 					|| config.layer.height !== config.layer.height_original) {
 					app.State.do_action(
@@ -502,7 +507,7 @@ class GUI_details_class {
 					);
 				}
 			});
-			document.getElementById('reset_rotate').addEventListener('click', function (e) {
+			document.getElementById('reset_rotate').addEventListener('click', () => {
 				if (config.layer.rotate) {
 					app.State.do_action(
 						new app.Actions.Bundle_action('change_layer_details', 'Change Layer Details', [
@@ -513,7 +518,7 @@ class GUI_details_class {
 					);
 				}
 			});
-			document.getElementById('reset_opacity').addEventListener('click', function (e) {
+			document.getElementById('reset_opacity').addEventListener('click', () => {
 				if (config.layer.opacity != 100) {
 					app.State.do_action(
 						new app.Actions.Bundle_action('change_layer_details', 'Change Layer Details', [
@@ -533,7 +538,7 @@ class GUI_details_class {
 	render_text(events) {
 		if (events) {
 			//events
-			document.getElementById('detail_param_text').addEventListener('click', function (e) {
+			document.getElementById('detail_param_text').addEventListener('click', () => {
 				document.querySelector('#tools_container #text').click();
 				document.getElementById('text_tool_keyboard_input').focus();
 				config.need_render = true;
@@ -542,8 +547,8 @@ class GUI_details_class {
 	}
 
 	render_more_parameters() {
-		var _this = this;
-		var target_id = "parameters_container";
+		let item;
+		const target_id = "parameters_container";
 		const itemContainer = document.getElementById(target_id);
 
 		if(this.layer_details_active == true){
@@ -557,8 +562,8 @@ class GUI_details_class {
 		}
 
 		//find layer parameters settings
-		var params_config = null;
-		for (var i in config.TOOLS) {
+		let params_config = null;
+		for (const i in config.TOOLS) {
 			if (config.TOOLS[i].name == config.layer.type) {
 				params_config =  config.TOOLS[i];
 			}
@@ -567,8 +572,8 @@ class GUI_details_class {
 			return;
 		}
 
-		for (var k in params_config.attributes) {
-			var item = params_config.attributes[k];
+		for (const k in params_config.attributes) {
+			item = params_config.attributes[k];
 
 			//hide some fields, in future name should start with underscore
 			if(params_config.name == 'rectangle' && k == 'square'
@@ -579,14 +584,14 @@ class GUI_details_class {
 			}
 
 			//row
-			let item_row = document.createElement('div');
+			const item_row = document.createElement('div');
 			item_row.className = 'row';
 			itemContainer.appendChild(item_row);
 
 			//title
-			var title = k[0].toUpperCase() + k.slice(1);
+			let title = k[0].toUpperCase() + k.slice(1);
 			title = title.replace("_", " ");
-			let item_title = document.createElement('span');
+			const item_title = document.createElement('span');
 			item_title.className = 'trn label';
 			item_title.innerHTML = title;
 			item_row.appendChild(item_title);
@@ -603,21 +608,21 @@ class GUI_details_class {
 				elementInput.dataset.key = k;
 				item_row.appendChild(elementInput);
 
-				let value = config.layer.params[k];
+				const value = config.layer.params[k];
 				elementInput.setAttribute('aria-pressed', value);
 
 				//events
-				elementInput.addEventListener('click', function (e) {
+				elementInput.addEventListener('click', function () {
 					//on leave
-					let layer = config.layer;
-					let key = this.dataset.key;
-					let new_value = elementInput.getAttribute('aria-pressed') !== 'true';
-					let params = JSON.parse(JSON.stringify(config.layer.params));
+					const layer = config.layer;
+					const key = this.dataset.key;
+					const new_value = elementInput.getAttribute('aria-pressed') !== 'true';
+					const params = JSON.parse(JSON.stringify(config.layer.params));
 					params[key] = new_value;
 
 					app.State.do_action(
 						new app.Actions.Update_layer_action(layer.id, {
-							params: params
+							params
 						})
 					);
 				});
@@ -633,9 +638,7 @@ class GUI_details_class {
 				let min = 1;
 				let max = k === 'power' ? 100 : 999;
 				let step = null;
-				let value = config.layer.params[k];
 				if (typeof item == 'object') {
-					value = item.value;
 					if (item.min != null) {
 						min = item.min;
 					}
@@ -655,31 +658,31 @@ class GUI_details_class {
 
 				//events
 				let focus_value = null;
-				elementInput.addEventListener('focus', function (e) {
-					focus_value = parseFloat(this.value);
-					_this.layer_details_active = true;
+				elementInput.addEventListener('focus', (event) => {
+					focus_value = parseFloat(event.currentTarget.value);
+					this.layer_details_active = true;
 				});
-				elementInput.addEventListener('blur', function (e) {
+				elementInput.addEventListener('blur', (event) => {
 					//on leave
-					_this.layer_details_active = false;
-					let layer = config.layer;
-					let key = this.dataset.key;
-					let new_value = parseInt(this.value);
-					let params = JSON.parse(JSON.stringify(config.layer.params));
+					this.layer_details_active = false;
+					const layer = config.layer;
+					const key = event.currentTarget.dataset.key;
+					const new_value = parseInt(event.currentTarget.value);
+					const params = JSON.parse(JSON.stringify(config.layer.params));
 					params[key] = new_value;
 
 					if (focus_value !== new_value) {
 						app.State.do_action(
 							new app.Actions.Update_layer_action(layer.id, {
-								params: params
+								params
 							})
 						);
 					}
 				});
-				elementInput.addEventListener('change', function (e) {
+				elementInput.addEventListener('change', function () {
 					//on change - lots of events here in short time
-					let key = this.dataset.key;
-					let new_value = parseInt(this.value);
+					const key = this.dataset.key;
+					const new_value = parseInt(this.value);
 
 					config.layer.params[key] = new_value;
 					config.need_render = true;
@@ -687,12 +690,12 @@ class GUI_details_class {
 			}
 			else if (typeof item == 'object' && typeof item.value == 'string' && Array.isArray(item.values)) {
 				//list of values
-				let select = document.createElement('select');
+				const select = document.createElement('select');
 				select.dataset.key = k;
 				let current = config.layer.params[k];
 				current = current && current.value !== undefined ? current.value : current;
-				item.values.forEach(function (option_value) {
-					let option = document.createElement('option');
+				item.values.forEach((option_value) => {
+					const option = document.createElement('option');
 					option.value = option_value;
 					option.className = 'trn';
 					option.textContent = option_value;
@@ -702,12 +705,12 @@ class GUI_details_class {
 				item_row.appendChild(select);
 
 				select.addEventListener('change', function () {
-					let key = this.dataset.key;
-					let params = JSON.parse(JSON.stringify(config.layer.params));
+					const key = this.dataset.key;
+					const params = JSON.parse(JSON.stringify(config.layer.params));
 					params[key] = Object.assign({}, params[key] && typeof params[key] == 'object' ? params[key] : {values: item.values}, {value: this.value});
 					app.State.do_action(
 						new app.Actions.Update_layer_action(config.layer.id, {
-							params: params
+							params
 						})
 					);
 				});
@@ -715,23 +718,22 @@ class GUI_details_class {
 			else if (typeof item == 'string' && item[0] == '#') {
 				//color
 
-				var elementInput = document.createElement('input');
+				const elementInput = document.createElement('input');
 				elementInput.type = 'color';
-				let focus_value = null;
 				const $colorInput = $(elementInput).uiColorInput({
 						id: k,
 						value: item
 					})
 					.on('change', () => {
-						let layer = config.layer;
-						let key = $colorInput.uiColorInput('get_id');
-						let new_value = $colorInput.uiColorInput('get_value');
-						let params = JSON.parse(JSON.stringify(config.layer.params));
+						const layer = config.layer;
+						const key = $colorInput.uiColorInput('get_id');
+						const new_value = $colorInput.uiColorInput('get_value');
+						const params = JSON.parse(JSON.stringify(config.layer.params));
 						params[key] = new_value;
 
 						app.State.do_action(
 							new app.Actions.Update_layer_action(layer.id, {
-								params: params
+								params
 							})
 						);
 					});
@@ -740,7 +742,7 @@ class GUI_details_class {
 				item_row.appendChild($colorInput[0]);
 			}
 			else {
-				alertify.error(t('Error: unsupported attribute type:') + typeof item + ', ' + k);
+				alertify.error(`${t('Error: unsupported attribute type:') + typeof item  }, ${  k}`);
 			}
 		}
 	}

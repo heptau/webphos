@@ -23,11 +23,11 @@ class Effects_nightVision_class {
 		}
 
 		//get canvas from layer
-		var canvas = this.Base_layers.convert_layer_to_canvas(null, true);
-		var ctx = canvas.getContext("2d");
+		const canvas = this.Base_layers.convert_layer_to_canvas(null, true);
+		const ctx = canvas.getContext("2d");
 
 		//change data
-		var data = this.change(canvas, canvas.width, canvas.height);
+		const data = this.change(canvas, canvas.width, canvas.height);
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		ctx.drawImage(data, 0, 0);
 
@@ -42,37 +42,36 @@ class Effects_nightVision_class {
 			//init glfx lib
 			this.fx_filter = glfx.canvas();
 		}
-		
+
 		//create second copy
-		var canvas2 = document.createElement('canvas');
-		var ctx2 = canvas2.getContext("2d");
+		let canvas2 = document.createElement('canvas');
+		const ctx2 = canvas2.getContext("2d");
 		canvas2.width = width;
 		canvas2.height = height;
 		ctx2.drawImage(canvas, 0, 0);
-		
+
 		// green overlay
-		var img = ctx2.getImageData(0, 0, width, height);
+		let img = ctx2.getImageData(0, 0, width, height);
 		//RGB corrections
-		var img = this.ImageFilters.ColorTransformFilter(img, 1, 1, 1, 1, 0, 100, 0, 1);
+		img = this.ImageFilters.ColorTransformFilter(img, 1, 1, 1, 1, 0, 100, 0, 1);
 		//hue/saturation/luminance
-		var img = this.ImageFilters.HSLAdjustment(img, 0, 0, -50);
+		img = this.ImageFilters.HSLAdjustment(img, 0, 0, -50);
 		ctx2.putImageData(img, 0, 0);
-		
+
 		//vignete
-		var texture = this.fx_filter.texture(canvas2);
+		const texture = this.fx_filter.texture(canvas2);
 		this.fx_filter.draw(texture).vignette(0.2, 0.9).update();	//effect
 		canvas2 = this.fx_filter;
-		
+
 		return canvas2;
 	}
 
 	demo(canvas_id, canvas_thumb){
-		var canvas = document.getElementById(canvas_id);
-		var ctx = canvas.getContext("2d");
+		const canvas = document.getElementById(canvas_id);
+		const ctx = canvas.getContext("2d");
 
 		//modify
-		var params = {};
-		var data = this.change(canvas_thumb, canvas_thumb.width, canvas_thumb.height);
+		const data = this.change(canvas_thumb, canvas_thumb.width, canvas_thumb.height);
 
 		//draw
 		ctx.drawImage(data, 0, 0);

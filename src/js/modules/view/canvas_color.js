@@ -15,14 +15,14 @@ class View_canvas_color_class {
 
 	constructor() {
 		this.Helper = new Helper_class();
-		var saved = this.Helper.getCookie('canvas_color');
+		const saved = this.Helper.getCookie('canvas_color');
 		if (saved && COLORS[saved] !== undefined) {
 			this.apply(saved);
 		}
 	}
 
 	apply(name) {
-		var wrapper = document.getElementById('main_wrapper');
+		const wrapper = document.getElementById('main_wrapper');
 		if (wrapper) {
 			wrapper.style.backgroundColor = COLORS[name];
 		}

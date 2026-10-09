@@ -27,7 +27,7 @@ export class Delete_layer_filter_action extends Base_action {
 			throw new Error('Aborted - layer with specified id doesn\'t exist');
 		}
 		this.old_filter = null;
-		for (let i in this.reference_layer.filters) {
+		for (const i in this.reference_layer.filters) {
 			if (this.reference_layer.filters[i].id == this.filter_id) {
 				this.filter_remove_index = i;
 				this.old_filter = this.reference_layer.filters.splice(i, 1)[0];

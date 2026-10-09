@@ -1,7 +1,6 @@
 import app from './../../app.js';
 import config from './../../config.js';
 import Base_layers_class from './../../core/base-layers.js';
-import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 
 class Layer_raster_class {
 
@@ -16,14 +15,14 @@ class Layer_raster_class {
 		if (config.layer.type == null) {
 			return this.raster_empty();
 		}
-		var canvas = this.Base_layers.convert_layer_to_canvas();
-		var current_layer = config.layer;
-		var current_id = current_layer.id;
+		const canvas = this.Base_layers.convert_layer_to_canvas();
+		const current_layer = config.layer;
+		const current_id = current_layer.id;
 
 		//show
-		var params = {
+		const params = {
 			type: 'image',
-			name: config.layer.name + ' + raster',
+			name: `${config.layer.name  } + raster`,
 			data: canvas.toDataURL("image/png"),
 			x: parseInt(canvas.dataset.x),
 			y: parseInt(canvas.dataset.y),
@@ -54,10 +53,10 @@ class Layer_raster_class {
 	 * @returns {object[]}
 	 */
 	empty_actions() {
-		var canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 		canvas.width = Math.max(1, config.WIDTH);
 		canvas.height = Math.max(1, config.HEIGHT);
-		var params = {
+		const params = {
 			type: 'image',
 			data: canvas.toDataURL('image/png'),
 			x: 0,
@@ -65,7 +64,7 @@ class Layer_raster_class {
 			width: canvas.width,
 			height: canvas.height,
 		};
-		var actions = [new app.Actions.Insert_layer_action(params, false)];
+		const actions = [new app.Actions.Insert_layer_action(params, false)];
 		//the only layer of the document, when empty, is replaced by a new one by itself (Insert_layer_action); an empty
 		//layer among others has to be removed
 		if (config.layers.length > 1) {

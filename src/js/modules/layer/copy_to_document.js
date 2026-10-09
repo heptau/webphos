@@ -1,5 +1,4 @@
 import app from './../../app.js';
-import config from './../../config.js';
 import Dialog_class from './../../libs/popup.js';
 import alertify from './../../../../node_modules/alertifyjs/build/alertify.min.js';
 import { t } from '../tools/translate.js';
@@ -14,22 +13,22 @@ class Layer_copy_to_document_class {
 	}
 
 	copy_to_document() {
-		var docs = app.GUI.GUI_documents;
-		var targets = docs.documents.map((doc, index) => ({name: doc.name, index: index})).filter((item) => item.index != docs.active);
+		const docs = app.GUI.GUI_documents;
+		const targets = docs.documents.map((doc, index) => ({name: doc.name, index})).filter((item) => item.index != docs.active);
 		if (targets.length == 0) {
 			alertify.warning(t('Open another document first.'));
 			return;
 		}
-		var names = targets.map((item) => item.name);
+		const names = targets.map((item) => item.name);
 		this.POP.show({
 			title: 'Copy to Document',
 			params: [
 				{name: "document", title: "Document:", type: 'select', values: names, value: names[0]},
 			],
 			on_finish: (params) => {
-				var target = targets.find((item) => item.name == params.document);
+				const target = targets.find((item) => item.name == params.document);
 				if (target && docs.copy_layer_to(target.index)) {
-					alertify.success(t('Layer copied to') + ' ' + target.name + '.');
+					alertify.success(`${t('Layer copied to')  } ${target.name}.`);
 				}
 				else {
 					alertify.error(t('The layer could not be copied.'));
